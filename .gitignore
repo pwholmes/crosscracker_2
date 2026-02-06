@@ -48,7 +48,4 @@ Thumbs.db
 *.bin
 *.pickle
 last_index*.txt
-
-# Accidentally created directories
-your_db_path/
-chroma_db_old/
+load_dataset*.py
