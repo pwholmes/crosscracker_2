@@ -1,5 +1,6 @@
-from .registry import register_puzzle
+from __future__ import annotations
 from ..model import Cell, Entry, Grid
+from .registry import register_puzzle
 
 def create_grid() -> Grid:
     # Fully packed 9x9 grid of Cells
@@ -57,4 +58,4 @@ def create_grid() -> Grid:
     grid = Grid(entries)
     return grid
 
-register_puzzle("9x9", create_grid, title="9x9", default=True)
+register_puzzle("simple 9x9", create_grid, title="simple 9x9", default=True)

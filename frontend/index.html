@@ -7,15 +7,35 @@
 </head>
 <body>
   <h1 id="page-title">CrossCracker 2</h1>
+  
   <div id="controls">
-    <label for="puzzle-select">Puzzle:</label>
-    <select id="puzzle-select"></select>
+    <div class="mode-toggle-container">
+      <span class="mode-label">Puzzles</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="mode-toggle">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="mode-label">Recordings</span>
+    </div>
+    
+    <label for="item-select" id="item-select-label">Puzzle:</label>
+    <select id="item-select"></select>
+    
     <button id="play">Play ▶️</button>
     <button id="pause">Pause ⏸️</button>
     <button id="step">Step ➡️</button>
     <button id="solve">Solve ⏩</button>
     <button id="reset">Reset 🔄</button>
   </div>
+  
+  <!-- Replay speed control (hidden by default, shown when in replay mode) -->
+  <div id="replay-speed-control" style="display: none; margin-top: 10px;">
+    <label for="replay-speed">Speed: </label>
+    <input type="range" id="replay-speed" min="0.25" max="3" step="0.25" value="1" style="width: 150px;">
+    <span id="speed-label">1x</span>
+    <span style="margin-left: 20px;">Step: <span id="current-step">0</span> / <span id="total-steps">0</span></span>
+  </div>
+
   <div id="main">
     <div class="clue-column">
       <h3>Across</h3>
@@ -47,6 +67,7 @@
     <h3 id="log-header" style="cursor: pointer;">Log <span id="log-toggle">▶</span></h3>
     <pre id="log" style="display: none;"></pre>
   </div>
+
   <script src="app.js"></script>
 </body>
 </html>

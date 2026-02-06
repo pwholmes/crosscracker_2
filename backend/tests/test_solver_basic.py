@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from src.model import Entry, ScoredCandidate
 from src.solver import Solver
-from src.puzzles.puzzle_9x9 import create_grid
+from src.puzzles.simple_9x9 import create_grid
 
 def test_solver_can_start():
     grid = create_grid()

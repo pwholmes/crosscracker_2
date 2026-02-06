@@ -6,11 +6,13 @@ returns scored candidates deterministically, enabling repeatable UI replays.
 
 from __future__ import annotations
 
+from __future__ import annotations
+
 from typing import Dict, List, Tuple, TypedDict
 
-from .puzzle_9x9 import create_grid as create_grid_9x9
+from .simple_9x9 import create_grid as create_grid_9x9
 from .registry import GenerateCandidatesHook, register_puzzle
-from ..model import Grid, Entry, ScoredCandidate
+from model import Grid, Entry, ScoredCandidate
 
 
 class CandidateItem(TypedDict):

@@ -6,8 +6,7 @@ import logging
 from .llm import LLM
 from .model import Candidate, CandidateCache, Entry, Grid, ScoredCandidate
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger("src.solver")
 
 @dataclass
 class AttemptState:
@@ -45,7 +44,7 @@ class Solver:
     # Maximum times a candidate can be placed before forcing fallback
     MAX_PLACEMENT_ATTEMPTS: int = 3
 
-    def __init__(self, grid: Grid, *, defer_candidate_init: bool = False):
+    def __init__(self, grid: Grid, *, defer_candidate_init: bool = False, record: bool = False):
         self.grid = grid
         self.entries = grid.entries
         self.cache = CandidateCache()
@@ -56,6 +55,7 @@ class Solver:
         self._placement_counts: dict[tuple[str, str], int] = {}
         self._attempted_this_pass: set[str] = set()
         self._stall_passes: int = 0
+        self._recording: list[dict[str, Any]] | None = [] if record else None
         # Initialize candidates for all entries at width 0 with empty pattern
         if not defer_candidate_init:
             self._initialize_candidates_at_width(0)
@@ -103,7 +103,7 @@ class Solver:
         """Perform exactly one solver action and return an event dict."""
         newly_verified, verification_failed = self._mark_verified_entries()
         if verification_failed:
-            return self._handle_verification_failure(verification_failed, newly_verified)
+            return self._handle_verification_failure(verification_failed, newly_verified, recently_placed=None)
 
         if self._all_filled():
             if self._all_entries_verified():
@@ -131,7 +131,7 @@ class Solver:
                 exclude_entry_ids={placed.entry_id},
             )
             if verification_failed:
-                return self._handle_verification_failure(verification_failed, newly_verified)
+                return self._handle_verification_failure(verification_failed, newly_verified, recently_placed=placed.entry_id)
 
             self._attempted_this_pass.clear()
             self._stall_passes = 0
@@ -220,21 +220,32 @@ class Solver:
             attempt.candidates = self._get_candidates(entry_id, pattern, attempt.current_width)
             attempt.next_index = 0
 
+        key = (entry_id, attempt.generated_pattern, attempt.current_width)
+        penalties = self._penalties.get(key, {})
+
+        best_cand = None
+        best_effective_confidence = float("-inf")
+
         for cand in attempt.candidates[attempt.next_index :]:
             if len(cand.answer) != entry.length:
                 continue
-            if self._can_place(entry, cand.answer):
-                return cand
+            if not self._can_place(entry, cand.answer):
+                continue
+            
+            # Calculate effective confidence (confidence minus penalty)
+            penalty = penalties.get(cand.answer, 0.0)
+            effective_confidence = cand.confidence - penalty
+            
+            if effective_confidence > best_effective_confidence:
+                best_cand = cand
+                best_effective_confidence = effective_confidence
         
-        # Debug: log why no candidate was found
-        if attempt.candidates:
-            import logging
-            logger = logging.getLogger("src.solver")
+        if best_cand is None and attempt.candidates:
             logger.debug(f"No placeable candidate found for {entry_id}: "
                         f"{len(attempt.candidates)} candidates, pattern={pattern}, "
                         f"entries returned {len([c for c in attempt.candidates if len(c.answer) == entry.length])} "
                         f"with correct length")
-        return None
+        return best_cand
 
     def _try_fill_entry(self, entry_id: str, selection_score: float) -> Candidate | None:
         entry = self.entries[entry_id]
@@ -350,59 +361,51 @@ class Solver:
         return self._finalize_event({"event": "failed"}, newly_verified)
 
     def _choose_backtrack_target(self) -> str | None:
+        """Select a backtrack target by finding the entry that appears most frequently
+        as a crossing to unfilled entries.
+        
+        Algorithm:
+        1. For each unplaced entry, identify all placed crossing entries
+        2. Award each placed crossing entry a point
+        3. Select the placed entry with the most points
+        4. Break ties by lowest confidence score
+        """
         candidates = [rec for rec in self._placed.values() if not rec.is_fallback]
         if not candidates:
             return None
-
-        # Score each candidate by confidence, but penalize high crossing counts
-        # and heavily penalize entries that intersect unfilled entries.
-        # Lower score = more likely to backtrack.
-        def backtrack_score(rec: PlacedRecord) -> float:
-            entry = self.entries[rec.entry_id]
-            crossing_count = self._count_crossing_letters(entry)
-            unfilled_blocking_count = self._count_unfilled_blocking_entries(entry)
-            
-            # Formula: confidence with penalties
-            # - crossing_count: makes entry safer (harder to backtrack) since it affects others
-            # - unfilled_blocking_count: makes entry more likely to backtrack since it's blocking progress
-            # Base score: confidence / (1 + crossing_penalty)
-            base_score = rec.score_at_placement / (1.0 + crossing_count * 0.5)
-            
-            # Apply strong penalty for each unfilled entry this blocks
-            # Divide by (1 + unfilled_blocking_count) to make blocking entries easier to backtrack
-            penalty_score = base_score / (1.0 + unfilled_blocking_count * 1.5)
-            
-            return penalty_score
-
-        candidates.sort(key=backtrack_score)
-        return candidates[0].entry_id
-
-    def _count_unfilled_blocking_entries(self, entry: Entry) -> int:
-        """Count how many unfilled entries intersect this entry.
         
-        These are potential "blocked" entries that might be unblocked by removing this one.
-        """
-        blocking_count = 0
-        for cell in entry.cells:
-            # Find all other entries that pass through this cell
-            for other_eid in cell.sources or set():
-                if other_eid == entry.entry_id:
-                    continue
-                other_entry = self.entries.get(other_eid)
-                if other_entry and "." in other_entry.pattern:
-                    # This other entry still has unfilled cells
-                    blocking_count += 1
-                    break  # Count each intersecting unfilled entry once
-        return blocking_count
-
-    def _count_crossing_letters(self, entry: Entry) -> int:
-        """Count how many letters in this entry came from other placed entries."""
-        count = 0
-        for cell in entry.cells:
-            # If this cell has sources other than the current entry, it's a crossing.
-            if cell.sources and entry.entry_id not in cell.sources:
-                count += 1
-        return count
+        # Count points for each placed entry
+        points: dict[str, int] = {rec.entry_id: 0 for rec in candidates}
+        
+        # Loop through unplaced entries
+        for entry_id, entry in self.entries.items():
+            # Skip if this entry is already placed
+            if "." not in entry.pattern:
+                continue
+            
+            # Find all placed entries that cross this unplaced entry
+            for cell in entry.cells:
+                # cell.sources contains the entry IDs that pass through this cell
+                if cell.sources:
+                    for crossing_id in cell.sources:
+                        if crossing_id != entry_id and crossing_id in points:
+                            # This crossing entry is placed, give it a point
+                            points[crossing_id] += 1
+        
+        # Find the entry with the most points
+        max_points = max(points.values())
+        tied_entries = [rec for rec in candidates if points[rec.entry_id] == max_points]
+        
+        if not tied_entries:
+            return None
+        
+        # Break ties by lowest confidence score
+        selected = min(tied_entries, key=lambda rec: rec.confidence_at_placement)
+        logger.debug(
+            f"BACKTRACK TARGET SELECTED: entry_id={selected.entry_id} "
+            f"points={max_points} confidence={selected.confidence_at_placement:.2f}"
+        )
+        return selected.entry_id
 
     def _record_placement(
         self,
@@ -556,9 +559,11 @@ class Solver:
             event["verified"] = newly_verified
         if event.get("event") == "verified" and not newly_verified:
             event["event"] = "failed"
+        if self._recording is not None:
+            self._recording.append(event.copy())
         return event
 
-    def _handle_verification_failure(self, failed: list[str], newly_verified: list[str]) -> dict[str, Any]:
+    def _handle_verification_failure(self, failed: list[str], newly_verified: list[str], recently_placed: str | None = None) -> dict[str, Any]:
         # Log the verification failure
         logger.debug(f"VERIFICATION FAILED: entries={failed}")
         
@@ -568,6 +573,35 @@ class Solver:
             if eid in self._placed and not self._placed[eid].is_fallback:
                 target = eid
                 break
+        
+        # If failing entries were auto-completed (not explicitly placed), 
+        # choose among their placed crossings by lowest confidence.
+        # Exclude the recently placed entry that triggered this verification.
+        if target is None:
+            crossing_candidates: dict[str, PlacedRecord] = {}
+            for failed_id in failed:
+                failed_entry = self.entries.get(failed_id)
+                if failed_entry is None:
+                    continue
+                for cell in failed_entry.cells:
+                    if not cell.sources:
+                        continue
+                    for crossing_id in cell.sources:
+                        if crossing_id == failed_id or crossing_id == recently_placed:
+                            continue
+                        rec = self._placed.get(crossing_id)
+                        if rec is not None and not rec.is_fallback:
+                            crossing_candidates[rec.entry_id] = rec
+            if crossing_candidates:
+                target = min(
+                    crossing_candidates.values(),
+                    key=lambda rec: rec.confidence_at_placement,
+                ).entry_id
+                logger.debug(
+                    f"Selected crossing with lowest confidence: {target} "
+                    f"(confidence={crossing_candidates[target].confidence_at_placement:.2f})"
+                )
+        
         if target is None:
             target = self._choose_backtrack_target()
         if target is None:
@@ -603,4 +637,80 @@ class Solver:
                 "verification_failed": failed,
             },
             newly_verified,
+        )
+
+    def get_recording(self) -> dict[str, Any] | None:
+        """Get the recorded solve session as a dict. Returns None if recording is disabled."""
+        if self._recording is None:
+            return None
+        
+        return {
+            "puzzle": self.grid.puzzle_id if hasattr(self.grid, 'puzzle_id') else "unknown",
+            "width": self.grid.width,
+            "height": self.grid.height,
+            "events": self._recording,
+        }
+    
+    def save_recording(self, filepath: str) -> bool:
+        """Save the recording to a JSON file. Returns True if successful."""
+        import json
+        
+        if self._recording is None:
+            logger.warning("Recording is disabled; no data to save")
+            return False
+        
+        try:
+            recording = self.get_recording()
+            with open(filepath, "w") as f:
+                json.dump(recording, f, indent=2)
+            logger.info(f"Recording saved to {filepath}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save recording: {e}")
+            return False
+    
+    @staticmethod
+    def load_recording(filepath: str) -> dict[str, Any] | None:
+        """Load a recording from a JSON file. Returns the recording dict or None on error."""
+        import json
+        
+        try:
+            with open(filepath, "r") as f:
+                recording = json.load(f)
+            logger.info(f"Recording loaded from {filepath}")
+            return recording
+        except Exception as e:
+            logger.error(f"Failed to load recording: {e}")
+            return None
+    
+    @staticmethod
+    def get_recording_event_at_step(recording: dict[str, Any], step_num: int) -> dict[str, Any] | None:
+        """Get the event at the specified step number (0-indexed) from a recording.
+        
+        Returns the event dict or None if step is out of range.
+        """
+        events = recording.get("events", [])
+        if 0 <= step_num < len(events):
+            return events[step_num]
+        return None
+    
+    @staticmethod
+    def get_recording_summary(recording: dict[str, Any]) -> str:
+        """Get a brief summary of a recording."""
+        puzzle = recording.get("puzzle", "unknown")
+        width = recording.get("width", "?")
+        height = recording.get("height", "?")
+        event_count = len(recording.get("events", []))
+        
+        # Count event types
+        events = recording.get("events", [])
+        event_types: dict[str, int] = {}
+        for event in events:
+            event_type = event.get("event", "unknown")
+            event_types[event_type] = event_types.get(event_type, 0) + 1
+        
+        return (
+            f"Puzzle: {puzzle} ({width}x{height})\n"
+            f"Total events: {event_count}\n"
+            f"Event types: {event_types}"
         )

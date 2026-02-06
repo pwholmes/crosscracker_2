@@ -10,7 +10,9 @@ const stepBtn = document.getElementById("step");
 const solveBtn = document.getElementById("solve");
 const resetBtn = document.getElementById("reset");
 
-const puzzleSelect = document.getElementById('puzzle-select');
+const modeToggle = document.getElementById('mode-toggle');
+const itemSelect = document.getElementById('item-select');
+const itemSelectLabel = document.getElementById('item-select-label');
 
 const stepCountEl = document.getElementById('step-count');
 const fallbackCountEl = document.getElementById('fallback-count');
@@ -19,6 +21,22 @@ const initProgressDiv = document.getElementById('init-progress');
 const progressText = document.getElementById('progress-text');
 const progressBarFill = document.getElementById('progress-bar-fill');
 let initProgressStarted = false;
+
+// Replay controls
+const replaySpeedControl = document.getElementById('replay-speed-control');
+const replaySpeedSlider = document.getElementById('replay-speed');
+const speedLabel = document.getElementById('speed-label');
+const currentStepSpan = document.getElementById('current-step');
+const totalStepsSpan = document.getElementById('total-steps');
+
+// Mode state
+let currentMode = 'puzzles'; // 'puzzles' or 'recordings'
+let isReplayMode = false;
+let currentRecording = null;
+let replayIndex = 0;
+let isReplayPlaying = false;
+let replaySpeed = 1.0;
+let replayTimer = null;
 
 function disableControls(disabled) {
   playBtn.disabled = disabled;
@@ -99,6 +117,226 @@ function log(msg) {
   logEl.scrollTop = logEl.scrollHeight;
 }
 
+// ============ MODE SWITCHING FUNCTIONALITY ============
+
+async function switchMode(mode) {
+  currentMode = mode;
+  
+  if (mode === 'puzzles') {
+    itemSelectLabel.textContent = 'Puzzle:';
+    replaySpeedControl.style.display = 'none';
+    solveBtn.style.display = 'inline-block';
+    isReplayMode = false;
+    if (replayTimer) clearTimeout(replayTimer);
+    isReplayPlaying = false;
+    await refreshItemList();
+  } else if (mode === 'recordings') {
+    itemSelectLabel.textContent = 'Recording:';
+    replaySpeedControl.style.display = 'block';
+    solveBtn.style.display = 'none';
+    await refreshItemList();
+  }
+  
+  // Reset state
+  itemSelect.value = '';
+  gridContainer.innerHTML = '';
+  entriesAcrossList.innerHTML = '';
+  entriesDownList.innerHTML = '';
+  statusMessage.textContent = mode === 'puzzles' ? 'Select a puzzle' : 'Select a recording';
+  statusMessage.className = '';
+  logEl.textContent = '';
+  disableControls(true);
+}
+
+async function refreshItemList() {
+  itemSelect.innerHTML = '';
+  
+  if (currentMode === 'puzzles') {
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '-- select puzzle --';
+    itemSelect.appendChild(defaultOption);
+    
+    // Load puzzles
+    try {
+      const res = await fetch(API_BASE + '/puzzles');
+      if (!res.ok) throw new Error(res.statusText);
+      const puzzles = await res.json();
+      puzzles.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.title || p.id;
+        itemSelect.appendChild(opt);
+      });
+    } catch (err) {
+      log('[error] Could not load puzzles: ' + err);
+    }
+  } else if (currentMode === 'recordings') {
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '-- select recording --';
+    itemSelect.appendChild(defaultOption);
+    
+    // Load recordings
+    try {
+      const res = await fetch(API_BASE + '/api/recordings');
+      if (!res.ok) throw new Error(res.statusText);
+      const recordings = await res.json();
+      recordings.forEach((rec) => {
+        const opt = document.createElement('option');
+        opt.value = rec.id;
+        opt.textContent = `${rec.puzzle_id} (${rec.width}x${rec.height}) - ${rec.event_count} events`;
+        itemSelect.appendChild(opt);
+      });
+    } catch (err) {
+      log('[error] Could not load recordings: ' + err);
+    }
+  }
+}
+
+// ============ REPLAY MODE FUNCTIONALITY ============
+
+function updateReplayProgress() {
+  currentStepSpan.textContent = replayIndex;
+  if (currentRecording) {
+    totalStepsSpan.textContent = currentRecording.event_count || 0;
+  }
+}
+
+function applyReplayEvent(event) {
+  if (!event) return;
+  
+  log('[event] ' + formatEvent(event));
+  
+  if (event.event === 'solved') {
+    statusMessage.textContent = 'Solved';
+    statusMessage.className = 'status-solved';
+  } else if (event.event === 'failed') {
+    statusMessage.textContent = 'Failed';
+    statusMessage.className = 'status-failed';
+  } else if (event.event === 'placed' || event.event === 'placed_fallback' || event.event === 'backtrack') {
+    statusMessage.textContent = 'Replaying...';
+    statusMessage.className = '';
+  }
+  
+  if (event.event === 'placed' || event.event === 'placed_fallback') {
+    if (event.candidate?.entry_id) {
+      highlightEntry(event.candidate.entry_id);
+    }
+  }
+  if (event.event === 'candidate_verified' && event.entry_id) {
+    highlightEntry(event.entry_id);
+  }
+  if (Array.isArray(event.verified)) {
+    event.verified.forEach((eid) => highlightEntry(eid));
+  }
+}
+
+function replayStep() {
+  if (!currentRecording || !isReplayMode) return;
+  
+  const event = currentRecording.events?.[replayIndex];
+  if (!event) return;
+  
+  applyReplayEvent(event);
+  replayIndex++;
+  updateReplayProgress();
+  
+  if (replayIndex >= (currentRecording.event_count || 0)) {
+    isReplayPlaying = false;
+  }
+}
+
+function replayPlay() {
+  if (!currentRecording || !isReplayMode) return;
+  
+  isReplayPlaying = true;
+  
+  const playStep = () => {
+    if (!isReplayPlaying || !currentRecording) return;
+    
+    const event = currentRecording.events?.[replayIndex];
+    if (!event) {
+      isReplayPlaying = false;
+      return;
+    }
+    
+    applyReplayEvent(event);
+    replayIndex++;
+    updateReplayProgress();
+    
+    if (replayIndex >= (currentRecording.event_count || 0)) {
+      isReplayPlaying = false;
+      return;
+    }
+    
+    const delay = (800 / replaySpeed);
+    replayTimer = setTimeout(playStep, delay);
+  };
+  
+  playStep();
+}
+
+function replayPause() {
+  isReplayPlaying = false;
+  if (replayTimer) clearTimeout(replayTimer);
+}
+
+function replayReset() {
+  replayPause();
+  replayIndex = 0;
+  updateReplayProgress();
+  logEl.textContent = '';
+  statusMessage.textContent = 'Recording loaded';
+  statusMessage.className = '';
+  if (currentRecording?.grid_state) {
+    renderGrid(currentRecording.grid_state);
+  }
+}
+
+async function loadRecording(recordingId) {
+  try {
+    const res = await fetch(`/api/recordings/${recordingId}`);
+    if (!res.ok) throw new Error(res.statusText);
+    currentRecording = await res.json();
+    
+    isReplayMode = true;
+    replayIndex = 0;
+    updateReplayProgress();
+    
+    statusMessage.textContent = 'Recording loaded';
+    statusMessage.className = '';
+    
+    if (currentRecording.grid_state) {
+      renderGrid(currentRecording.grid_state);
+    }
+    
+    // Clear entries (recordings don't have live entry state)
+    entriesAcrossList.innerHTML = '';
+    entriesDownList.innerHTML = '';
+    
+    disableControls(false);
+    log(`[recording] Loaded: ${currentRecording.puzzle} (${currentRecording.event_count} events)`);
+  } catch (err) {
+    log('[error] Could not load recording: ' + err);
+    statusMessage.textContent = 'Error loading recording';
+    statusMessage.className = '';
+  }
+}
+
+// Update speed label when slider changes
+replaySpeedSlider.addEventListener('input', (e) => {
+  replaySpeed = parseFloat(e.target.value);
+  speedLabel.textContent = replaySpeed.toFixed(2) + 'x';
+});
+
+// Mode select handler
+modeToggle.addEventListener('change', () => {
+  switchMode(modeToggle.checked ? 'recordings' : 'puzzles');
+});
+
 function connect() {
   ws = new WebSocket('ws://localhost:8000/ws');
 
@@ -113,10 +351,10 @@ function connect() {
       renderGrid(data.grid);
       renderEntries(data.entries);
       renderTallyFromState(data.metrics);
-      // Sync dropdown to current puzzle
+      // Sync dropdown to current puzzle (only in puzzle mode)
       const currentPuzzleId = data.metrics?.puzzle_id;
-      if (currentPuzzleId && puzzleSelect.value !== currentPuzzleId) {
-        puzzleSelect.value = currentPuzzleId;
+      if (currentMode === 'puzzles' && currentPuzzleId && itemSelect.value !== currentPuzzleId) {
+        itemSelect.value = currentPuzzleId;
       }
       log('[state] updated');
       
@@ -323,35 +561,11 @@ async function fetchJson(path) {
   return res.json();
 }
 
-async function refreshPuzzleList() {
-  try {
-    const puzzles = await fetchJson('/puzzles');
-    if (!Array.isArray(puzzles)) return;
-    puzzleSelect.innerHTML = '';
-    // Add default option
-    const defaultOpt = document.createElement('option');
-    defaultOpt.value = '';
-    defaultOpt.textContent = '-- select puzzle --';
-    puzzleSelect.appendChild(defaultOpt);
-    // Add puzzle options
-    for (const p of puzzles) {
-      if (!p || typeof p !== 'object') continue;
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.title || p.id;
-      puzzleSelect.appendChild(opt);
-    }
-  } catch (err) {
-    log('[http] /puzzles error: ' + err);
-  }
-}
-
 async function loadSelectedPuzzle() {
-  const puzzleId = puzzleSelect.value;
+  const puzzleId = itemSelect.value;
   if (!puzzleId) return;
   
   // Clear old puzzle display
-  const gridContainer = document.getElementById('grid-container');
   gridContainer.innerHTML = '';
   
   // Hide clue sections
@@ -366,16 +580,16 @@ async function loadSelectedPuzzle() {
   disableControls(true);
   logEl.textContent = '';
   
-  // Reset and show progress bar
+  // Reset progress bar (but don't show it yet - wait for first progress update)
   progressText.textContent = '0 / 0 entries';
   progressBarFill.style.width = '0%';
-  initProgressDiv.style.display = 'block';
+  initProgressDiv.style.display = 'none';
   initProgressStarted = false;
   
   await postAction(`/puzzles/${encodeURIComponent(puzzleId)}/load`);
   
   // Remove the "-- select puzzle --" option once a puzzle is loaded
-  const defaultOption = puzzleSelect.querySelector('option[value=""]');
+  const defaultOption = itemSelect.querySelector('option[value=""]');
   if (defaultOption) {
     defaultOption.remove();
   }
@@ -396,27 +610,60 @@ async function postAction(path) {
   }
 }
 
-playBtn.addEventListener('click', () => postAction('/play'));
-pauseBtn.addEventListener('click', () => postAction('/pause'));
-stepBtn.addEventListener('click', () => postAction('/step'));
-solveBtn.addEventListener('click', () => postAction('/solve'));
-resetBtn.addEventListener('click', () => {
-  postAction('/reset');
-  statusMessage.textContent = 'Loaded';
-  statusMessage.className = '';
-  logEl.textContent = '';
-  renderTallyFromState({steps: 0, fallbacks: 0});
+playBtn.addEventListener('click', () => {
+  if (isReplayMode) {
+    replayPlay();
+  } else {
+    postAction('/play');
+  }
 });
 
-puzzleSelect.addEventListener('change', () => {
-  loadSelectedPuzzle();
+pauseBtn.addEventListener('click', () => {
+  if (isReplayMode) {
+    replayPause();
+  } else {
+    postAction('/pause');
+  }
+});
+
+stepBtn.addEventListener('click', () => {
+  if (isReplayMode) {
+    replayStep();
+  } else {
+    postAction('/step');
+  }
+});
+
+solveBtn.addEventListener('click', () => postAction('/solve'));
+
+resetBtn.addEventListener('click', () => {
+  if (isReplayMode) {
+    replayReset();
+  } else {
+    postAction('/reset');
+    statusMessage.textContent = 'Loaded';
+    statusMessage.className = '';
+    logEl.textContent = '';
+    renderTallyFromState({steps: 0, fallbacks: 0});
+  }
+});
+
+itemSelect.addEventListener('change', async () => {
+  const selectedValue = itemSelect.value;
+  if (!selectedValue) return;
+  
+  if (currentMode === 'puzzles') {
+    await loadSelectedPuzzle();
+  } else if (currentMode === 'recordings') {
+    await loadRecording(selectedValue);
+  }
 });
 
 connect();
 
-refreshPuzzleList();
+refreshItemList();
 
 renderTallyFromState({steps: 0, fallbacks: 0});
 
-// Disable controls until a puzzle is loaded
+// Disable controls until something is loaded
 disableControls(true);

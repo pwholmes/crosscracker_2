@@ -87,6 +87,18 @@ class ScoredCandidate:
 class Grid:
     def __init__(self, entries: dict[str, Entry]):
         self.entries = entries  # all Entries keyed by entry_id
+        self.puzzle_id: str | None = None  # Set by server when puzzle is loaded
+        
+        # Calculate grid dimensions from cell positions
+        max_row = 0
+        max_col = 0
+        for entry in entries.values():
+            for cell in entry.cells:
+                max_row = max(max_row, cell.row)
+                max_col = max(max_col, cell.col)
+        
+        self.width = max_col + 1
+        self.height = max_row + 1
 
     def place_candidate(self, candidate: Candidate) -> bool:
         entry = self.entries[candidate.entry_id]

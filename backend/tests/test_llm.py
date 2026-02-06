@@ -14,27 +14,31 @@ def test_generate_candidates_with_mock():
     # Create a test entry
     entry = create_test_entry("Old-fashioned butter maker", "CHURN", 5)
     
-    # Mock the requests.post response
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "response": "CHURN|95\nCHURNS|75\nMIXER|60"
+    # Mock the requests.post response - need two responses for generation and scoring
+    mock_generation_response = Mock()
+    mock_generation_response.json.return_value = {
+        "response": "CHURN\nMIXER"
     }
-    mock_response.raise_for_status = Mock()
+    mock_generation_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response) as mock_post:
+    mock_scoring_response = Mock()
+    mock_scoring_response.json.return_value = {
+        "response": "CHURN | 95\nMIXER | 60"
+    }
+    mock_scoring_response.raise_for_status = Mock()
+    
+    with patch('src.llm.requests.post', side_effect=[mock_generation_response, mock_scoring_response]) as mock_post:
         candidates = LLM.generate_candidates(entry, widening_level=0)
         
-        # Verify requests.post was called with correct parameters
-        mock_post.assert_called_once()
-        call_args = mock_post.call_args
-        assert call_args.kwargs['json']['model'] == LLM.MODEL_NAME
-        assert call_args.kwargs['json']['stream'] is False
-        assert 'prompt' in call_args.kwargs['json']
+        # Verify requests.post was called twice (generation + scoring)
+        assert mock_post.call_count == 2
         
         # Verify the candidates were parsed correctly
-        assert len(candidates) == 2  # Only CHURN and MIXER have length 5
-        assert candidates[0] == ScoredCandidate(answer="CHURN", confidence=95.0)
-        assert candidates[1] == ScoredCandidate(answer="MIXER", confidence=60.0)
+        assert len(candidates) == 2
+        assert candidates[0].answer == "CHURN"
+        assert candidates[0].confidence == 95.0
+        assert candidates[1].answer == "MIXER"
+        assert candidates[1].confidence == 60.0
 
 
 def test_generate_candidates_with_malformed_response():

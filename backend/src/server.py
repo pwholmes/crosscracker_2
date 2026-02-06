@@ -6,6 +6,10 @@ from pydantic import BaseModel
 from typing import Any, Dict, List, Callable
 import uvicorn
 import logging
+import json
+from pathlib import Path
+from datetime import datetime
+import uuid
 
 from .model import Grid
 from .llm import LLM
@@ -25,7 +29,13 @@ steps_executed: int = 0
 fallbacks_used: int = 0
 _metrics_lock = Lock()
 
+# Recordings
+BASE_DIR = Path(__file__).resolve().parents[2]
+RECORDINGS_DIR = BASE_DIR / "backend" / "recordings"
+RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
+
 # Logger
+logger = logging.getLogger("src.server")
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s [%(name)s] %(message)s")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
@@ -184,6 +194,69 @@ def _step_and_update_metrics() -> dict[str, Any]:
     return ev
 
 
+def _save_recording_if_enabled() -> None:
+    """Save the current solver recording if recording is enabled."""
+    if solver is None or not hasattr(solver, 'get_recording'):
+        return
+    
+    recording = solver.get_recording()
+    if recording is None:
+        return
+    
+    try:
+        recording_id = str(uuid.uuid4())
+        recording['id'] = recording_id
+        recording['timestamp'] = datetime.now().isoformat()
+        recording['event_count'] = len(recording.get('events', []))
+        
+        # Add grid state for replay
+        if grid is not None:
+            # Build initial grid state
+            max_r = 0
+            max_c = 0
+            used_cells: set[tuple[int, int]] = set()
+            for e in grid.entries.values():
+                for cell in e.cells:
+                    used_cells.add((cell.row, cell.col))
+                    max_r = max(max_r, cell.row)
+                    max_c = max(max_c, cell.col)
+            rows = max_r + 1
+            cols = max_c + 1
+            
+            blocks = [[True for _ in range(cols)] for _ in range(rows)]
+            for e in grid.entries.values():
+                for cell in e.cells:
+                    blocks[cell.row][cell.col] = False
+            
+            recording['grid_state'] = {
+                'rows': rows,
+                'cols': cols,
+                'blocks': blocks,
+            }
+        
+        # Generate filename based on puzzle name and ordinal
+        puzzle_name = recording.get('puzzle', 'unknown')
+        # Sanitize puzzle name for filename (replace spaces and special chars)
+        safe_name = puzzle_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        
+        # Find next available ordinal
+        ordinal = 1
+        while True:
+            filename = f"{safe_name} - {ordinal}.json"
+            filepath = RECORDINGS_DIR / filename
+            if not filepath.exists():
+                break
+            ordinal += 1
+        
+        # Save to JSON file
+        with open(filepath, 'w') as f:
+            json.dump(recording, f, indent=2)
+        
+        logger.info(f"Recording saved: {filename} (id: {recording_id}) for puzzle {puzzle_name}")
+    except Exception as e:
+        logger.error(f"Failed to save recording: {e}")
+
+
 async def broadcast_step_events(ev: dict[str, Any]) -> None:
     """Broadcast step event and any verification events."""
     await manager.broadcast({"type": "event", "event": ev})
@@ -208,6 +281,8 @@ async def start_player() -> None:
             await broadcast_step_events(ev)
             if ev.get("event") in ("solved", "failed"):
                 play_event.clear()
+                # Save recording when auto-play completes
+                await asyncio.to_thread(_save_recording_if_enabled)
             await asyncio.sleep(play_interval_seconds)
 
     asyncio.create_task(player_loop())
@@ -251,6 +326,9 @@ async def step_once() -> dict[str, Any]:
     async with solver_lock:
         ev = await asyncio.to_thread(_step_and_update_metrics)
     await broadcast_step_events(ev)
+    # Save recording when stepping completes the puzzle
+    if ev.get("event") in ("solved", "failed"):
+        await asyncio.to_thread(_save_recording_if_enabled)
     return ev
 
 
@@ -265,6 +343,8 @@ async def solve_now() -> dict[str, Any]:
             ev = await asyncio.to_thread(_step_and_update_metrics)
             await broadcast_step_events(ev)
             if ev.get("event") in ("solved", "failed"):
+                # Save recording when solve completes
+                await asyncio.to_thread(_save_recording_if_enabled)
                 return {"solved": ev.get("event") == "solved"}
 
 
@@ -277,7 +357,7 @@ async def reset() -> dict[str, str]:
     async with solver_lock:
         grid, hook = puzzles.load_puzzle(puzzle_id=current_puzzle_id)
         LLM.set_generate_candidates_hook(hook)
-        solver = Solver(grid)
+        solver = Solver(grid, record=True)
         with _metrics_lock:
             steps_executed = 0
             fallbacks_used = 0
@@ -288,6 +368,47 @@ async def reset() -> dict[str, str]:
 @app.get("/state")
 async def get_state():
     return serialize_state()
+
+
+@app.get("/api/recordings")
+def list_recordings() -> list[dict[str, Any]]:
+    """List all saved recordings."""
+    try:
+        recordings: list[dict[str, Any]] = []
+        for json_file in sorted(RECORDINGS_DIR.glob("*.json")):
+            try:
+                with open(json_file, 'r') as f:
+                    rec = json.load(f)
+                recordings.append({
+                    'id': rec.get('id', json_file.stem),
+                    'puzzle_id': rec.get('puzzle', 'unknown'),
+                    'width': rec.get('width', 0),
+                    'height': rec.get('height', 0),
+                    'event_count': rec.get('event_count', len(rec.get('events', []))),
+                    'timestamp': rec.get('timestamp', ''),
+                })
+            except Exception as e:
+                logger.error(f"Failed to load recording {json_file}: {e}")
+        return recordings
+    except Exception as e:
+        logger.error(f"Failed to list recordings: {e}")
+        return []
+
+
+@app.get("/api/recordings/{recording_id}")
+def get_recording(recording_id: str):
+    """Fetch a specific recording."""
+    try:
+        filepath = RECORDINGS_DIR / f"{recording_id}.json"
+        if not filepath.exists():
+            return {"error": "Recording not found"}
+        
+        with open(filepath, 'r') as f:
+            recording = json.load(f)
+        return recording
+    except Exception as e:
+        logger.error(f"Failed to get recording {recording_id}: {e}")
+        return {"error": str(e)}
 
 
 @app.get("/puzzles")
@@ -301,6 +422,7 @@ async def load_puzzle(puzzle_id: str):
     current_puzzle_id = puzzle_id
     async with solver_lock:
         grid, hook = puzzles.load_puzzle(puzzle_id=puzzle_id)
+        grid.puzzle_id = puzzle_id  # Store puzzle_id on the grid for recording
         LLM.set_generate_candidates_hook(hook)
 
         await manager.broadcast({
@@ -322,8 +444,8 @@ async def load_puzzle(puzzle_id: str):
                 "state": "initializing",
             })
         
-        # Create solver (defer candidate init so we can stream progress)
-        solver = Solver(grid, defer_candidate_init=True)
+        # Create solver with recording enabled
+        solver = Solver(grid, defer_candidate_init=True, record=True)
         
         # Initialize candidates with progress callback for UI feedback
         async def progress_callback(current: int, total: int):
@@ -339,12 +461,12 @@ async def load_puzzle(puzzle_id: str):
         with _metrics_lock:
             steps_executed = 0
             fallbacks_used = 0
+    
     await manager.broadcast(serialize_state())
     return {"status": "loaded", "puzzle": puzzle_id}
 
 
 # Mount frontend static files after routes are defined so websocket routes are matched first
-BASE_DIR = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = BASE_DIR / "frontend"
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
