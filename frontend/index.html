@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CrossCracker 2</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1 id="page-title">CrossCracker 2</h1>
+  <div id="controls">
+    <label for="puzzle-select">Puzzle:</label>
+    <select id="puzzle-select"></select>
+    <button id="play">Play ▶️</button>
+    <button id="pause">Pause ⏸️</button>
+    <button id="step">Step ➡️</button>
+    <button id="solve">Solve ⏩</button>
+    <button id="reset">Reset 🔄</button>
+  </div>
+  <div id="main">
+    <div class="clue-column">
+      <h3>Across</h3>
+      <ul id="entries-across"></ul>
+    </div>
+    <div id="grid-section">
+      <h3 id="status-message">Select a puzzle</h3>
+      <div id="init-progress" style="display: none;">
+        <div id="progress-text">0 / 0 entries</div>
+        <div id="progress-bar-container">
+          <div id="progress-bar-fill"></div>
+        </div>
+      </div>
+      <div id="grid-container"></div>
+    </div>
+    <div class="clue-column">
+      <h3>Down</h3>
+      <ul id="entries-down"></ul>
+    </div>
+  </div>
+
+  <div id="tally">
+    Steps: <span id="step-count">0</span>
+    <span class="tally-sep">|</span>
+    Fallbacks: <span id="fallback-count">0</span>
+  </div>
+
+  <div id="log-section">
+    <h3 id="log-header" style="cursor: pointer;">Log <span id="log-toggle">▶</span></h3>
+    <pre id="log" style="display: none;"></pre>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

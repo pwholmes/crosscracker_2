@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+markers = [
+	"integration: marks tests that call external services or run slowly",
+]
+addopts = "-m 'not integration'"

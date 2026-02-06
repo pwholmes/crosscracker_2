@@ -1,0 +1,173 @@
+body {
+  font-family: monospace;
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#page-title {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 16px 0 20px 0;
+  text-align: center;
+}
+#controls {
+  margin-bottom: 12px;
+  text-align: center;
+}
+#main {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+  justify-content: center;
+  align-items: flex-start;
+}
+#grid-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#status-message {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 8px;
+  min-height: auto;
+}
+#status-message.status-solved {
+  color: green;
+}
+#status-message.status-failed {
+  color: red;
+}
+#status-message.loading {
+  color: orange;
+  font-style: italic;
+}
+#init-progress {
+  margin: 12px auto;
+  max-width: 300px;
+  text-align: center;
+}
+#progress-text {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  display: none;
+}
+#progress-bar-container {
+  width: 100%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+}
+#progress-bar-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+#grid-container {
+  min-width: 220px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 12px;
+}
+#grid {
+  border-collapse: collapse;
+}
+#grid td {
+  border: 1px solid #333;
+  width: 36px;
+  height: 36px;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+  font-size: 18px;
+  position: relative;
+  background: #fff;
+}
+.cell-block {
+  background: #000 !important;
+  border-color: #000 !important;
+}
+.clue-number {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 10px;
+  font-weight: normal;
+  color: #222;
+  line-height: 1;
+}
+.cell-letter {
+  display: inline-block;
+  line-height: 1;
+}
+
+.cell-cheated .cell-letter {
+  color: #c00000;
+}
+.cell-block .clue-number,
+.cell-block .cell-letter {
+  color: #000;
+}
+.clue-column {
+  flex: 1;
+  min-width: 240px;
+  max-width: 350px;
+}
+.clue-column h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  display: none;
+}
+#entries-across,
+#entries-down {
+  list-style: none;
+  padding: 0;
+}
+#entries-across li,
+#entries-down li {
+  margin: 6px 0;
+  font-size: 14px;
+}
+#log-section {
+  margin-top: 0px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+#tally {
+  margin: 8px 0 12px 0;
+  font-size: 14px;
+  text-align: center;
+  color: #222;
+  display: none;
+}
+
+.tally-sep {
+  margin: 0 10px;
+  color: #666;
+}
+#log-section h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  text-align: center;
+  user-select: none;
+}
+#log {
+  background: #f6f6f6;
+  padding: 8px;
+  height: 200px;
+  overflow: auto;
+  border: 1px solid #ccc;
+}
+.entry-highlight {
+  background: #fffbcc;
+}
+.entry-verified {
+  background: #fffbcc;
+}
