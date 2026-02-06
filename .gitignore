@@ -31,6 +31,9 @@ env/
 ENV/
 .venv
 
+# Environment files
+.env
+
 # IDEs
 .vscode/
 .idea/
@@ -48,4 +51,3 @@ Thumbs.db
 *.bin
 *.pickle
 last_index*.txt
-load_dataset*.py
