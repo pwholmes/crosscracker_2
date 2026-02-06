@@ -35,13 +35,13 @@ def load_hf_dataset():
     # Now insert the data into the ChromaDB database.
     # Explicitly request the CUDA provider
     print("Opening database...")
-    client = chromadb.PersistentClient(path = ".")
+    client = chromadb.PersistentClient(path = "../db")
     gpu_ef = ONNXMiniLM_L6_V2(preferred_providers=['CUDAExecutionProvider'])
     collection = client.get_or_create_collection(name="crossword_1", embedding_function=gpu_ef) #type: ignore
     
     BATCH_SIZE:int = 5000
     total_rows:int = len(ds)
-    checkpoint_file:str = "last_index_1.txt"
+    checkpoint_file:str = "../db/last_index_1.txt"
     start_index:int = 0
 
     # Read where we last finished
