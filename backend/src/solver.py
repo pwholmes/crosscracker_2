@@ -320,11 +320,6 @@ class Solver:
                     f"score={score_at_placement:.2f} "
                     f"pattern={removed_record.pattern_at_placement} widening_level={removed_candidate.widening_level}"
                 )
-                # Log hints for the backtracked entry
-                entry = self.entries.get(removed_candidate.entry_id)
-                if entry and entry.hints:
-                    for hint_clue, hint_answer in entry.hints:
-                        logger.debug(f"  HINT: '{hint_clue}' -> '{hint_answer}'")
                 return self._finalize_event(
                     {
                         "event": "backtrack",
@@ -619,11 +614,6 @@ class Solver:
             f"pattern={popped_record.pattern_at_placement} widening_level={popped_candidate.widening_level} "
             f"failed={failed}"
         )
-        # Log hints for the backtracked entry
-        #entry = self.entries.get(popped_candidate.entry_id)
-        #if entry and entry.hints:
-        #    for hint_clue, hint_answer in entry.hints:
-        #        logger.debug(f"  HINT: '{hint_clue}' -> '{hint_answer}'")
         return self._finalize_event(
             {
                 "event": "backtrack",
