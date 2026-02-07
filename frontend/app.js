@@ -14,6 +14,7 @@ const modeToggle = document.getElementById('mode-toggle');
 const itemSelect = document.getElementById('item-select');
 const itemSelectLabel = document.getElementById('item-select-label');
 
+
 const stepCountEl = document.getElementById('step-count');
 const fallbackCountEl = document.getElementById('fallback-count');
 
@@ -38,6 +39,10 @@ let isReplayPlaying = false;
 let replaySpeed = 1.0;
 let replayTimer = null;
 
+// Track grid state during replay
+let replayGridState = null; // { rows, cols, letters, blocks }
+let entryToCells = {}; // mapping from entry_id to list of [row, col] for replay
+
 function disableControls(disabled) {
   playBtn.disabled = disabled;
   pauseBtn.disabled = disabled;
@@ -51,6 +56,11 @@ function renderTallyFromState(metrics) {
   const fallbacks = metrics?.fallbacks ?? 0;
   if (stepCountEl) stepCountEl.textContent = String(steps);
   if (fallbackCountEl) fallbackCountEl.textContent = String(fallbacks);
+}
+
+function setClueHeadingsVisible(visible) {
+  const clueColumns = document.querySelectorAll('.clue-column h3');
+  clueColumns.forEach(h3 => h3.style.display = visible ? 'block' : 'none');
 }
 
 const logHeader = document.getElementById("log-header");
@@ -145,6 +155,7 @@ async function switchMode(mode) {
   statusMessage.textContent = mode === 'puzzles' ? 'Select a puzzle' : 'Select a recording';
   statusMessage.className = '';
   logEl.textContent = '';
+  setClueHeadingsVisible(false);
   disableControls(true);
 }
 
@@ -169,6 +180,7 @@ async function refreshItemList() {
         opt.textContent = p.title || p.id;
         itemSelect.appendChild(opt);
       });
+
     } catch (err) {
       log('[error] Could not load puzzles: ' + err);
     }
@@ -196,7 +208,104 @@ async function refreshItemList() {
   }
 }
 
-// ============ REPLAY MODE FUNCTIONALITY ============
+// ============ CENTRALIZED MESSAGE PROCESSOR ============
+
+function processMessage(data) {
+  if (data.type === 'state') {
+    gridState = data.grid;
+    renderGrid(data.grid);
+    renderEntries(data.entries);
+    renderTallyFromState(data.metrics);
+    // Sync dropdown to current puzzle (only in puzzle mode)
+    const currentPuzzleId = data.metrics?.puzzle_id;
+    if (currentMode === 'puzzles' && currentPuzzleId && itemSelect.value !== currentPuzzleId) {
+      itemSelect.value = currentPuzzleId;
+    }
+    log('[state] updated');
+    
+    // Handle puzzle loaded vs not loaded
+    if (!currentPuzzleId) {
+      // No puzzle loaded - show "Select a puzzle" and hide sections
+      statusMessage.textContent = 'Select a puzzle';
+      statusMessage.className = '';
+      document.getElementById('tally').style.display = 'none';
+      // Find and hide the Across and Down headings
+      setClueHeadingsVisible(false);
+      disableControls(true);
+    } else {
+      // Puzzle loaded - show sections and "Loaded" message
+      // Set status to Loaded when state is received (unless already solving/solved/failed)
+      if (!statusMessage.textContent.match(/Solving|Solved|Failed|Replaying/)) {
+        statusMessage.textContent = 'Loaded';
+        statusMessage.className = '';
+      }
+      // Show tally and headings
+      document.getElementById('tally').style.display = 'block';
+      setClueHeadingsVisible(true);
+      // Enable controls now that puzzle is loaded
+      disableControls(false);
+      // Hide progress bar when puzzle is fully loaded
+      initProgressDiv.style.display = 'none';
+    }
+  } else if (data.type === 'status') {
+    if (typeof data.message === 'string') {
+      statusMessage.textContent = data.message;
+    }
+    if (data.state === 'loading_hints' || data.state === 'initializing') {
+      statusMessage.className = 'loading';
+    } else {
+      statusMessage.className = '';
+    }
+  } else if (data.type === 'init_progress') {
+    // Update progress bar
+    const current = data.current || 0;
+    const total = data.total || 1;
+    const percentage = data.percentage || 0;
+    if (!initProgressStarted) {
+      progressText.style.display = 'block';
+      // Clear status message when progress starts
+      statusMessage.textContent = 'Initializing entries...';
+      statusMessage.className = '';
+      initProgressStarted = true;
+    }
+    progressText.textContent = `${current} / ${total} entries`;
+    progressBarFill.style.width = `${percentage}%`;
+    initProgressDiv.style.display = 'block';
+  } else if (data.type === 'event') {
+    const ev = data.event;
+    log('[event] ' + formatEvent(ev));
+    if (DEBUG_LOG_JSON) {
+      log('[event.json] ' + JSON.stringify(ev));
+    }
+    // Update status based on event
+    if (ev.event === 'solved') {
+      statusMessage.textContent = 'Solved';
+      statusMessage.className = 'status-solved';
+    } else if (ev.event === 'failed') {
+      statusMessage.textContent = 'Failed';
+      statusMessage.className = 'status-failed';
+    } else if (ev.event === 'placed' || ev.event === 'placed_fallback' || ev.event === 'backtrack') {
+      if (!isReplayMode) {
+        statusMessage.textContent = 'Solving...';
+      } else {
+        statusMessage.textContent = 'Replaying...';
+      }
+      statusMessage.className = '';
+    }
+    // highlight placed/verified entries for a moment
+    if (ev.event === 'placed' || ev.event === 'placed_fallback') {
+      highlightEntry(ev.candidate.entry_id);
+    }
+    if (ev.event === 'candidate_verified') {
+      highlightEntry(ev.entry_id);
+    }
+    if (Array.isArray(ev.verified)) {
+      ev.verified.forEach((eid) => highlightEntry(eid));
+    }
+  }
+}
+
+// ============ REPLY MODE FUNCTIONALITY ============
 
 function updateReplayProgress() {
   currentStepSpan.textContent = replayIndex;
@@ -205,52 +314,9 @@ function updateReplayProgress() {
   }
 }
 
-function applyReplayEvent(event) {
-  if (!event) return;
-  
-  log('[event] ' + formatEvent(event));
-  
-  if (event.event === 'solved') {
-    statusMessage.textContent = 'Solved';
-    statusMessage.className = 'status-solved';
-  } else if (event.event === 'failed') {
-    statusMessage.textContent = 'Failed';
-    statusMessage.className = 'status-failed';
-  } else if (event.event === 'placed' || event.event === 'placed_fallback' || event.event === 'backtrack') {
-    statusMessage.textContent = 'Replaying...';
-    statusMessage.className = '';
-  }
-  
-  if (event.event === 'placed' || event.event === 'placed_fallback') {
-    if (event.candidate?.entry_id) {
-      highlightEntry(event.candidate.entry_id);
-    }
-  }
-  if (event.event === 'candidate_verified' && event.entry_id) {
-    highlightEntry(event.entry_id);
-  }
-  if (Array.isArray(event.verified)) {
-    event.verified.forEach((eid) => highlightEntry(eid));
-  }
-}
-
-function replayStep() {
-  if (!currentRecording || !isReplayMode) return;
-  
-  const event = currentRecording.events?.[replayIndex];
-  if (!event) return;
-  
-  applyReplayEvent(event);
-  replayIndex++;
-  updateReplayProgress();
-  
-  if (replayIndex >= (currentRecording.event_count || 0)) {
-    isReplayPlaying = false;
-  }
-}
-
 function replayPlay() {
   if (!currentRecording || !isReplayMode) return;
+
   
   isReplayPlaying = true;
   
@@ -263,7 +329,50 @@ function replayPlay() {
       return;
     }
     
-    applyReplayEvent(event);
+    // Update grid display for placed events
+    if (event.event === 'placed' || event.event === 'placed_fallback') {
+      if (event.candidate?.entry_id) {
+        const cells = entryToCells[event.candidate.entry_id];
+        if (cells && event.candidate.answer) {
+          const answer = event.candidate.answer;
+          cells.forEach((cell, idx) => {
+            if (idx < answer.length) {
+              const [r, c] = cell;
+              const td = document.querySelector(`#grid td[data-row="${r}"][data-col="${c}"]`);
+              if (td) {
+                const letterEl = td.querySelector('.cell-letter');
+                if (letterEl) {
+                  letterEl.textContent = answer[idx];
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+    
+    // Handle backtrack - remove letters from grid
+    if (event.event === 'backtrack') {
+      if (event.candidate?.entry_id) {
+        const cells = entryToCells[event.candidate.entry_id];
+        if (cells) {
+          cells.forEach((cell) => {
+            const [r, c] = cell;
+            const td = document.querySelector(`#grid td[data-row="${r}"][data-col="${c}"]`);
+            if (td) {
+              const letterEl = td.querySelector('.cell-letter');
+              if (letterEl) {
+                letterEl.textContent = '';
+              }
+            }
+          });
+        }
+      }
+    }
+    
+    // Dispatch through the same message processor as WebSocket uses
+    processMessage({ type: 'event', event });
+    
     replayIndex++;
     updateReplayProgress();
     
@@ -294,6 +403,61 @@ function replayReset() {
   if (currentRecording?.grid_state) {
     renderGrid(currentRecording.grid_state);
   }
+  
+  // Reset entry patterns to blanks by re-rendering with blank patterns
+  const blankEntries = {};
+  for (const [entryId, cells] of Object.entries(entryToCells)) {
+    const match = entryId.match(/^(\d+)([AD])$/);
+    if (match) {
+      const [, num, dir] = match;
+      blankEntries[entryId] = {
+        pattern: '_'.repeat(cells.length),
+        clue: '', // Will be reconstructed from DOM
+        used_fallback: false,
+        verified: false,
+      };
+    }
+  }
+  
+  // Reconstruct clue text from currently displayed entries
+  for (const li of entriesAcrossList.querySelectorAll('li')) {
+    const match = li.textContent.match(/^(\d+): .+ — (.+)$/);
+    if (match) {
+      const [, num, clue] = match;
+      const entryId = `${num}A`;
+      if (blankEntries[entryId]) {
+        blankEntries[entryId].clue = clue;
+      }
+    }
+  }
+  for (const li of entriesDownList.querySelectorAll('li')) {
+    const match = li.textContent.match(/^(\d+): .+ — (.+)$/);
+    if (match) {
+      const [, num, clue] = match;
+      const entryId = `${num}D`;
+      if (blankEntries[entryId]) {
+        blankEntries[entryId].clue = clue;
+      }
+    }
+  }
+  
+  renderEntries(blankEntries);
+}
+
+function buildEntryToCellsMap(puzzleData) {
+  const map = {};
+  if (!puzzleData || !puzzleData.entries) {
+    return map;
+  }
+  
+  // For each entry, build a list of [row, col] coordinates
+  for (const [entryId, entry] of Object.entries(puzzleData.entries)) {
+    if (entry.cells && Array.isArray(entry.cells)) {
+      map[entryId] = entry.cells;
+    }
+  }
+  
+  return map;
 }
 
 async function loadRecording(recordingId) {
@@ -313,12 +477,42 @@ async function loadRecording(recordingId) {
       renderGrid(currentRecording.grid_state);
     }
     
-    // Clear entries (recordings don't have live entry state)
-    entriesAcrossList.innerHTML = '';
-    entriesDownList.innerHTML = '';
+    // Load puzzle data to get entry-to-cells mapping for replay
+    try {
+      const puzzleRes = await fetch(`/api/puzzle/${currentRecording.puzzle}`);
+      if (puzzleRes.ok) {
+        const puzzleData = await puzzleRes.json();
+        entryToCells = buildEntryToCellsMap(puzzleData);
+        
+        // Render the clues from the puzzle data
+        const entriesForDisplay = {};
+        for (const [entryId, entry] of Object.entries(puzzleData.entries)) {
+          entriesForDisplay[entryId] = {
+            pattern: '_'.repeat(entry.length),
+            clue: entry.clue,
+            used_fallback: false,
+            verified: false,
+          };
+        }
+        renderEntries(entriesForDisplay);
+        setClueHeadingsVisible(true);
+      }
+    } catch (err) {
+      log('[warning] Could not load puzzle for entry mapping: ' + err);
+      // Clear entries if puzzle load fails
+      entriesAcrossList.innerHTML = '';
+      entriesDownList.innerHTML = '';
+      setClueHeadingsVisible(false);
+    }
     
     disableControls(false);
     log(`[recording] Loaded: ${currentRecording.puzzle} (${currentRecording.event_count} events)`);
+
+    // Remove the "-- select recording --" option once a recording is loaded
+    const defaultOption = itemSelect.querySelector('option[value=""]');
+    if (defaultOption) {
+      defaultOption.remove();
+    }
   } catch (err) {
     log('[error] Could not load recording: ' + err);
     statusMessage.textContent = 'Error loading recording';
@@ -346,96 +540,7 @@ function connect() {
 
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
-    if (data.type === 'state') {
-      gridState = data.grid;
-      renderGrid(data.grid);
-      renderEntries(data.entries);
-      renderTallyFromState(data.metrics);
-      // Sync dropdown to current puzzle (only in puzzle mode)
-      const currentPuzzleId = data.metrics?.puzzle_id;
-      if (currentMode === 'puzzles' && currentPuzzleId && itemSelect.value !== currentPuzzleId) {
-        itemSelect.value = currentPuzzleId;
-      }
-      log('[state] updated');
-      
-      // Handle puzzle loaded vs not loaded
-      if (!currentPuzzleId) {
-        // No puzzle loaded - show "Select a puzzle" and hide sections
-        statusMessage.textContent = 'Select a puzzle';
-        statusMessage.className = '';
-        document.getElementById('tally').style.display = 'none';
-        // Find and hide the Across and Down headings
-        const clueColumns = document.querySelectorAll('.clue-column h3');
-        clueColumns.forEach(h3 => h3.style.display = 'none');
-        disableControls(true);
-      } else {
-        // Puzzle loaded - show sections and "Loaded" message
-        // Set status to Loaded when state is received (unless already solving/solved/failed)
-        if (!statusMessage.textContent.match(/Solving|Solved|Failed/)) {
-          statusMessage.textContent = 'Loaded';
-          statusMessage.className = '';
-        }
-        // Show tally and headings
-        document.getElementById('tally').style.display = 'block';
-        const clueColumns = document.querySelectorAll('.clue-column h3');
-        clueColumns.forEach(h3 => h3.style.display = 'block');
-        // Enable controls now that puzzle is loaded
-        disableControls(false);
-        // Hide progress bar when puzzle is fully loaded
-        initProgressDiv.style.display = 'none';
-      }
-    } else if (data.type === 'status') {
-      if (typeof data.message === 'string') {
-        statusMessage.textContent = data.message;
-      }
-      if (data.state === 'loading_hints' || data.state === 'initializing') {
-        statusMessage.className = 'loading';
-      } else {
-        statusMessage.className = '';
-      }
-    } else if (data.type === 'init_progress') {
-      // Update progress bar
-      const current = data.current || 0;
-      const total = data.total || 1;
-      const percentage = data.percentage || 0;
-      if (!initProgressStarted) {
-        progressText.style.display = 'block';
-        // Clear status message when progress starts
-        statusMessage.textContent = 'Initializing entries...';
-        statusMessage.className = '';
-        initProgressStarted = true;
-      }
-      progressText.textContent = `${current} / ${total} entries`;
-      progressBarFill.style.width = `${percentage}%`;
-      initProgressDiv.style.display = 'block';
-    } else if (data.type === 'event') {
-      const ev = data.event;
-      log('[event] ' + formatEvent(ev));
-      if (DEBUG_LOG_JSON) {
-        log('[event.json] ' + JSON.stringify(ev));
-      }
-      // Update status based on event
-      if (ev.event === 'solved') {
-        statusMessage.textContent = 'Solved';
-        statusMessage.className = 'status-solved';
-      } else if (ev.event === 'failed') {
-        statusMessage.textContent = 'Failed';
-        statusMessage.className = 'status-failed';
-      } else if (ev.event === 'placed' || ev.event === 'placed_fallback' || ev.event === 'backtrack') {
-        statusMessage.textContent = 'Solving...';
-        statusMessage.className = '';
-      }
-      // highlight placed/verified entries for a moment
-      if (ev.event === 'placed' || ev.event === 'placed_fallback') {
-        highlightEntry(ev.candidate.entry_id);
-      }
-      if (ev.event === 'candidate_verified') {
-        highlightEntry(ev.entry_id);
-      }
-      if (Array.isArray(ev.verified)) {
-        ev.verified.forEach((eid) => highlightEntry(eid));
-      }
-    }
+    processMessage(data);
   };
 
   ws.onclose = () => {
@@ -503,6 +608,11 @@ function renderGrid(grid) {
 function renderEntries(entries) {
   entriesAcrossList.innerHTML = '';
   entriesDownList.innerHTML = '';
+  
+  // Handle null/undefined entries
+  if (!entries || typeof entries !== 'object') {
+    return;
+  }
   
   const acrossEntries = [];
   const downEntries = [];
@@ -667,3 +777,4 @@ renderTallyFromState({steps: 0, fallbacks: 0});
 
 // Disable controls until something is loaded
 disableControls(true);
+

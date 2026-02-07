@@ -3,7 +3,7 @@ import asyncio
 from threading import Lock
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, cast
 import uvicorn
 import logging
 import json
@@ -66,7 +66,7 @@ app.add_middleware(
 # Simple WebSocket manager
 class WSManager:
     def __init__(self):
-        self._conns: List[WebSocket] = []
+        self._conns: list[WebSocket] = []
 
     async def connect(self, ws: WebSocket):
         await ws.accept()
@@ -152,7 +152,7 @@ def serialize_state() -> dict[str, Any]:
     for (r, c), info in starts.items():
         numbers[r][c] = info["number"]
 
-    entries: Dict[str, Dict[str, Any]] = {
+    entries: dict[str, dict[str, Any]] = {
         eid: {
             "pattern": e.pattern,
             "clue": e.clue,
@@ -182,7 +182,11 @@ def serialize_state() -> dict[str, Any]:
 
 
 def _step_and_update_metrics() -> dict[str, Any]:
-    """Run one solver step and update authoritative metrics."""
+    """Run one solver step and update authoritative metrics.
+    
+    Events are automatically recorded by the Solver's record_event() method,
+    called via _finalize_event() during step execution.
+    """
     global steps_executed, fallbacks_used
     if solver is None:
         raise RuntimeError("Solver not initialized")
@@ -270,15 +274,35 @@ async def broadcast_step_events(ev: dict[str, Any]) -> None:
             await manager.broadcast({"type": "event", "event": {"event": "candidate_verified", "entry_id": entry_id}})
     await manager.broadcast(serialize_state())
 
+
+async def _emit_solver_step() -> dict[str, Any]:
+    """Unified function for executing one solver step and broadcasting the result.
+    
+    This is the single point through which all solver steps flow, ensuring that:
+    1. Events are recorded by the Solver (via _finalize_event → record_event)
+    2. Events are broadcast to clients in the same operation
+    3. The frontend always receives exactly what was recorded
+    
+    Returns the event dict. The caller should check the event type for terminal conditions.
+    """
+    if solver is None:
+        raise RuntimeError("Solver not initialized")
+    
+    # Execute step (automatically records event via Solver.record_event)
+    ev = await asyncio.to_thread(_step_and_update_metrics)
+    
+    # Broadcast the event and state to all connected clients
+    await broadcast_step_events(ev)
+    
+    return ev
+
 async def start_player() -> None:
     async def player_loop() -> None:
         while True:
             await play_event.wait()
-            # Do one step
+            # Do one step (records and broadcasts automatically via _emit_solver_step)
             async with solver_lock:
-                ev = await asyncio.to_thread(_step_and_update_metrics)
-            # After performing the step, broadcast the event and updated state
-            await broadcast_step_events(ev)
+                ev = await _emit_solver_step()
             if ev.get("event") in ("solved", "failed"):
                 play_event.clear()
                 # Save recording when auto-play completes
@@ -324,8 +348,7 @@ async def step_once() -> dict[str, Any]:
     if solver is None:
         return {"event": "error", "message": "No puzzle loaded"}
     async with solver_lock:
-        ev = await asyncio.to_thread(_step_and_update_metrics)
-    await broadcast_step_events(ev)
+        ev = await _emit_solver_step()
     # Save recording when stepping completes the puzzle
     if ev.get("event") in ("solved", "failed"):
         await asyncio.to_thread(_save_recording_if_enabled)
@@ -336,12 +359,12 @@ async def step_once() -> dict[str, Any]:
 async def solve_now() -> dict[str, Any]:
     if solver is None:
         return {"event": "error", "message": "No puzzle loaded"}
-    # Run to completion, broadcasting each solver step.
-    # (This keeps the UI log and step tally accurate.)
+    # Run to completion, broadcasting each solver step via unified _emit_solver_step.
+    # This keeps the UI log and step tally accurate, and ensures recording and
+    # broadcasting stay in perfect sync.
     async with solver_lock:
         while True:
-            ev = await asyncio.to_thread(_step_and_update_metrics)
-            await broadcast_step_events(ev)
+            ev = await _emit_solver_step()
             if ev.get("event") in ("solved", "failed"):
                 # Save recording when solve completes
                 await asyncio.to_thread(_save_recording_if_enabled)
@@ -396,18 +419,58 @@ def list_recordings() -> list[dict[str, Any]]:
 
 
 @app.get("/api/recordings/{recording_id}")
-def get_recording(recording_id: str):
+def get_recording(recording_id: str) -> dict[str, Any]:
     """Fetch a specific recording."""
     try:
-        filepath = RECORDINGS_DIR / f"{recording_id}.json"
-        if not filepath.exists():
-            return {"error": "Recording not found"}
+        # Search through all recording files to find one with matching ID
+        for json_file in RECORDINGS_DIR.glob("*.json"):
+            try:
+                with open(json_file, 'r') as f:
+                    rec = cast(dict[str, Any], json.load(f))
+                # Check if this recording has the matching ID
+                if rec.get('id') == recording_id:
+                    return rec
+            except Exception:
+                pass
         
-        with open(filepath, 'r') as f:
-            recording = json.load(f)
-        return recording
+        return {"error": "Recording not found"}
     except Exception as e:
         logger.error(f"Failed to get recording {recording_id}: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/puzzle/{puzzle_id}")
+def get_puzzle(puzzle_id: str) -> dict[str, Any]:
+    """Get puzzle metadata including entries and their cell coordinates."""
+    try:
+        # Load the puzzle to get its entries
+        grid, _ = puzzles.load_puzzle(puzzle_id=puzzle_id)
+        
+        # Build entry-to-cells mapping from the grid
+        entries: dict[str, dict[str, Any]] = {}
+        for entry_id, entry in grid.entries.items():
+            # Extract cell coordinates from the entry's cells
+            cells: list[list[int]] = []
+            for cell in entry.cells:
+                cells.append([int(cell.row), int(cell.col)])
+            
+            entries[entry_id] = {
+                "clue": entry.clue,
+                "answer": entry.correct_answer,
+                "length": entry.length,
+                "cells": cells,
+            }
+        
+        return {
+            "puzzle_id": puzzle_id,
+            "width": grid.width,
+            "height": grid.height,
+            "entries": entries,
+        }
+    except Exception as e:
+        logger.error(f"Failed to get puzzle {puzzle_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return {"error": str(e)}
 
 
@@ -485,4 +548,8 @@ async def favicon():
 
 
 if __name__ == "__main__":
-    uvicorn.run("backend.src.server:app", host="0.0.0.0", port=8000, reload=False)
+    import sys
+    import os
+    # Add backend directory to path for relative imports
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    uvicorn.run("src.server:app", host="0.0.0.0", port=8000, reload=False)

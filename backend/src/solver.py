@@ -60,6 +60,15 @@ class Solver:
         if not defer_candidate_init:
             self._initialize_candidates_at_width(0)
 
+    def record_event(self, event: dict[str, Any]) -> None:
+        """Record an event to the recording if recording is enabled.
+        
+        This is the single point through which all events flow for recording.
+        Separated from broadcasting so the server can handle both in a unified way.
+        """
+        if self._recording is not None:
+            self._recording.append(event.copy())
+
     def _initialize_entry_candidates(self, entry_id: str, widening_level: int) -> None:
         """Initialize (or reinitialize) candidates for a single entry at a given widening level."""
         entry = self.entries[entry_id]
@@ -554,8 +563,7 @@ class Solver:
             event["verified"] = newly_verified
         if event.get("event") == "verified" and not newly_verified:
             event["event"] = "failed"
-        if self._recording is not None:
-            self._recording.append(event.copy())
+        self.record_event(event)
         return event
 
     def _handle_verification_failure(self, failed: list[str], newly_verified: list[str], recently_placed: str | None = None) -> dict[str, Any]:
