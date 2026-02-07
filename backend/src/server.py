@@ -27,6 +27,7 @@ solver_lock = asyncio.Lock()
 # Metrics
 steps_executed: int = 0
 fallbacks_used: int = 0
+backtracks_used: int = 0
 _metrics_lock = Lock()
 
 # Recordings
@@ -168,6 +169,7 @@ def serialize_state() -> dict[str, Any]:
             "puzzle_id": current_puzzle_id,
             "steps": steps_executed,
             "fallbacks": fallbacks_used,
+            "backtracks": backtracks_used,
         },
         "grid": {
             "rows": rows,
@@ -187,7 +189,7 @@ def _step_and_update_metrics() -> dict[str, Any]:
     Events are automatically recorded by the Solver's record_event() method,
     called via _finalize_event() during step execution.
     """
-    global steps_executed, fallbacks_used
+    global steps_executed, fallbacks_used, backtracks_used
     if solver is None:
         raise RuntimeError("Solver not initialized")
     ev = solver.step()
@@ -195,6 +197,8 @@ def _step_and_update_metrics() -> dict[str, Any]:
         steps_executed += 1
         if ev.get("event") == "placed_fallback":
             fallbacks_used += 1
+        elif ev.get("event") == "backtrack":
+            backtracks_used += 1
     return ev
 
 
@@ -373,7 +377,7 @@ async def solve_now() -> dict[str, Any]:
 
 @app.post("/reset")
 async def reset() -> dict[str, str]:
-    global solver, grid, current_puzzle_id, steps_executed, fallbacks_used
+    global solver, grid, current_puzzle_id, steps_executed, fallbacks_used, backtracks_used
     if current_puzzle_id is None:
         return {"status": "no puzzle loaded"}
     play_event.clear()
@@ -384,6 +388,7 @@ async def reset() -> dict[str, str]:
         with _metrics_lock:
             steps_executed = 0
             fallbacks_used = 0
+            backtracks_used = 0
     await manager.broadcast(serialize_state())
     return {"status": "reset"}
 
@@ -480,7 +485,7 @@ def list_puzzles():
 
 @app.post("/puzzles/{puzzle_id}/load")
 async def load_puzzle(puzzle_id: str):
-    global solver, grid, current_puzzle_id, steps_executed, fallbacks_used
+    global solver, grid, current_puzzle_id, steps_executed, fallbacks_used, backtracks_used
     play_event.clear()
     current_puzzle_id = puzzle_id
     async with solver_lock:
@@ -524,6 +529,7 @@ async def load_puzzle(puzzle_id: str):
         with _metrics_lock:
             steps_executed = 0
             fallbacks_used = 0
+            backtracks_used = 0
     
     await manager.broadcast(serialize_state())
     return {"status": "loaded", "puzzle": puzzle_id}

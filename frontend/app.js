@@ -17,6 +17,7 @@ const itemSelectLabel = document.getElementById('item-select-label');
 
 const stepCountEl = document.getElementById('step-count');
 const fallbackCountEl = document.getElementById('fallback-count');
+const backtrackCountEl = document.getElementById('backtrack-count');
 
 const initProgressDiv = document.getElementById('init-progress');
 const progressText = document.getElementById('progress-text');
@@ -46,6 +47,7 @@ let replayEntries = null;
 let replayBaseEntries = null;
 let entryToCells = {}; // mapping from entry_id to list of [row, col] for replay
 let replayFallbackEntries = new Set(); // track which entries were placed with fallback
+let replayBacktrackCount = 0; // count total backtrack events during replay
 
 function disableControls(disabled) {
   playBtn.disabled = disabled;
@@ -58,8 +60,10 @@ function disableControls(disabled) {
 function renderTallyFromState(metrics) {
   const steps = metrics?.steps ?? 0;
   const fallbacks = metrics?.fallbacks ?? 0;
+  const backtracks = metrics?.backtracks ?? 0;
   if (stepCountEl) stepCountEl.textContent = String(steps);
   if (fallbackCountEl) fallbackCountEl.textContent = String(fallbacks);
+  if (backtrackCountEl) backtrackCountEl.textContent = String(backtracks);
 }
 
 function setClueHeadingsVisible(visible) {
@@ -400,6 +404,7 @@ function replayPlay() {
       replayFallbackEntries.add(entryId);
     } else if (event.event === 'backtrack' && entryId) {
       replayFallbackEntries.delete(entryId);
+      replayBacktrackCount++;
     }
     
     applyReplayEventToGrid(event, replayGridState, entryToCells);
@@ -418,6 +423,7 @@ function replayPlay() {
         puzzle_id: currentRecording.puzzle,
         steps: replayIndex + 1,
         fallbacks: fallbacks,
+        backtracks: replayBacktrackCount,
       },
     });
     
@@ -456,6 +462,7 @@ function replayStep() {
     replayFallbackEntries.add(entryId);
   } else if (event.event === 'backtrack' && entryId) {
     replayFallbackEntries.delete(entryId);
+    replayBacktrackCount++;
   }
   
   applyReplayEventToGrid(event, replayGridState, entryToCells);
@@ -472,6 +479,7 @@ function replayStep() {
       puzzle_id: currentRecording.puzzle,
       steps: replayIndex + 1,
       fallbacks: fallbacks,
+      backtracks: replayBacktrackCount,
     },
   });
   
@@ -488,6 +496,7 @@ function replayReset() {
   statusMessage.className = '';
   replayGridState = cloneJson(replayBaseGridState);
   replayFallbackEntries.clear();
+  replayBacktrackCount = 0;
   replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
   if (replayGridState) {
     processMessage({
@@ -498,6 +507,7 @@ function replayReset() {
         puzzle_id: currentRecording?.puzzle ?? null,
         steps: 0,
         fallbacks: 0,
+        backtracks: 0,
       },
     });
   }
@@ -576,6 +586,7 @@ async function loadRecording(recordingId) {
         
         replayBaseEntries = cloneJson(entriesForDisplay);
         replayFallbackEntries.clear();
+        replayBacktrackCount = 0;
         replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
         
         // Dispatch initial state through unified message path
@@ -587,6 +598,7 @@ async function loadRecording(recordingId) {
             puzzle_id: currentRecording.puzzle,
             steps: 0,
             fallbacks: 0,
+            backtracks: 0,
           },
         });
       }
@@ -848,7 +860,7 @@ resetBtn.addEventListener('click', () => {
     statusMessage.textContent = 'Loaded';
     statusMessage.className = '';
     logEl.textContent = '';
-    renderTallyFromState({steps: 0, fallbacks: 0});
+    renderTallyFromState({steps: 0, fallbacks: 0, backtracks: 0});
   }
 });
 
@@ -867,7 +879,7 @@ connect();
 
 refreshItemList();
 
-renderTallyFromState({steps: 0, fallbacks: 0});
+renderTallyFromState({steps: 0, fallbacks: 0, backtracks: 0});
 
 // Disable controls until something is loaded
 disableControls(true);
