@@ -41,7 +41,11 @@ let replayTimer = null;
 
 // Track grid state during replay
 let replayGridState = null; // { rows, cols, letters, blocks }
+let replayBaseGridState = null;
+let replayEntries = null;
+let replayBaseEntries = null;
 let entryToCells = {}; // mapping from entry_id to list of [row, col] for replay
+let replayFallbackEntries = new Set(); // track which entries were placed with fallback
 
 function disableControls(disabled) {
   playBtn.disabled = disabled;
@@ -61,6 +65,67 @@ function renderTallyFromState(metrics) {
 function setClueHeadingsVisible(visible) {
   const clueColumns = document.querySelectorAll('.clue-column h3');
   clueColumns.forEach(h3 => h3.style.display = visible ? 'block' : 'none');
+}
+
+function cloneJson(value) {
+  return value ? JSON.parse(JSON.stringify(value)) : null;
+}
+
+function applyReplayEventToGrid(event, gridState, entryToCells) {
+  if (!event || !gridState) return;
+  const letters = gridState.letters || gridState.cells;
+  if (!letters) return;
+  
+  const entryId = event.candidate?.entry_id;
+  
+  if (event.event === 'placed' || event.event === 'placed_fallback') {
+    if (entryId && event.candidate?.answer) {
+      const cells = entryToCells[entryId];
+      if (cells) {
+        const answer = String(event.candidate.answer);
+        cells.forEach(([r, c], idx) => {
+          if (idx < answer.length) {
+            letters[r][c] = answer[idx];
+          }
+        });
+      }
+    }
+  } else if (event.event === 'backtrack') {
+    if (entryId) {
+      const cells = entryToCells[entryId];
+      if (cells) {
+        cells.forEach(([r, c]) => {
+          letters[r][c] = '';
+        });
+      }
+    }
+  }
+}
+
+function computeReplayEntriesFromGrid(baseEntries, gridState, entryToCells, fallbackEntries) {
+  const entries = cloneJson(baseEntries);
+  if (!entries || !gridState) return entries;
+  
+  const letters = gridState.letters || gridState.cells;
+  if (!letters) return entries;
+  
+  Object.entries(entryToCells).forEach(([entryId, cells]) => {
+    if (!entries[entryId] || !cells) return;
+    const entry = entries[entryId];
+    const pattern = cells.map(([r, c]) => {
+      const letter = letters?.[r]?.[c];
+      return letter ? String(letter) : '.';
+    }).join('');
+    entry.pattern = pattern;
+    entry.used_fallback = fallbackEntries.has(entryId);
+    if (entry.correct_answer) {
+      entry.verified = (pattern === entry.correct_answer);
+    } else {
+      entry.verified = !pattern.includes('.');
+    }
+  });
+  
+  return entries;
 }
 
 const logHeader = document.getElementById("log-header");
@@ -142,7 +207,7 @@ async function switchMode(mode) {
     await refreshItemList();
   } else if (mode === 'recordings') {
     itemSelectLabel.textContent = 'Recording:';
-    replaySpeedControl.style.display = 'block';
+    replaySpeedControl.style.display = 'none';
     solveBtn.style.display = 'none';
     await refreshItemList();
   }
@@ -152,6 +217,7 @@ async function switchMode(mode) {
   gridContainer.innerHTML = '';
   entriesAcrossList.innerHTML = '';
   entriesDownList.innerHTML = '';
+  document.getElementById('tally').style.display = 'none';
   statusMessage.textContent = mode === 'puzzles' ? 'Select a puzzle' : 'Select a recording';
   statusMessage.className = '';
   logEl.textContent = '';
@@ -317,7 +383,6 @@ function updateReplayProgress() {
 function replayPlay() {
   if (!currentRecording || !isReplayMode) return;
 
-  
   isReplayPlaying = true;
   
   const playStep = () => {
@@ -329,49 +394,32 @@ function replayPlay() {
       return;
     }
     
-    // Update grid display for placed events
-    if (event.event === 'placed' || event.event === 'placed_fallback') {
-      if (event.candidate?.entry_id) {
-        const cells = entryToCells[event.candidate.entry_id];
-        if (cells && event.candidate.answer) {
-          const answer = event.candidate.answer;
-          cells.forEach((cell, idx) => {
-            if (idx < answer.length) {
-              const [r, c] = cell;
-              const td = document.querySelector(`#grid td[data-row="${r}"][data-col="${c}"]`);
-              if (td) {
-                const letterEl = td.querySelector('.cell-letter');
-                if (letterEl) {
-                  letterEl.textContent = answer[idx];
-                }
-              }
-            }
-          });
-        }
-      }
+    // Track fallback placements and backtracking
+    const entryId = event.candidate?.entry_id;
+    if (event.event === 'placed_fallback' && entryId) {
+      replayFallbackEntries.add(entryId);
+    } else if (event.event === 'backtrack' && entryId) {
+      replayFallbackEntries.delete(entryId);
     }
     
-    // Handle backtrack - remove letters from grid
-    if (event.event === 'backtrack') {
-      if (event.candidate?.entry_id) {
-        const cells = entryToCells[event.candidate.entry_id];
-        if (cells) {
-          cells.forEach((cell) => {
-            const [r, c] = cell;
-            const td = document.querySelector(`#grid td[data-row="${r}"][data-col="${c}"]`);
-            if (td) {
-              const letterEl = td.querySelector('.cell-letter');
-              if (letterEl) {
-                letterEl.textContent = '';
-              }
-            }
-          });
-        }
-      }
-    }
+    applyReplayEventToGrid(event, replayGridState, entryToCells);
+    replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
     
+    // Count fallbacks from current entries
+    const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
+
     // Dispatch through the same message processor as WebSocket uses
     processMessage({ type: 'event', event });
+    processMessage({
+      type: 'state',
+      grid: replayGridState,
+      entries: replayEntries,
+      metrics: {
+        puzzle_id: currentRecording.puzzle,
+        steps: replayIndex + 1,
+        fallbacks: fallbacks,
+      },
+    });
     
     replayIndex++;
     updateReplayProgress();
@@ -393,6 +441,44 @@ function replayPause() {
   if (replayTimer) clearTimeout(replayTimer);
 }
 
+function replayStep() {
+  if (!currentRecording || !isReplayMode) return;
+  
+  // Pause if currently playing
+  replayPause();
+  
+  const event = currentRecording.events?.[replayIndex];
+  if (!event) return;
+  
+  // Track fallback placements and backtracking
+  const entryId = event.candidate?.entry_id;
+  if (event.event === 'placed_fallback' && entryId) {
+    replayFallbackEntries.add(entryId);
+  } else if (event.event === 'backtrack' && entryId) {
+    replayFallbackEntries.delete(entryId);
+  }
+  
+  applyReplayEventToGrid(event, replayGridState, entryToCells);
+  replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+  
+  const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
+  
+  processMessage({ type: 'event', event });
+  processMessage({
+    type: 'state',
+    grid: replayGridState,
+    entries: replayEntries,
+    metrics: {
+      puzzle_id: currentRecording.puzzle,
+      steps: replayIndex + 1,
+      fallbacks: fallbacks,
+    },
+  });
+  
+  replayIndex++;
+  updateReplayProgress();
+}
+
 function replayReset() {
   replayPause();
   replayIndex = 0;
@@ -400,48 +486,21 @@ function replayReset() {
   logEl.textContent = '';
   statusMessage.textContent = 'Recording loaded';
   statusMessage.className = '';
-  if (currentRecording?.grid_state) {
-    renderGrid(currentRecording.grid_state);
+  replayGridState = cloneJson(replayBaseGridState);
+  replayFallbackEntries.clear();
+  replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+  if (replayGridState) {
+    processMessage({
+      type: 'state',
+      grid: replayGridState,
+      entries: replayEntries,
+      metrics: {
+        puzzle_id: currentRecording?.puzzle ?? null,
+        steps: 0,
+        fallbacks: 0,
+      },
+    });
   }
-  
-  // Reset entry patterns to blanks by re-rendering with blank patterns
-  const blankEntries = {};
-  for (const [entryId, cells] of Object.entries(entryToCells)) {
-    const match = entryId.match(/^(\d+)([AD])$/);
-    if (match) {
-      const [, num, dir] = match;
-      blankEntries[entryId] = {
-        pattern: '_'.repeat(cells.length),
-        clue: '', // Will be reconstructed from DOM
-        used_fallback: false,
-        verified: false,
-      };
-    }
-  }
-  
-  // Reconstruct clue text from currently displayed entries
-  for (const li of entriesAcrossList.querySelectorAll('li')) {
-    const match = li.textContent.match(/^(\d+): .+ — (.+)$/);
-    if (match) {
-      const [, num, clue] = match;
-      const entryId = `${num}A`;
-      if (blankEntries[entryId]) {
-        blankEntries[entryId].clue = clue;
-      }
-    }
-  }
-  for (const li of entriesDownList.querySelectorAll('li')) {
-    const match = li.textContent.match(/^(\d+): .+ — (.+)$/);
-    if (match) {
-      const [, num, clue] = match;
-      const entryId = `${num}D`;
-      if (blankEntries[entryId]) {
-        blankEntries[entryId].clue = clue;
-      }
-    }
-  }
-  
-  renderEntries(blankEntries);
 }
 
 function buildEntryToCellsMap(puzzleData) {
@@ -473,9 +532,6 @@ async function loadRecording(recordingId) {
     statusMessage.textContent = 'Recording loaded';
     statusMessage.className = '';
     
-    if (currentRecording.grid_state) {
-      renderGrid(currentRecording.grid_state);
-    }
     
     // Load puzzle data to get entry-to-cells mapping for replay
     try {
@@ -484,18 +540,55 @@ async function loadRecording(recordingId) {
         const puzzleData = await puzzleRes.json();
         entryToCells = buildEntryToCellsMap(puzzleData);
         
-        // Render the clues from the puzzle data
+        // Build base entries template from puzzle data
         const entriesForDisplay = {};
         for (const [entryId, entry] of Object.entries(puzzleData.entries)) {
           entriesForDisplay[entryId] = {
-            pattern: '_'.repeat(entry.length),
+            pattern: '.'.repeat(entry.length),
             clue: entry.clue,
+            correct_answer: entry.answer,
             used_fallback: false,
             verified: false,
           };
         }
-        renderEntries(entriesForDisplay);
-        setClueHeadingsVisible(true);
+        
+        // Initialize replay base state
+        replayBaseGridState = cloneJson(currentRecording.grid_state);
+        replayGridState = cloneJson(currentRecording.grid_state);
+        
+        // Initialize empty letters matrix (not stored in recording)
+        const rows = replayGridState.rows || currentRecording.height;
+        const cols = replayGridState.cols || currentRecording.width;
+        replayBaseGridState.letters = Array(rows).fill(null).map(() => Array(cols).fill(''));
+        replayGridState.letters = Array(rows).fill(null).map(() => Array(cols).fill(''));
+        
+        // Compute clue numbers from puzzle data
+        const numbers = Array(rows).fill(null).map(() => Array(cols).fill(null));
+        for (const [entryId, cells] of Object.entries(entryToCells)) {
+          if (cells && cells.length > 0) {
+            const [r, c] = cells[0]; // First cell of the entry
+            const clueNumber = entryId.slice(0, -1); // Remove direction suffix (A or D)
+            numbers[r][c] = clueNumber;
+          }
+        }
+        replayBaseGridState.numbers = numbers;
+        replayGridState.numbers = numbers;
+        
+        replayBaseEntries = cloneJson(entriesForDisplay);
+        replayFallbackEntries.clear();
+        replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+        
+        // Dispatch initial state through unified message path
+        processMessage({
+          type: 'state',
+          grid: replayGridState,
+          entries: replayEntries,
+          metrics: {
+            puzzle_id: currentRecording.puzzle,
+            steps: 0,
+            fallbacks: 0,
+          },
+        });
       }
     } catch (err) {
       log('[warning] Could not load puzzle for entry mapping: ' + err);
@@ -506,6 +599,7 @@ async function loadRecording(recordingId) {
     }
     
     disableControls(false);
+    replaySpeedControl.style.display = 'block';
     log(`[recording] Loaded: ${currentRecording.puzzle} (${currentRecording.event_count} events)`);
 
     // Remove the "-- select recording --" option once a recording is loaded

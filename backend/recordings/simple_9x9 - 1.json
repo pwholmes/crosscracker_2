@@ -301,12 +301,26 @@
       ]
     },
     {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "18D",
+        "answer": "SEEP",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 60.0,
+        "pattern": "S..."
+      },
+      "verified": [
+        "20A", "24A", "25A"
+      ]
+    },
+    {
       "event": "solved"
     }
   ],
   "id": "f75246e2-4b9d-4727-b9a6-82295166ba50",
   "timestamp": "2026-02-06T19:24:11.537662",
-  "event_count": 27,
+  "event_count": 28,
   "grid_state": {
     "rows": 9,
     "cols": 9,
