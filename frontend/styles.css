@@ -235,6 +235,12 @@ input:checked + .toggle-slider:before {
 .entry-highlight {
   background: #fffbcc;
 }
-.entry-verified {
+.entry-correct {
   background: #fffbcc;
+}
+.entry-incorrect {
+  background: #ffcc99;
+}
+.entry-fallback {
+  background: #ffcccc;
 }

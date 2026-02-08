@@ -7,7 +7,6 @@ const statusMessage = document.getElementById("status-message");
 const playBtn = document.getElementById("play");
 const pauseBtn = document.getElementById("pause");
 const stepBtn = document.getElementById("step");
-const solveBtn = document.getElementById("solve");
 const resetBtn = document.getElementById("reset");
 
 const modeToggle = document.getElementById('mode-toggle');
@@ -37,6 +36,7 @@ let isReplayMode = false;
 let currentRecording = null;
 let replayIndex = 0;
 let isReplayPlaying = false;
+let isPuzzlePlaying = false; // Track puzzle mode auto-play state
 let replaySpeed = 1.0;
 let replayTimer = null;
 
@@ -48,13 +48,35 @@ let replayBaseEntries = null;
 let entryToCells = {}; // mapping from entry_id to list of [row, col] for replay
 let replayFallbackEntries = new Set(); // track which entries were placed with fallback
 let replayBacktrackCount = 0; // count total backtrack events during replay
+let replayPlacedEntries = new Map(); // track currently placed entries: entry_id -> answer
 
 function disableControls(disabled) {
   playBtn.disabled = disabled;
   pauseBtn.disabled = disabled;
   stepBtn.disabled = disabled;
-  solveBtn.disabled = disabled;
   resetBtn.disabled = disabled;
+}
+
+function setPlayingState(playing) {
+  if (playing) {
+    playBtn.disabled = true;
+    stepBtn.disabled = true;
+    resetBtn.disabled = true;
+    pauseBtn.disabled = false;
+  } else {
+    playBtn.disabled = false;
+    stepBtn.disabled = false;
+    resetBtn.disabled = false;
+    pauseBtn.disabled = true;
+  }
+}
+
+function setCompletedState() {
+  // When puzzle is solved or failed, disable Play/Step/Pause but keep Reset enabled
+  playBtn.disabled = true;
+  stepBtn.disabled = true;
+  pauseBtn.disabled = true;
+  resetBtn.disabled = false;
 }
 
 function renderTallyFromState(metrics) {
@@ -75,7 +97,7 @@ function cloneJson(value) {
   return value ? JSON.parse(JSON.stringify(value)) : null;
 }
 
-function applyReplayEventToGrid(event, gridState, entryToCells) {
+function applyReplayEventToGrid(event, gridState, entryToCells, placedEntries) {
   if (!event || !gridState) return;
   const letters = gridState.letters || gridState.cells;
   if (!letters) return;
@@ -92,14 +114,36 @@ function applyReplayEventToGrid(event, gridState, entryToCells) {
             letters[r][c] = answer[idx];
           }
         });
+        // Track this placement
+        placedEntries.set(entryId, answer);
       }
     }
   } else if (event.event === 'backtrack') {
     if (entryId) {
       const cells = entryToCells[entryId];
       if (cells) {
+        // Remove from placed entries
+        placedEntries.delete(entryId);
+        
+        // Smart clearing: only clear cells that don't belong to other placed entries
         cells.forEach(([r, c]) => {
-          letters[r][c] = '';
+          // Check if this cell belongs to any other placed entry
+          let belongsToOther = false;
+          for (const [otherEntryId, otherAnswer] of placedEntries.entries()) {
+            if (otherEntryId === entryId) continue;
+            const otherCells = entryToCells[otherEntryId];
+            if (otherCells) {
+              const cellIndex = otherCells.findIndex(([or, oc]) => or === r && oc === c);
+              if (cellIndex >= 0 && cellIndex < otherAnswer.length) {
+                belongsToOther = true;
+                break;
+              }
+            }
+          }
+          // Only clear if no other placed entry uses this cell
+          if (!belongsToOther) {
+            letters[r][c] = '';
+          }
         });
       }
     }
@@ -122,11 +166,6 @@ function computeReplayEntriesFromGrid(baseEntries, gridState, entryToCells, fall
     }).join('');
     entry.pattern = pattern;
     entry.used_fallback = fallbackEntries.has(entryId);
-    if (entry.correct_answer) {
-      entry.verified = (pattern === entry.correct_answer);
-    } else {
-      entry.verified = !pattern.includes('.');
-    }
   });
   
   return entries;
@@ -204,7 +243,6 @@ async function switchMode(mode) {
   if (mode === 'puzzles') {
     itemSelectLabel.textContent = 'Puzzle:';
     replaySpeedControl.style.display = 'none';
-    solveBtn.style.display = 'inline-block';
     isReplayMode = false;
     if (replayTimer) clearTimeout(replayTimer);
     isReplayPlaying = false;
@@ -212,7 +250,6 @@ async function switchMode(mode) {
   } else if (mode === 'recordings') {
     itemSelectLabel.textContent = 'Recording:';
     replaySpeedControl.style.display = 'none';
-    solveBtn.style.display = 'none';
     await refreshItemList();
   }
   
@@ -312,8 +349,11 @@ function processMessage(data) {
       // Show tally and headings
       document.getElementById('tally').style.display = 'block';
       setClueHeadingsVisible(true);
-      // Enable controls now that puzzle is loaded
-      disableControls(false);
+      // Enable controls now that puzzle is loaded (unless currently playing or completed)
+      const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
+      if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted) {
+        setPlayingState(false);
+      }
       // Hide progress bar when puzzle is fully loaded
       initProgressDiv.style.display = 'none';
     }
@@ -351,9 +391,13 @@ function processMessage(data) {
     if (ev.event === 'solved') {
       statusMessage.textContent = 'Solved';
       statusMessage.className = 'status-solved';
+      isPuzzlePlaying = false;
+      setCompletedState();
     } else if (ev.event === 'failed') {
       statusMessage.textContent = 'Failed';
       statusMessage.className = 'status-failed';
+      isPuzzlePlaying = false;
+      setCompletedState();
     } else if (ev.event === 'placed' || ev.event === 'placed_fallback' || ev.event === 'backtrack') {
       if (!isReplayMode) {
         statusMessage.textContent = 'Solving...';
@@ -388,6 +432,7 @@ function replayPlay() {
   if (!currentRecording || !isReplayMode) return;
 
   isReplayPlaying = true;
+  setPlayingState(true);
   
   const playStep = () => {
     if (!isReplayPlaying || !currentRecording) return;
@@ -407,7 +452,7 @@ function replayPlay() {
       replayBacktrackCount++;
     }
     
-    applyReplayEventToGrid(event, replayGridState, entryToCells);
+    applyReplayEventToGrid(event, replayGridState, entryToCells, replayPlacedEntries);
     replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
     
     // Count fallbacks from current entries
@@ -432,6 +477,14 @@ function replayPlay() {
     
     if (replayIndex >= (currentRecording.event_count || 0)) {
       isReplayPlaying = false;
+      // Check if the last event was solved/failed - if so, keep buttons disabled
+      const lastEvent = currentRecording.events?.[replayIndex - 1];
+      if (lastEvent?.event === 'solved' || lastEvent?.event === 'failed') {
+        // setCompletedState() was already called by processMessage above
+        // Don't call setPlayingState(false) as it would re-enable buttons
+      } else {
+        setPlayingState(false);
+      }
       return;
     }
     
@@ -445,6 +498,11 @@ function replayPlay() {
 function replayPause() {
   isReplayPlaying = false;
   if (replayTimer) clearTimeout(replayTimer);
+  // Don't re-enable buttons if puzzle is already completed
+  const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
+  if (!isCompleted) {
+    setPlayingState(false);
+  }
 }
 
 function replayStep() {
@@ -465,7 +523,7 @@ function replayStep() {
     replayBacktrackCount++;
   }
   
-  applyReplayEventToGrid(event, replayGridState, entryToCells);
+  applyReplayEventToGrid(event, replayGridState, entryToCells, replayPlacedEntries);
   replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
   
   const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
@@ -485,6 +543,9 @@ function replayStep() {
   
   replayIndex++;
   updateReplayProgress();
+  
+  // Note: if event was solved/failed, setCompletedState() was already called by processMessage
+  // and buttons are already in the correct disabled state
 }
 
 function replayReset() {
@@ -496,6 +557,7 @@ function replayReset() {
   statusMessage.className = '';
   replayGridState = cloneJson(replayBaseGridState);
   replayFallbackEntries.clear();
+  replayPlacedEntries.clear();
   replayBacktrackCount = 0;
   replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
   if (replayGridState) {
@@ -586,6 +648,7 @@ async function loadRecording(recordingId) {
         
         replayBaseEntries = cloneJson(entriesForDisplay);
         replayFallbackEntries.clear();
+        replayPlacedEntries.clear();
         replayBacktrackCount = 0;
         replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
         
@@ -610,7 +673,7 @@ async function loadRecording(recordingId) {
       setClueHeadingsVisible(false);
     }
     
-    disableControls(false);
+    setPlayingState(false);
     replaySpeedControl.style.display = 'block';
     log(`[recording] Loaded: ${currentRecording.puzzle} (${currentRecording.event_count} events)`);
 
@@ -746,8 +809,16 @@ function renderEntries(entries) {
     li.id = `entry-${eid}`;
     const displayNum = eid.slice(0, -1); // strip A/D
     li.textContent = `${displayNum}: ${info.pattern} — ${info.clue}`;
-    if (info.used_fallback) li.classList.add('entry-highlight');
-    if (info.verified) li.classList.add('entry-verified');
+    // Determine highlighting: fallback (red) > incorrect (orange) > correct (yellow)
+    if (info.used_fallback) {
+      li.classList.add('entry-fallback');
+    } else if (info.correct_answer) {
+      if (info.pattern === info.correct_answer) {
+        li.classList.add('entry-correct');
+      } else if (!info.pattern.includes('.')) {
+        li.classList.add('entry-incorrect');
+      }
+    }
     entriesAcrossList.appendChild(li);
   }
   
@@ -756,8 +827,16 @@ function renderEntries(entries) {
     li.id = `entry-${eid}`;
     const displayNum = eid.slice(0, -1); // strip A/D
     li.textContent = `${displayNum}: ${info.pattern} — ${info.clue}`;
-    if (info.used_fallback) li.classList.add('entry-highlight');
-    if (info.verified) li.classList.add('entry-verified');
+    // Determine highlighting: fallback (red) > incorrect (orange) > correct (yellow)
+    if (info.used_fallback) {
+      li.classList.add('entry-fallback');
+    } else if (info.correct_answer) {
+      if (info.pattern === info.correct_answer) {
+        li.classList.add('entry-correct');
+      } else if (!info.pattern.includes('.')) {
+        li.classList.add('entry-incorrect');
+      }
+    }
     entriesDownList.appendChild(li);
   }
 }
@@ -822,7 +901,11 @@ async function postAction(path) {
   } catch (err) {
     log('[http] error: ' + err);
   } finally {
-    disableControls(false);
+    // Don't re-enable controls if we're actively playing or if puzzle is completed
+    const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
+    if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted) {
+      setPlayingState(false);
+    }
   }
 }
 
@@ -830,15 +913,23 @@ playBtn.addEventListener('click', () => {
   if (isReplayMode) {
     replayPlay();
   } else {
+    isPuzzlePlaying = true;
     postAction('/play');
   }
+  setPlayingState(true);
 });
 
 pauseBtn.addEventListener('click', () => {
   if (isReplayMode) {
     replayPause();
   } else {
+    isPuzzlePlaying = false;
     postAction('/pause');
+  }
+  // Don't re-enable buttons if puzzle is already completed
+  const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
+  if (!isCompleted) {
+    setPlayingState(false);
   }
 });
 
@@ -849,8 +940,6 @@ stepBtn.addEventListener('click', () => {
     postAction('/step');
   }
 });
-
-solveBtn.addEventListener('click', () => postAction('/solve'));
 
 resetBtn.addEventListener('click', () => {
   if (isReplayMode) {
