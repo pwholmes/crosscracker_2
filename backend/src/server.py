@@ -34,6 +34,7 @@ _metrics_lock = Lock()
 BASE_DIR = Path(__file__).resolve().parents[2]
 RECORDINGS_DIR = BASE_DIR / "backend" / "recordings"
 RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
+PLAY_INTERVAL_SECONDS = 0
 
 # Logger
 logger = logging.getLogger("src.server")
@@ -91,7 +92,6 @@ class WSManager:
 manager = WSManager()
 
 play_event = asyncio.Event()
-play_interval_seconds = 0.8
 
 # utility to serialize state
 def serialize_state() -> dict[str, Any]:
@@ -311,7 +311,7 @@ async def start_player() -> None:
                 play_event.clear()
                 # Save recording when auto-play completes
                 await asyncio.to_thread(_save_recording_if_enabled)
-            await asyncio.sleep(play_interval_seconds)
+            await asyncio.sleep(PLAY_INTERVAL_SECONDS)
 
     asyncio.create_task(player_loop())
 
@@ -357,22 +357,6 @@ async def step_once() -> dict[str, Any]:
     if ev.get("event") in ("solved", "failed"):
         await asyncio.to_thread(_save_recording_if_enabled)
     return ev
-
-
-@app.post("/solve")
-async def solve_now() -> dict[str, Any]:
-    if solver is None:
-        return {"event": "error", "message": "No puzzle loaded"}
-    # Run to completion, broadcasting each solver step via unified _emit_solver_step.
-    # This keeps the UI log and step tally accurate, and ensures recording and
-    # broadcasting stay in perfect sync.
-    async with solver_lock:
-        while True:
-            ev = await _emit_solver_step()
-            if ev.get("event") in ("solved", "failed"):
-                # Save recording when solve completes
-                await asyncio.to_thread(_save_recording_if_enabled)
-                return {"solved": ev.get("event") == "solved"}
 
 
 @app.post("/reset")
