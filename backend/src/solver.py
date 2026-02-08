@@ -115,9 +115,10 @@ class Solver:
             return self._handle_verification_failure(verification_failed, newly_verified, recently_placed=None)
 
         if self._all_filled():
-            if self._all_entries_verified():
-                return self._finalize_event({"event": "solved"}, newly_verified)
-            return self._finalize_event({"event": "failed"}, newly_verified)
+            assert self._all_entries_verified(), (
+                "All entries should be verified after _mark_verified_entries when the grid is filled."
+            )
+            return self._finalize_event({"event": "solved"}, newly_verified)
 
         while True:
             selection = self._select_best_unfilled_entry()
@@ -314,9 +315,6 @@ class Solver:
         self._stall_passes += 1
         self._attempted_this_pass.clear()
 
-        if self._all_filled() and self._all_entries_verified():
-            return self._finalize_event({"event": "solved"}, newly_verified)
-
         target = self._choose_backtrack_target()
         if target is not None:
             removed = self._remove_placed(target)
@@ -444,6 +442,13 @@ class Solver:
         if rec is None:
             return None
 
+        # Collect crossing entries before removing
+        entry = self.entries[entry_id]
+        crossing_entries: set[str] = set()
+        for cell in entry.cells:
+            crossing_entries.update(cell.sources)
+        crossing_entries.discard(entry_id)
+
         candidate = Candidate(entry_id=rec.entry_id, answer=rec.answer, widening_level=rec.width_used)
         self.grid.remove_candidate(candidate)
 
@@ -453,6 +458,19 @@ class Solver:
         self._placed.pop(entry_id, None)
         if entry_id in self._placed_order:
             self._placed_order.remove(entry_id)
+
+        # Reset verified flag when backtracking
+        self.entries[entry_id].verified = False
+
+        # Unverify crossing entries that are now incomplete and were not explicitly placed
+        for crossing_id in crossing_entries:
+            crossing_entry = self.entries.get(crossing_id)
+            if crossing_entry is None:
+                continue
+            # Only unverify if: (1) now incomplete AND (2) never explicitly placed
+            if "." in crossing_entry.pattern and crossing_id not in self._placed:
+                crossing_entry.verified = False
+                logger.debug(f"BACKTRACK: Unverified crossing entry {crossing_id} (now incomplete)")
 
         attempt = self._attempts[entry_id]
         attempt.current_width = 0
@@ -548,11 +566,18 @@ class Solver:
                 continue
             if entry.verified:
                 continue
+            logger.debug(f"VERIFY CHECK: entry={entry.entry_id} pattern='{pattern}' length={entry.length}")
+            # Defensive assertion: pattern should never have dots at this point
+            assert "." not in pattern, (
+                f"BUG: Attempting to verify entry {entry.entry_id} with incomplete pattern: '{pattern}'"
+            )
             if LLM.verify_answer(entry, pattern):
                 entry.verified = True
                 newly_verified.append(entry.entry_id)
+                logger.debug(f"VERIFY SUCCESS: entry={entry.entry_id} pattern='{pattern}'")
             else:
                 failed.append(entry.entry_id)
+                logger.debug(f"VERIFY FAILED: entry={entry.entry_id} pattern='{pattern}'")
         return newly_verified, failed
 
     def _all_entries_verified(self) -> bool:
