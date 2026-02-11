@@ -58,4 +58,4 @@ def create_grid() -> Grid:
     grid = Grid(entries)
     return grid
 
-register_puzzle("simple-9x9", create_grid, title="simple 9x9", default=True)
+register_puzzle("simple-9x9", create_grid, title="Simple (9x9)", default=True)

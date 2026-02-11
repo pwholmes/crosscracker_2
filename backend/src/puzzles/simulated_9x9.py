@@ -99,15 +99,15 @@ def create_grid() -> Grid:
 
 # Register two simulated puzzle variants.
 register_puzzle(
-    "9x9-simple-easy",
+    "sim-9x9-easy",
     create_grid,
-    title="simple 9x9 (simulated, only right answers)",
+    title="Simulated (9x9, correct answers only)",
     generate_candidates_hook=_make_hook(backtrack=False),
 )
 
 register_puzzle(
-    "9x9-simple-backtrack",
+    "sim-9x9-backtrack",
     create_grid,
-    title="simple 9x9 (simulated, backtracking)",
+    title="Simulated (9x9, backtracking)",
     generate_candidates_hook=_make_hook(backtrack=True),
 )
