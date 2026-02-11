@@ -1,6 +1,10 @@
 from __future__ import annotations
 import asyncio
 from threading import Lock
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from typing import Any, Callable, cast
@@ -35,6 +39,9 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 RECORDINGS_DIR = BASE_DIR / "backend" / "recordings"
 RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
 PLAY_INTERVAL_SECONDS = 0
+
+# Read RECORDING from .env (default True)
+RECORDING_ENABLED = os.environ.get("RECORDING", "true").lower() in ("1", "true", "yes", "on")
 
 # Logger
 logger = logging.getLogger("src.server")
@@ -204,6 +211,8 @@ def _step_and_update_metrics() -> dict[str, Any]:
 
 def _save_recording_if_enabled() -> None:
     """Save the current solver recording if recording is enabled."""
+    if not RECORDING_ENABLED:
+        return
     if solver is None or not hasattr(solver, 'get_recording'):
         return
     
