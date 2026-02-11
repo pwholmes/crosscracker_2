@@ -20,154 +20,16 @@
         "entry_id": "3D",
         "answer": "LETSDANCE",
         "widening_level": 0,
-        "confidence": 100.0,
-        "score": 53.55555555555556,
+        "confidence": 90.0,
+        "score": 50.55555555555556,
         "pattern": "..T......"
       }
     },
     {
       "event": "placed",
       "candidate": {
-        "entry_id": "6D",
-        "answer": "RESEMBLE",
-        "widening_level": 0,
-        "confidence": 95.0,
-        "score": 50.75,
-        "pattern": "..S....."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "9A",
-        "answer": "REAL",
-        "widening_level": 0,
-        "confidence": 100.0,
-        "score": 50.5,
-        "pattern": ".E.."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "5D",
-        "answer": "BRA",
-        "widening_level": 0,
-        "confidence": 90.0,
-        "score": 66.33333333333333,
-        "pattern": ".RA"
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "5A",
-        "answer": "BRR",
-        "widening_level": 0,
-        "confidence": 50.0,
-        "score": 54.33333333333333,
-        "pattern": "BR."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "7D",
-        "answer": "RATCHETS",
-        "widening_level": 0,
-        "confidence": 40.0,
-        "score": 52.75,
-        "pattern": "RAT....."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "1D",
-        "answer": "AHAB",
-        "widening_level": 0,
-        "confidence": 100.0,
-        "score": 50.5,
-        "pattern": "..A."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "8A",
-        "answer": "HEEL",
-        "widening_level": 0,
-        "confidence": 98.0,
-        "score": 62.4,
-        "pattern": "H.E."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "4D",
-        "answer": "ELITE",
-        "widening_level": 0,
-        "confidence": 98.0,
-        "score": 59.4,
-        "pattern": ".LI.."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "1A",
-        "answer": "AXLE",
-        "widening_level": 0,
-        "confidence": 98.0,
-        "score": 74.9,
-        "pattern": "A.LE"
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "13A",
-        "answer": "BASTE",
-        "widening_level": 0,
-        "confidence": 95.0,
-        "score": 68.5,
-        "pattern": "B.ST."
-      },
-      "verified": [
-        "2D"
-      ]
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "15A",
-        "answer": "DEN",
-        "widening_level": 0,
-        "confidence": 95.0,
-        "score": 67.83333333333333,
-        "pattern": "DE."
-      },
-      "verified": [
-        "12D"
-      ]
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "25A",
-        "answer": "PENTA",
-        "widening_level": 0,
-        "confidence": 90.0,
-        "score": 47.0,
-        "pattern": ".E..."
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "23D",
-        "answer": "AVA",
+        "entry_id": "17A",
+        "answer": "SSA",
         "widening_level": 0,
         "confidence": 100.0,
         "score": 52.666666666666664,
@@ -177,38 +39,147 @@
     {
       "event": "placed",
       "candidate": {
-        "entry_id": "21D",
-        "answer": "TEN",
+        "entry_id": "15A",
+        "answer": "DEN",
         "widening_level": 0,
-        "confidence": 95.0,
-        "score": 51.166666666666664,
-        "pattern": "..N"
+        "confidence": 90.0,
+        "score": 49.666666666666664,
+        "pattern": "D.."
       }
     },
     {
-      "event": "backtrack",
+      "event": "placed",
       "candidate": {
-        "entry_id": "7D",
-        "answer": "RATCHETS",
+        "entry_id": "4D",
+        "answer": "ELITE",
         "widening_level": 0,
-        "confidence": 40.0,
-        "pattern": "RAT....."
+        "confidence": 90.0,
+        "score": 57.0,
+        "pattern": "..I.E"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "1A",
+        "answer": "AXLE",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 60.0,
+        "pattern": "..LE"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "2D",
+        "answer": "XENA",
+        "widening_level": 0,
+        "confidence": 95.0,
+        "score": 61.5,
+        "pattern": "X.N."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "8A",
+        "answer": "HEEL",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 72.5,
+        "pattern": ".EEL"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "1D",
+        "answer": "AHAB",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 72.5,
+        "pattern": "AHA."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "13A",
+        "answer": "BASTE",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 77.0,
+        "pattern": "BAST."
       },
-      "verification_failed": [
-        "14A",
-        "16A",
-        "19A"
+      "verified": [
+        "12D"
       ]
     },
     {
       "event": "placed",
       "candidate": {
-        "entry_id": "14A",
-        "answer": "ERG",
+        "entry_id": "5D",
+        "answer": "BRA",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 49.666666666666664,
+        "pattern": "..A"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "5A",
+        "answer": "BRR",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 49.666666666666664,
+        "pattern": "B.."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "17D",
+        "answer": "STR",
+        "widening_level": 0,
+        "confidence": 90.0,
+        "score": 49.666666666666664,
+        "pattern": "S.."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "10D",
+        "answer": "LOGIC",
         "widening_level": 0,
         "confidence": 95.0,
-        "score": 67.83333333333333,
-        "pattern": "E.G"
+        "score": 48.5,
+        "pattern": ".O..."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "9A",
+        "answer": "REAL",
+        "widening_level": 0,
+        "confidence": 100.0,
+        "score": 63.0,
+        "pattern": "R..L"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "6D",
+        "answer": "RESEMBLE",
+        "widening_level": 0,
+        "confidence": 95.0,
+        "score": 63.25,
+        "pattern": "RES....."
       }
     },
     {
@@ -217,8 +188,8 @@
         "entry_id": "16A",
         "answer": "MAI",
         "widening_level": 0,
-        "confidence": 50.0,
-        "score": 54.33333333333333,
+        "confidence": 90.0,
+        "score": 66.33333333333333,
         "pattern": "M.I"
       }
     },
@@ -228,53 +199,20 @@
         "entry_id": "19A",
         "answer": "BCC",
         "widening_level": 0,
-        "confidence": 50.0,
-        "score": 54.33333333333333,
+        "confidence": 90.0,
+        "score": 66.33333333333333,
         "pattern": "B.C"
       }
     },
     {
       "event": "placed",
       "candidate": {
-        "entry_id": "22D",
-        "answer": "SIT",
+        "entry_id": "14A",
+        "answer": "ERG",
         "widening_level": 0,
-        "confidence": 70.0,
-        "score": 43.666666666666664,
-        "pattern": "..T"
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "17A",
-        "answer": "SSA",
-        "widening_level": 0,
-        "confidence": 50.0,
-        "score": 37.666666666666664,
-        "pattern": "..A"
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "18D",
-        "answer": "SEEP",
-        "widening_level": 0,
-        "confidence": 95.0,
-        "score": 61.5,
-        "pattern": "S..P"
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "17D",
-        "answer": "STN",
-        "widening_level": 0,
-        "confidence": 0.0,
-        "score": 49.666666666666664,
-        "pattern": "S.."
+        "confidence": 85.0,
+        "score": 64.83333333333333,
+        "pattern": "E.G"
       }
     },
     {
@@ -283,31 +221,64 @@
         "entry_id": "20A",
         "answer": "TENTSALE",
         "widening_level": 0,
-        "confidence": 50.0,
-        "score": 74.75,
-        "pattern": "TENTSAL."
-      }
-    },
-    {
-      "event": "backtrack",
-      "candidate": {
-        "entry_id": "17D",
-        "answer": "STN",
-        "widening_level": 0,
-        "confidence": 0.0,
-        "score": 49.666666666666664,
-        "pattern": "S.."
+        "confidence": 85.0,
+        "score": 60.25,
+        "pattern": "T.N...L."
       }
     },
     {
       "event": "placed",
       "candidate": {
-        "entry_id": "17D",
-        "answer": "STR",
+        "entry_id": "21D",
+        "answer": "TEN",
         "widening_level": 0,
-        "confidence": 10.0,
-        "score": 42.33333333333333,
-        "pattern": "ST."
+        "confidence": 90.0,
+        "score": 49.666666666666664,
+        "pattern": "T.."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "25A",
+        "answer": "PENTA",
+        "widening_level": 0,
+        "confidence": 80.0,
+        "score": 54.0,
+        "pattern": ".EN.."
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "18D",
+        "answer": "SEEP",
+        "widening_level": 0,
+        "confidence": 80.0,
+        "score": 69.5,
+        "pattern": "SE.P"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "22D",
+        "answer": "SIT",
+        "widening_level": 0,
+        "confidence": 93.0,
+        "score": 67.23333333333332,
+        "pattern": "S.T"
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "23D",
+        "answer": "AVA",
+        "widening_level": 0,
+        "confidence": 80.0,
+        "score": 63.33333333333333,
+        "pattern": "A.A"
       }
     },
     {
@@ -328,9 +299,9 @@
       "event": "solved"
     }
   ],
-  "id": "9ebff574-4c48-4cce-8aaa-b8d115e34e3f",
-  "timestamp": "2026-02-10T02:50:33.016441",
-  "event_count": 29,
+  "id": "9eb7c10b-736d-4db3-8e50-fd5d856fdae5",
+  "timestamp": "2026-02-10T20:30:05.313167",
+  "event_count": 27,
   "grid_state": {
     "rows": 9,
     "cols": 9,

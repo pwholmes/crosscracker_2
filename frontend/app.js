@@ -414,7 +414,10 @@ function processMessage(data) {
       highlightEntry(ev.entry_id);
     }
     if (Array.isArray(ev.verified)) {
-      ev.verified.forEach((eid) => highlightEntry(eid));
+      ev.verified.forEach((eid) => {
+        highlightEntry(eid);
+        log(`verified ${eid}`);
+      });
     }
   }
 }

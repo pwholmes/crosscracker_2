@@ -5,6 +5,8 @@ from typing import Any
 import requests
 import logging
 import re
+import os
+from dotenv import load_dotenv
 from .model import Cell, Entry, ScoredCandidate
 
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
@@ -24,7 +26,9 @@ class LLM:
     # Configuration for candidate generation behavior
     MAX_WIDENING: int = 0
     MAX_CANDIDATES: int = 5
-    MODEL_NAME: str = "llama3.1:8b"
+    # Load environment variables from .env
+    load_dotenv()
+    MODEL_NAME: str = os.environ.get("MODEL_NAME", "llama3.1:8b")
     OLLAMA_URL: str = "http://localhost:11434/api/generate"
 
     # Optional hook for overriding candidate generation (used by simulated/test puzzles).
