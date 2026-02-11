@@ -493,6 +493,7 @@ async def load_puzzle(puzzle_id: str):
         })
         try:
             await asyncio.to_thread(populate_hints, list(grid.entries.values()))
+            logger.debug("Hints loaded")
         except Exception as exc:
             logging.getLogger("src.server").warning(
                 "Vector DB hint population failed; continuing without hints: %s",
