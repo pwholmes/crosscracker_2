@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from src.model import Entry, ScoredCandidate
+from src.model import Candidate, Cell, Entry, Grid, ScoredCandidate
 from src.solver import Solver
 from src.puzzles.simple_9x9 import create_grid
 
@@ -28,3 +28,41 @@ def test_solver_can_start():
         solver = Solver(grid)
         ev = solver.step()
         assert ev["event"] in {"placed", "solved", "placed_fallback"}
+
+
+def _create_small_grid() -> Grid:
+    cells = [[Cell(row=r, col=c) for c in range(2)] for r in range(3)]
+    entries: dict[str, Entry] = {
+        "1A": Entry("1A", "Top across", "AB", cells, (0, 0), 2),
+        "1D": Entry("1D", "Left down", "AC", cells, (0, 0), 2),
+        "2D": Entry("2D", "Right down", "BD", cells, (0, 1), 2),
+        "3A": Entry("3A", "Bottom across", "EF", cells, (2, 0), 2),
+    }
+    return Grid(entries)
+
+
+def test_verify_entries_checks_crossings_only():
+    grid = _create_small_grid()
+    solver = Solver(grid, defer_candidate_init=True)
+
+    # Pre-fill crossing entries and an unrelated entry.
+    grid.place_candidate(Candidate("1D", "AC", widening_level=0))
+    grid.place_candidate(Candidate("2D", "BD", widening_level=0))
+    grid.place_candidate(Candidate("3A", "EF", widening_level=0))
+
+    crossing_ids = solver._get_crossing_entry_ids("1A")
+    assert crossing_ids == {"1D", "2D"}
+
+    verified_ids: list[str] = []
+
+    def mock_verify(entry: Entry, answer: str) -> bool:
+        verified_ids.append(entry.entry_id)
+        return True
+
+    with patch("src.llm.LLM.verify_answer", side_effect=mock_verify):
+        newly_verified, failed = solver._verify_entries(crossing_ids)
+
+    assert set(newly_verified) == {"1D", "2D"}
+    assert failed == []
+    assert grid.entries["3A"].verified is False
+    assert set(verified_ids) == {"1D", "2D"}

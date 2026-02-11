@@ -244,3 +244,6 @@ input:checked + .toggle-slider:before {
 .entry-fallback {
   background: #ffcccc;
 }
+.entry-verified {
+  background: #ccffcc;
+}

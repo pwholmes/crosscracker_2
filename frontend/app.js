@@ -809,32 +809,32 @@ function renderEntries(entries) {
     li.id = `entry-${eid}`;
     const displayNum = eid.slice(0, -1); // strip A/D
     li.textContent = `${displayNum}: ${info.pattern} — ${info.clue}`;
-    // Determine highlighting: fallback (red) > incorrect (orange) > correct (yellow)
+    // Highlighting: fallback (orange) > incorrect (red) > correct (yellow)
     if (info.used_fallback) {
-      li.classList.add('entry-fallback');
+      li.classList.add('entry-incorrect');
     } else if (info.correct_answer) {
       if (info.pattern === info.correct_answer) {
         li.classList.add('entry-correct');
       } else if (!info.pattern.includes('.')) {
-        li.classList.add('entry-incorrect');
+        li.classList.add('entry-fallback');
       }
     }
     entriesAcrossList.appendChild(li);
   }
-  
+
   for (const [eid, info] of downEntries) {
     const li = document.createElement('li');
     li.id = `entry-${eid}`;
     const displayNum = eid.slice(0, -1); // strip A/D
     li.textContent = `${displayNum}: ${info.pattern} — ${info.clue}`;
-    // Determine highlighting: fallback (red) > incorrect (orange) > correct (yellow)
+    // Highlighting: fallback (orange) > incorrect (red) > correct (yellow)
     if (info.used_fallback) {
-      li.classList.add('entry-fallback');
+      li.classList.add('entry-incorrect');
     } else if (info.correct_answer) {
       if (info.pattern === info.correct_answer) {
         li.classList.add('entry-correct');
       } else if (!info.pattern.includes('.')) {
-        li.classList.add('entry-incorrect');
+        li.classList.add('entry-fallback');
       }
     }
     entriesDownList.appendChild(li);
@@ -945,11 +945,16 @@ resetBtn.addEventListener('click', () => {
   if (isReplayMode) {
     replayReset();
   } else {
-    postAction('/reset');
-    statusMessage.textContent = 'Loaded';
+    // Clear UI immediately for responsive feel
+    renderGrid(null);
+    renderEntries(null);
+    statusMessage.textContent = 'Resetting...';
     statusMessage.className = '';
     logEl.textContent = '';
     renderTallyFromState({steps: 0, fallbacks: 0, backtracks: 0});
+    
+    // Then call server to reinitialize
+    postAction('/reset');
   }
 });
 

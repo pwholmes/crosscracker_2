@@ -24,7 +24,6 @@ class PlacedRecord:
     pattern_at_placement: str
     confidence_at_placement: float
     score_at_placement: float
-    placement_count: int
     is_fallback: bool = False
 
 
@@ -41,8 +40,8 @@ class Solver:
       needed, apply fallbacks (removing conflicting non-fallback entries).
     """
 
-    # Maximum times a candidate can be placed before forcing fallback
-    MAX_PLACEMENT_ATTEMPTS: int = 3
+    # Backtracks for an entry before forcing its fallback
+    MAX_BACKTRACKS_BEFORE_FALLBACK: int = 3
 
     def __init__(self, grid: Grid, *, defer_candidate_init: bool = False, record: bool = False):
         self.grid = grid
@@ -52,7 +51,7 @@ class Solver:
         self._placed: dict[str, PlacedRecord] = {}
         self._placed_order: list[str] = []
         self._penalties: dict[tuple[str, str, int], dict[str, float]] = {}
-        self._placement_counts: dict[tuple[str, str], int] = {}
+        self._entry_backtracks: dict[str, int] = {}
         self._attempted_this_pass: set[str] = set()
         self._stall_passes: int = 0
         self._recording: list[dict[str, Any]] | None = [] if record else None
@@ -110,46 +109,50 @@ class Solver:
 
     def step(self) -> dict[str, Any]:
         """Perform exactly one solver action and return an event dict."""
-        newly_verified, verification_failed = self._mark_verified_entries()
-        if verification_failed:
-            return self._handle_verification_failure(verification_failed, newly_verified, recently_placed=None)
-
+        # Check if grid is completely filled first
         if self._all_filled():
-            assert self._all_entries_verified(), (
-                "All entries should be verified after _mark_verified_entries when the grid is filled."
-            )
-            return self._finalize_event({"event": "solved"}, newly_verified)
+            return self._finalize_event({"event": "solved"}, [])
 
         while True:
             selection = self._select_best_unfilled_entry()
             if selection is None:
-                # End of pass.
-                return self._handle_stall(newly_verified)
+                return self._handle_stall([])
 
             entry_id, selection_score = selection
-
             self._attempted_this_pass.add(entry_id)
-            placed = self._try_fill_entry(entry_id, selection_score)
+            
+            # Before placing, check if any crossing entries would be completed and verify them
+            cand = self._select_best_candidate(entry_id)
+            if cand is None:
+                continue
+            
+            crossing_patterns = self._compute_crossing_patterns_if_placed(entry_id, cand.answer)
+            if crossing_patterns:
+                logger.debug(
+                    f"VERIFY: Checking crossing entries for {entry_id}='{cand.answer}': "
+                    f"{list(crossing_patterns.keys())}"
+                )
+            newly_verified, verification_failed = self._verify_entries_with_patterns(crossing_patterns)
+            if verification_failed:
+                # Reject this candidate and continue trying others
+                self._reject_candidate(entry_id, cand.answer)
+                continue
+            
+            # Verification passed - now actually place the entry
+            placed = self._place_entry(entry_id, selection_score)
             if placed is None:
                 continue
 
-            # After explicitly placing an entry, we treat that entry as trusted/verified.
-            # Verification is reserved for entries that become complete indirectly
-            # (i.e., via crossings) to avoid redundant LLM calls and log spam.
-            newly_verified, verification_failed = self._mark_verified_entries(
-                newly_verified,
-                exclude_entry_ids={placed.entry_id},
-            )
-            if verification_failed:
-                return self._handle_verification_failure(verification_failed, newly_verified, recently_placed=placed.entry_id)
-
+            # Mark crossing entries as verified now that placement is committed
+            for verified_id in newly_verified:
+                self.entries[verified_id].verified = True
+            
             self._attempted_this_pass.clear()
             self._stall_passes = 0
 
             rec = self._placed.get(placed.entry_id)
             confidence = rec.confidence_at_placement if rec is not None else None
             pattern_at_placement = rec.pattern_at_placement if rec is not None else None
-
             score_at_placement = rec.score_at_placement if rec is not None else None
             logger.debug(
                 f"PLACED entry={entry_id} answer='{placed.answer}' "
@@ -192,7 +195,7 @@ class Solver:
             if eid in self._attempted_this_pass:
                 continue
 
-            cand = self._peek_best_fit_candidate(eid)
+            cand = self._select_best_candidate(eid)
             if cand is None:
                 continue
 
@@ -220,7 +223,7 @@ class Solver:
             return None
         return best_entry_id, best_score
 
-    def _peek_best_fit_candidate(self, entry_id: str) -> ScoredCandidate | None:
+    def _select_best_candidate(self, entry_id: str) -> ScoredCandidate | None:
         entry = self.entries[entry_id]
         attempt = self._attempts[entry_id]
         pattern = entry.pattern
@@ -250,14 +253,9 @@ class Solver:
                 best_cand = cand
                 best_effective_confidence = effective_confidence
         
-        if best_cand is None and attempt.candidates:
-            logger.debug(f"No placeable candidate found for {entry_id}: "
-                        f"{len(attempt.candidates)} candidates, pattern={pattern}, "
-                        f"entries returned {len([c for c in attempt.candidates if len(c.answer) == entry.length])} "
-                        f"with correct length")
         return best_cand
 
-    def _try_fill_entry(self, entry_id: str, selection_score: float) -> Candidate | None:
+    def _place_entry(self, entry_id: str, selection_score: float) -> Candidate | None:
         entry = self.entries[entry_id]
         attempt = self._attempts[entry_id]
 
@@ -279,12 +277,6 @@ class Solver:
                     continue
 
                 candidate = Candidate(entry_id=entry_id, answer=cand.answer, widening_level=attempt.current_width)
-                
-                # Check if this candidate has been placed too many times (threshold to prevent thrashing)
-                placement_count = self._placement_counts.get((entry_id, cand.answer), 0)
-                if placement_count >= self.MAX_PLACEMENT_ATTEMPTS:
-                    penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 50.0
-                    continue
                 
                 if not self.grid.place_candidate(candidate):
                     penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
@@ -311,15 +303,75 @@ class Solver:
 
         return None
 
+    def _try_apply_fallback_and_create_event(
+        self,
+        newly_verified: list[str],
+        entry: Entry | None = None,
+        extra_event_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Apply a fallback (for a specific entry or any entry) and create the event.
+        
+        Returns the placed_fallback event dict if successful, None otherwise.
+        """
+        fallback = self._apply_fallback_with_conflict_removal(entry)
+        if fallback is None:
+            return None
+        
+        rec, conflicts_removed = fallback
+        event: dict[str, Any] = {
+            "event": "placed_fallback",
+            "candidate": {
+                "entry_id": rec.entry_id,
+                "answer": rec.answer,
+                "widening_level": 0,
+                "confidence": rec.confidence_at_placement,
+                "pattern": rec.pattern_at_placement,
+            },
+            "conflicts_removed": conflicts_removed,
+        }
+        
+        # Merge in any extra fields (e.g., verification_failed)
+        if extra_event_fields:
+            event.update(extra_event_fields)
+        
+        return self._finalize_event(event, newly_verified)
+
     def _handle_stall(self, newly_verified: list[str]) -> dict[str, Any]:
+        """Handle a stall: no placements were made in this pass.
+        
+        Strategy:
+        1. Try to backtrack a placed entry to open up new possibilities
+        2. If that entry has been backtracked MAX_BACKTRACKS_BEFORE_FALLBACK times, 
+           apply its fallback instead of continuing to thrash
+        3. If no backtrack target exists, try to apply any available fallback
+        4. If no fallback possible, puzzle has failed
+        """
         self._stall_passes += 1
         self._attempted_this_pass.clear()
 
+        # Try to select a backtrack target
         target = self._choose_backtrack_target()
         if target is not None:
             removed = self._remove_placed(target)
             if removed is not None:
                 removed_candidate, removed_record = removed
+                self._record_backtrack(removed_candidate.entry_id)
+                
+                # Check if this entry has been backtracked too many times
+                backtrack_count = self._entry_backtracks.get(removed_candidate.entry_id, 0)
+                if backtrack_count >= self.MAX_BACKTRACKS_BEFORE_FALLBACK:
+                    # Force fallback for this thrashing entry
+                    entry = self.entries.get(removed_candidate.entry_id)
+                    if entry is not None and entry.correct_answer:
+                        logger.debug(
+                            f"FORCING FALLBACK: entry_id={removed_candidate.entry_id} "
+                            f"backtrack_count={backtrack_count}"
+                        )
+                        fallback_event = self._try_apply_fallback_and_create_event(newly_verified, entry)
+                        if fallback_event is not None:
+                            return fallback_event
+                
+                # Normal backtrack - return backtrack event
                 score_at_placement = removed_record.score_at_placement
                 logger.debug(
                     f"BACKTRACK: entry_id={removed_candidate.entry_id} answer={removed_candidate.answer} "
@@ -342,24 +394,12 @@ class Solver:
                     newly_verified,
                 )
 
-        fallback = self._apply_fallback_with_conflict_removal()
-        if fallback is not None:
-            rec, conflicts_removed = fallback
-            return self._finalize_event(
-                {
-                    "event": "placed_fallback",
-                    "candidate": {
-                        "entry_id": rec.entry_id,
-                        "answer": rec.answer,
-                        "widening_level": 0,
-                        "confidence": rec.confidence_at_placement,
-                        "pattern": rec.pattern_at_placement,
-                    },
-                    "conflicts_removed": conflicts_removed,
-                },
-                newly_verified,
-            )
+        # No backtrack target available - try to apply any fallback
+        fallback_event = self._try_apply_fallback_and_create_event(newly_verified)
+        if fallback_event is not None:
+            return fallback_event
 
+        # No backtrack and no fallback possible - puzzle has failed
         return self._finalize_event({"event": "failed"}, newly_verified)
 
     def _choose_backtrack_target(self) -> str | None:
@@ -419,10 +459,6 @@ class Solver:
         score: float,
         is_fallback: bool,
     ) -> None:
-        key = (entry_id, answer)
-        self._placement_counts[key] = self._placement_counts.get(key, 0) + 1
-        placement_count = self._placement_counts[key]
-        
         self._placed[entry_id] = PlacedRecord(
             entry_id=entry_id,
             answer=answer,
@@ -430,12 +466,14 @@ class Solver:
             pattern_at_placement=pattern_at_placement,
             confidence_at_placement=confidence,
             score_at_placement=score,
-            placement_count=placement_count,
             is_fallback=is_fallback,
         )
         if entry_id in self._placed_order:
             self._placed_order.remove(entry_id)
         self._placed_order.append(entry_id)
+
+    def _record_backtrack(self, entry_id: str) -> None:
+        self._entry_backtracks[entry_id] = self._entry_backtracks.get(entry_id, 0) + 1
 
     def _remove_placed(self, entry_id: str) -> tuple[Candidate, PlacedRecord] | None:
         rec = self._placed.get(entry_id)
@@ -480,8 +518,9 @@ class Solver:
 
         return candidate, rec
 
-    def _apply_fallback_with_conflict_removal(self) -> tuple[PlacedRecord, list[str]] | None:
-        entry = self._select_fallback_entry()
+    def _apply_fallback_with_conflict_removal(self, entry: Entry | None = None) -> tuple[PlacedRecord, list[str]] | None:
+        if entry is None:
+            entry = self._select_fallback_entry()
         if entry is None:
             return None
 
@@ -523,10 +562,23 @@ class Solver:
         )
         return self._placed[eid], removed_entries
 
-    def _select_fallback_entry(self) -> Entry | None:
-        entries: list[Entry] = [e for e in self.entries.values() if "." in e.pattern]
+    def _select_fallback_entry(self, *, threshold_only: bool = False) -> Entry | None:
+        entries: list[Entry] = [e for e in self.entries.values() if "." in e.pattern and e.correct_answer]
+        if threshold_only:
+            entries = [
+                e for e in entries
+                if self._entry_backtracks.get(e.entry_id, 0) >= self.MAX_BACKTRACKS_BEFORE_FALLBACK
+            ]
         if not entries:
             return None
+        if threshold_only:
+            return max(
+                entries,
+                key=lambda e: (
+                    self._entry_backtracks.get(e.entry_id, 0),
+                    e.pattern.count("."),
+                ),
+            )
         return max(entries, key=lambda e: e.pattern.count("."))
 
     def _all_filled(self) -> bool:
@@ -547,38 +599,103 @@ class Solver:
             return candidates
         return cached
 
-    def _mark_verified_entries(
-        self,
-        existing: list[str] | None = None,
-        *,
-        exclude_entry_ids: set[str] | None = None,
-    ) -> tuple[list[str], list[str]]:
-        newly_verified: list[str] = existing or []
+    def _compute_crossing_patterns_if_placed(self, entry_id: str, answer: str) -> dict[str, str]:
+        """Compute hypothetical patterns for crossing entries if we placed this answer.
+        
+        Returns a dict mapping entry_id -> hypothetical_pattern for entries that would
+        become complete after placement.
+        """
+        entry = self.entries[entry_id]
+        crossing_patterns: dict[str, str] = {}
+        seen_crossings: set[str] = set()
+        
+        # For each cell in the entry, find ALL crossing entries (not just placed ones)
+        for _, (cell, ch) in enumerate(zip(entry.cells, answer)):
+            # Find all entries that contain this cell
+            for crossing_id, crossing_entry in self.entries.items():
+                if crossing_id == entry_id:
+                    continue
+                if crossing_id in seen_crossings:
+                    continue
+                    
+                # Check if this crossing entry contains the current cell
+                if cell not in crossing_entry.cells:
+                    continue
+                    
+                seen_crossings.add(crossing_id)
+                
+                # Skip if already explicitly placed
+                if crossing_id in self._placed:
+                    logger.debug(
+                        f"VERIFY SKIP: {crossing_id} already placed (crossing {entry_id})"
+                    )
+                    continue
+                
+                # Compute what the pattern would be after placing
+                hypothetical_pattern = list(crossing_entry.pattern)
+                crossing_cell_idx = crossing_entry.cells.index(cell)
+                hypothetical_pattern[crossing_cell_idx] = ch
+                
+                pattern_str = "".join(hypothetical_pattern)
+                # Only include if it would be complete
+                if "." not in pattern_str:
+                    crossing_patterns[crossing_id] = pattern_str
+                    logger.debug(
+                        f"VERIFY CANDIDATE: {crossing_id} would be complete: '{pattern_str}' "
+                        f"(crossing {entry_id}='{answer}' at cell {cell.row},{cell.col})"
+                    )
+                else:
+                    logger.debug(
+                        f"VERIFY SKIP: {crossing_id} would be incomplete: '{pattern_str}' "
+                        f"(crossing {entry_id}='{answer}')"
+                    )
+        
+        return crossing_patterns
+
+    def _verify_entries_with_patterns(self, patterns: dict[str, str]) -> tuple[list[str], list[str]]:
+        """Verify entries using provided patterns (hypothetical or actual).
+        
+        Returns (newly_verified, failed) lists of entry IDs.
+        """
+        if not patterns:
+            return [], []
+            
+        newly_verified: list[str] = []
         failed: list[str] = []
-        exclude = exclude_entry_ids or set()
-        for entry in self.entries.values():
-            if entry.entry_id in exclude:
+        
+        for entry_id, pattern in patterns.items():
+            entry = self.entries.get(entry_id)
+            if entry is None:
                 continue
-            pattern = entry.pattern
-            if "." in pattern:
-                if entry.verified:
-                    entry.verified = False
-                continue
+            
+            # Skip if already verified
             if entry.verified:
+                logger.debug(f"VERIFY SKIP: {entry_id} already verified")
                 continue
-            logger.debug(f"VERIFY CHECK: entry={entry.entry_id} pattern='{pattern}' length={entry.length}")
-            # Defensive assertion: pattern should never have dots at this point
-            assert "." not in pattern, (
-                f"BUG: Attempting to verify entry {entry.entry_id} with incomplete pattern: '{pattern}'"
-            )
+            
             if LLM.verify_answer(entry, pattern):
-                entry.verified = True
-                newly_verified.append(entry.entry_id)
-                logger.debug(f"VERIFY SUCCESS: entry={entry.entry_id} pattern='{pattern}'")
+                # Don't set verified flag yet - we haven't actually placed anything
+                newly_verified.append(entry_id)
+                logger.debug(f"VERIFY ✓ SUCCESS: {entry_id}='{pattern}'")
             else:
-                failed.append(entry.entry_id)
-                logger.debug(f"VERIFY FAILED: entry={entry.entry_id} pattern='{pattern}'")
+                failed.append(entry_id)
+                logger.debug(f"VERIFY ✗ FAILED: {entry_id}='{pattern}'")
+        
+        if newly_verified or failed:
+            logger.debug(
+                f"VERIFY SUMMARY: {len(newly_verified)} passed, {len(failed)} failed "
+                f"(passed: {newly_verified}, failed: {failed})"
+            )
+        
         return newly_verified, failed
+    
+    def _reject_candidate(self, entry_id: str, answer: str) -> None:
+        """Reject a candidate by applying a penalty, preventing it from being selected again."""
+        attempt = self._attempts[entry_id]
+        key = (entry_id, attempt.generated_pattern, attempt.current_width)
+        penalties = self._penalties.setdefault(key, {})
+        penalties[answer] = penalties.get(answer, 0.0) + 50.0  # Heavy penalty for verification failure
+        logger.debug(f"REJECTED: entry={entry_id} answer={answer} (verification would fail)")
 
     def _all_entries_verified(self) -> bool:
         return all(e.verified for e in self.entries.values())
@@ -591,76 +708,9 @@ class Solver:
         self.record_event(event)
         return event
 
-    def _handle_verification_failure(self, failed: list[str], newly_verified: list[str], recently_placed: str | None = None) -> dict[str, Any]:
-        # Log the verification failure
-        logger.debug(f"VERIFICATION FAILED: entries={failed}")
-        
-        # Prefer removing a failing entry if it was placed and is not a fallback.
-        target: str | None = None
-        for eid in failed:
-            if eid in self._placed and not self._placed[eid].is_fallback:
-                target = eid
-                break
-        
-        # If failing entries were auto-completed (not explicitly placed), 
-        # choose among their placed crossings by lowest confidence.
-        # Exclude the recently placed entry that triggered this verification.
-        if target is None:
-            crossing_candidates: dict[str, PlacedRecord] = {}
-            for failed_id in failed:
-                failed_entry = self.entries.get(failed_id)
-                if failed_entry is None:
-                    continue
-                for cell in failed_entry.cells:
-                    if not cell.sources:
-                        continue
-                    for crossing_id in cell.sources:
-                        if crossing_id == failed_id or crossing_id == recently_placed:
-                            continue
-                        rec = self._placed.get(crossing_id)
-                        if rec is not None and not rec.is_fallback:
-                            crossing_candidates[rec.entry_id] = rec
-            if crossing_candidates:
-                target = min(
-                    crossing_candidates.values(),
-                    key=lambda rec: rec.confidence_at_placement,
-                ).entry_id
-                logger.debug(
-                    f"Selected crossing with lowest confidence: {target} "
-                    f"(confidence={crossing_candidates[target].confidence_at_placement:.2f})"
-                )
-        
-        if target is None:
-            target = self._choose_backtrack_target()
-        if target is None:
-            logger.debug(f"VERIFICATION FAILED - NO BACKTRACK TARGET: entries={failed}")
-            return self._finalize_event({"event": "failed", "verification_failed": failed}, newly_verified)
-
-        popped = self._remove_placed(target)
-        newly_verified, _ = self._mark_verified_entries(newly_verified)
-        if popped is None:
-            return self._finalize_event({"event": "failed", "verification_failed": failed}, newly_verified)
-        popped_candidate, popped_record = popped
-        logger.debug(
-            f"BACKTRACK (verification failed): entry_id={popped_candidate.entry_id} answer={popped_candidate.answer} "
-            f"confidence={popped_record.confidence_at_placement:.2f} "
-            f"pattern={popped_record.pattern_at_placement} widening_level={popped_candidate.widening_level} "
-            f"failed={failed}"
-        )
-        return self._finalize_event(
-            {
-                "event": "backtrack",
-                "candidate": {
-                    "entry_id": popped_candidate.entry_id,
-                    "answer": popped_candidate.answer,
-                    "widening_level": popped_candidate.widening_level,
-                    "confidence": popped_record.confidence_at_placement,
-                    "pattern": popped_record.pattern_at_placement,
-                },
-                "verification_failed": failed,
-            },
-            newly_verified,
-        )
+    # Note: This method is now unused since verification happens before placement.
+    # Keeping it for now in case we need to handle post-placement verification failures
+    # (e.g., from backtracking or fallback operations).
 
     def get_recording(self) -> dict[str, Any] | None:
         """Get the recorded solve session as a dict. Returns None if recording is disabled."""
