@@ -49,7 +49,6 @@ class Solver:
         self.cache = CandidateCache()
         self._attempts: dict[str, AttemptState] = {eid: AttemptState() for eid in self.entries}
         self._placed: dict[str, PlacedRecord] = {}
-        self._placed_order: list[str] = []
         self._penalties: dict[tuple[str, str, int], dict[str, float]] = {}
         self._entry_backtracks: dict[str, int] = {}
         self._attempted_this_pass: set[str] = set()
@@ -468,9 +467,6 @@ class Solver:
             score_at_placement=score,
             is_fallback=is_fallback,
         )
-        if entry_id in self._placed_order:
-            self._placed_order.remove(entry_id)
-        self._placed_order.append(entry_id)
 
     def _record_backtrack(self, entry_id: str) -> None:
         self._entry_backtracks[entry_id] = self._entry_backtracks.get(entry_id, 0) + 1
@@ -480,35 +476,43 @@ class Solver:
         if rec is None:
             return None
 
-        # Collect crossing entries before removing
+        # Collect crossing entries before removing (by checking all entries for shared cells)
         entry = self.entries[entry_id]
         crossing_entries: set[str] = set()
-        for cell in entry.cells:
-            crossing_entries.update(cell.sources)
-        crossing_entries.discard(entry_id)
+        for crossing_id, crossing_entry in self.entries.items():
+            if crossing_id == entry_id:
+                continue
+            # If any cell is shared, it's a crossing entry
+            if any(cell in crossing_entry.cells for cell in entry.cells):
+                crossing_entries.add(crossing_id)
+        logger.debug(f"BACKTRACK: {len(crossing_entries)} crossing entries detected for {entry_id}")
 
+        # Remove the answer from the grid and from the Solver's list of placed entries
         candidate = Candidate(entry_id=rec.entry_id, answer=rec.answer, widening_level=rec.width_used)
         self.grid.remove_candidate(candidate)
+        self._placed.pop(entry_id, None)
 
+        # Apply a penalty to this answer so it is less likely (but not impossible!) to use again
         key = (entry_id, rec.pattern_at_placement, rec.width_used)
         self._penalties.setdefault(key, {})[rec.answer] = self._penalties.get(key, {}).get(rec.answer, 0.0) + 20.0
 
-        self._placed.pop(entry_id, None)
-        if entry_id in self._placed_order:
-            self._placed_order.remove(entry_id)
-
-        # Reset verified flag when backtracking
+        # Reset the entry's verified flag
         self.entries[entry_id].verified = False
 
-        # Unverify crossing entries that are now incomplete and were not explicitly placed
+        # For each crossing entry not explicitly placed, unverify and regenerate candidates
         for crossing_id in crossing_entries:
-            crossing_entry = self.entries.get(crossing_id)
-            if crossing_entry is None:
+            if crossing_id in self._placed:
+                logger.debug(f"BACKTRACK: Crossing entry {crossing_id} was explicitly placed, not affected by backtrack.")
                 continue
-            # Only unverify if: (1) now incomplete AND (2) never explicitly placed
-            if "." in crossing_entry.pattern and crossing_id not in self._placed:
-                crossing_entry.verified = False
-                logger.debug(f"BACKTRACK: Unverified crossing entry {crossing_id} (now incomplete)")
+            crossing_entry = self.entries.get(crossing_id)
+            assert crossing_entry is not None, "Invalid crossing entry ID " + crossing_id
+            crossing_entry.verified = False
+            crossing_attempt = self._attempts[crossing_id]
+            crossing_attempt.generated_pattern = crossing_entry.pattern
+            crossing_attempt.candidates = self._get_candidates(crossing_id, crossing_entry.pattern, crossing_attempt.current_width)
+            crossing_attempt.next_index = 0
+            logger.debug(f"BACKTRACK: Unverified and regenerated candidates for crossing entry {crossing_id} (pattern now '{crossing_entry.pattern}')")
+
 
         attempt = self._attempts[entry_id]
         attempt.current_width = 0
