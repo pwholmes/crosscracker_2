@@ -30,6 +30,7 @@ class LLM:
     load_dotenv()
     MODEL_NAME: str = os.environ.get("MODEL_NAME", "llama3.1:8b")
     OLLAMA_URL: str = "http://localhost:11434/api/generate"
+    print("Using Ollama model " + MODEL_NAME)
 
     # Optional hook for overriding candidate generation (used by simulated/test puzzles).
     # When set, generate_candidates() dispatches to this hook instead of calling the LLM.
