@@ -340,7 +340,7 @@ function processMessage(data) {
       document.getElementById('tally').style.display = 'none';
       // Find and hide the Across and Down headings
       setClueHeadingsVisible(false);
-      disableControls(true);
+      //disableControls(true);
     } else {
       // Puzzle loaded - show sections and "Loaded" message
       // Set status to Loaded when state is received (unless already solving/solved/failed)
@@ -396,15 +396,17 @@ function processMessage(data) {
       isPuzzlePlaying = false;
       setCompletedState();
 
-      // Prompt user to save recording
-      setTimeout(() => {
-        if (window.confirm('Puzzle solved! Do you want to save this recording?')) {
-          fetch('/api/save_recording', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-      }, 100);
+      // Only prompt to save recording in puzzle mode
+      if (!isReplayMode) {
+        setTimeout(() => {
+          if (window.confirm('Puzzle solved! Do you want to save this recording?')) {
+            fetch('/api/save_recording', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+          }
+        }, 100);
+      }
     } else if (ev.event === 'failed') {
       statusMessage.textContent = 'Failed';
       statusMessage.className = 'status-failed';
@@ -480,7 +482,7 @@ function replayPlay() {
       grid: replayGridState,
       entries: replayEntries,
       metrics: {
-        puzzle_id: currentRecording.puzzle,
+        puzzle_id: currentRecording.puzzle_id,
         steps: replayIndex + 1,
         fallbacks: fallbacks,
         backtracks: replayBacktrackCount,
@@ -549,7 +551,7 @@ function replayStep() {
     grid: replayGridState,
     entries: replayEntries,
     metrics: {
-      puzzle_id: currentRecording.puzzle,
+      puzzle_id: currentRecording.puzzle_id,
       steps: replayIndex + 1,
       fallbacks: fallbacks,
       backtracks: replayBacktrackCount,
@@ -581,7 +583,7 @@ function replayReset() {
       grid: replayGridState,
       entries: replayEntries,
       metrics: {
-        puzzle_id: currentRecording?.puzzle ?? null,
+        puzzle_id: currentRecording?.puzzle_id ?? null,
         steps: 0,
         fallbacks: 0,
         backtracks: 0,
@@ -677,7 +679,7 @@ async function loadSelectedRecording() {
           grid: replayGridState,
           entries: replayEntries,
           metrics: {
-            puzzle_id: currentRecording.puzzle,
+            puzzle_id: currentRecording.puzzle_id,
             steps: 0,
             fallbacks: 0,
             backtracks: 0,
