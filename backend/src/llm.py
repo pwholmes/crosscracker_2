@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections.abc import Callable
 from typing import Any
 import requests
@@ -12,8 +10,8 @@ from .model import Cell, Entry, ScoredCandidate
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
 _generate_candidates_hook: Callable[[Entry, int, int], list[Any]] | None = None
 
+#logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("src.llm")
-
 
 def normalize_candidate(answer: str) -> str:
     """Normalize a candidate answer: capitalize and remove spaces, punctuation, and digits.
@@ -30,7 +28,7 @@ class LLM:
     load_dotenv()
     MODEL_NAME: str = os.environ.get("MODEL_NAME", "llama3.1:8b")
     OLLAMA_URL: str = "http://localhost:11434/api/generate"
-    print("Using Ollama model " + MODEL_NAME)
+    #logger.debug("Using Ollama model " + MODEL_NAME)
 
     # Optional hook for overriding candidate generation (used by simulated/test puzzles).
     # When set, generate_candidates() dispatches to this hook instead of calling the LLM.
