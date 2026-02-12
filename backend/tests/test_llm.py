@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 from src.llm import LLM
-from src.model import Entry, Cell, ScoredCandidate
+from src.model import Entry, Cell, Candidate
 
 
 def create_test_entry(clue: str, answer: str, length: int) -> Entry:
@@ -56,7 +56,7 @@ def test_generate_candidates_with_malformed_response():
         
         # Should return empty list or only valid candidates
         assert isinstance(candidates, list)
-        assert all(isinstance(c, ScoredCandidate) for c in candidates)
+        assert all(isinstance(c, Candidate) for c in candidates)
 
 
 def test_generate_candidates_with_network_error():
@@ -114,8 +114,8 @@ def test_generate_candidates_with_hook():
     
     # Create a mock hook
     mock_hook = Mock(return_value=[
-        ScoredCandidate(answer="HOOKA", confidence=100.0),
-        ScoredCandidate(answer="HOOKB", confidence=90.0),
+        Candidate(answer="HOOKA", confidence=100.0),
+        Candidate(answer="HOOKB", confidence=90.0),
     ])
     
     # Set the hook

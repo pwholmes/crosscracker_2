@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from src.model import Candidate, Cell, Entry, Grid, ScoredCandidate
+from src.model import Candidate, Cell, Entry, Grid
 from src.solver import Solver
 from src.puzzles.simple_9x9 import create_grid
 
@@ -13,8 +13,8 @@ def test_solver_can_start():
         entry: Entry,
         widening_level: int,
         max_candidates: int | None = None,
-    ) -> list[ScoredCandidate]:
-        return [ScoredCandidate(answer=entry.correct_answer, confidence=1.0)]
+    ) -> list[Candidate]:
+        return [Candidate(answer=entry.correct_answer, confidence=1.0)]
     
     def mock_verify(clue: str, answer: str) -> bool:
         """Verify answer by checking against correct answer in grid."""

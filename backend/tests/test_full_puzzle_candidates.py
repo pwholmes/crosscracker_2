@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 from src.puzzles.simple_9x9 import create_grid
 from src.solver import Solver
-from src.model import Entry, ScoredCandidate
+from src.model import Entry, Candidate
 
 
 class CandidateItem(TypedDict):
@@ -92,7 +92,7 @@ def test_full_puzzle_scored_candidates_exercises_backtracking():
 
         by_clue[entry.clue] = (init, refined)
 
-    def mock_generate(entry: Entry, widening_level: int, max_candidates: int | None = None) -> list[ScoredCandidate]:
+    def mock_generate(entry: Entry, widening_level: int, max_candidates: int | None = None) -> list[Candidate]:
         if max_candidates is None:
             max_candidates = 5
         cands = by_clue.get(entry.clue)
@@ -106,8 +106,8 @@ def test_full_puzzle_scored_candidates_exercises_backtracking():
         # Always return correct-length answers.
         assert all(len(item["answer"]) == len(out_dicts[0]["answer"]) for item in out_dicts)
         
-        # Convert to ScoredCandidate objects
-        return [ScoredCandidate(answer=item["answer"], confidence=item["confidence"]) for item in out_dicts]
+        # Convert to Candidate objects
+        return [Candidate(answer=item["answer"], confidence=item["confidence"]) for item in out_dicts]
 
     def mock_verify(clue: str, answer: str) -> bool:
         """Verify answer by checking against correct answer in grid."""

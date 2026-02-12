@@ -69,18 +69,18 @@ class Entry:
         return "".join(cell.letter or "." for cell in self.cells)
     
 
+
 @dataclass
 class Candidate:
-    entry_id: str
-    answer: str
-    widening_level: int
+    """
+    Represents a possible answer for a crossword entry, including scoring and placement context.
+    Combines the previous Candidate and ScoredCandidate classes.
+    """
+    entry_id: str = ""
+    answer: str = ""
+    widening_level: int = 0
     is_fallback: bool = False
-
-
-@dataclass(frozen=True)
-class ScoredCandidate:
-    answer: str
-    confidence: float
+    confidence: float = 0.0
     selection_score: float = 0.0
 
 
@@ -130,14 +130,14 @@ class CandidateCache:
     """Cache candidate lists by (entry_id, pattern, widening_level)."""
     def __init__(self):
         """Initialize the in-memory cache store."""
-        self._cache: dict[tuple[str, str, int], list[ScoredCandidate]] = {}
+        self._cache: dict[tuple[str, str, int], list[Candidate]] = {}
 
     def get(
         self,
         entry_id: str,
         pattern: str,
         widening_level: int,
-    ) -> list[ScoredCandidate] | None:
+    ) -> list[Candidate] | None:
         """Return cached candidates for the given key, or None if not present."""
         return self._cache.get((entry_id, pattern, widening_level))
 
@@ -146,7 +146,7 @@ class CandidateCache:
         entry_id: str,
         pattern: str,
         widening_level: int,
-        candidates: list[ScoredCandidate],
+        candidates: list[Candidate],
     ) -> None:
         """Store candidates for the given key, overwriting any existing entry."""
         self._cache[(entry_id, pattern, widening_level)] = candidates

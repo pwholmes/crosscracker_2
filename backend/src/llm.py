@@ -5,7 +5,7 @@ import logging
 import re
 import os
 from dotenv import load_dotenv
-from .model import Cell, Entry, ScoredCandidate
+from .model import Cell, Entry, Candidate
 
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
 _generate_candidates_hook: Callable[[Entry, int, int], list[Any]] | None = None
@@ -59,7 +59,7 @@ class LLM:
             entry: Entry,
             widening_level: int,
             max_candidates: int | None = None,
-    ) -> list[ScoredCandidate]:
+    ) -> list[Candidate]:
         """
         Given all the information we have about a particular crossword clue, prompt the LLM for a
             list of potential answers ("candidates").
@@ -178,7 +178,7 @@ class LLM:
     def _score_candidates(
             entry: Entry,
             answers: list[str],
-    ) -> list[ScoredCandidate]:
+    ) -> list[Candidate]:
         """
         Score a list of candidate answers independently (evaluation phase).
         
@@ -187,7 +187,7 @@ class LLM:
         
         :param entry: The crossword entry
         :param answers: List of candidate answers to score
-        :return: List of ScoredCandidate with confidence ratings
+        :return: List of Candidate with confidence ratings
         """
         if not answers:
             return []
@@ -252,17 +252,17 @@ class LLM:
                         scored[answer] = float(confidence)
             
             # Return scored candidates, maintaining original order
-            result_candidates: list[ScoredCandidate] = []
+            result_candidates: list[Candidate] = []
             for answer in answers:
                 confidence = scored.get(answer, 25.0)  # Default to low confidence if not scored
-                result_candidates.append(ScoredCandidate(answer=answer, confidence=confidence))
+                result_candidates.append(Candidate(answer=answer, confidence=confidence))
             
             logger.debug(f"[LLM SCORE RESULT] Scored candidates: {[(c.answer, c.confidence) for c in result_candidates]}")
             return result_candidates
         except Exception as e:
             logger.error(f"Ollama scoring query failed: {e}")
             # Fallback: return unscored candidates with default confidence
-            return [ScoredCandidate(answer=answer, confidence=25.0) for answer in answers]
+            return [Candidate(answer=answer, confidence=25.0) for answer in answers]
 
     @staticmethod
     def verify_answer(

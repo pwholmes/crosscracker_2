@@ -12,7 +12,7 @@ from typing import Dict, List, Tuple, TypedDict
 
 from .simple_9x9 import create_grid as create_grid_9x9
 from .registry import GenerateCandidatesHook, register_puzzle
-from model import Grid, Entry, ScoredCandidate
+from model import Grid, Entry, Candidate
 
 
 class CandidateItem(TypedDict):
@@ -79,7 +79,7 @@ def _make_hook(backtrack: bool) -> GenerateCandidatesHook:
 
         by_clue[entry.clue] = (init, refined)
 
-    def hook(entry: Entry, widening_level: int, max_candidates: int) -> list[ScoredCandidate]:
+    def hook(entry: Entry, widening_level: int, max_candidates: int) -> list[Candidate]:
         cands = by_clue.get(entry.clue)
         if cands is None:
             return []
@@ -88,7 +88,7 @@ def _make_hook(backtrack: bool) -> GenerateCandidatesHook:
         use_init = widening_level == 0 and empty_pattern
         chosen: List[CandidateItem] = cands[0] if use_init else cands[1]
         selected: List[CandidateItem] = chosen[:max_candidates]
-        return [ScoredCandidate(answer=item["answer"], confidence=item["confidence"]) for item in selected]
+        return [Candidate(answer=item["answer"], confidence=item["confidence"]) for item in selected]
 
     return hook
 

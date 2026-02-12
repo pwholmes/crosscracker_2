@@ -4,7 +4,7 @@ from typing import Any, Callable
 import asyncio
 import logging
 from .llm import LLM
-from .model import Candidate, CandidateCache, Entry, Grid, ScoredCandidate
+from .model import Candidate, CandidateCache, Entry, Grid
 
 logger = logging.getLogger("src.solver")
 
@@ -12,7 +12,7 @@ logger = logging.getLogger("src.solver")
 class AttemptState:
     current_width: int = 0
     generated_pattern: str = ""
-    candidates: list[ScoredCandidate] | None = None
+    candidates: list[Candidate] | None = None
     next_index: int = 0
 
 
@@ -235,7 +235,7 @@ class Solver:
             return None
         return best_entry_id, best_score
 
-    def _select_best_candidate(self, entry_id: str) -> ScoredCandidate | None:
+    def _select_best_candidate(self, entry_id: str) -> Candidate | None:
         entry = self.entries[entry_id]
         attempt = self._attempts[entry_id]
         pattern = entry.pattern
@@ -590,7 +590,7 @@ class Solver:
                 return False
         return True
 
-    def _get_candidates(self, entry_id: str, pattern: str, widening_level: int) -> list[ScoredCandidate]:
+    def _get_candidates(self, entry_id: str, pattern: str, widening_level: int) -> list[Candidate]:
         cached = self.cache.get(entry_id, pattern, widening_level)
         if cached is None:
             entry = self.entries[entry_id]

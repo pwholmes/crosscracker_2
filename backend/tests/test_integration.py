@@ -6,7 +6,7 @@ from unit tests using: pytest -m integration
 
 import pytest
 from src.llm import LLM
-from src.model import Entry, Cell, ScoredCandidate
+from src.model import Entry, Cell, Candidate
 
 
 def create_test_entry(clue: str, answer: str, length: int) -> Entry:
@@ -25,7 +25,7 @@ def test_generate_candidates_integration():
     assert len(candidates) > 0
     assert len(candidates) <= LLM.MAX_CANDIDATES
     for cand in candidates:
-        assert isinstance(cand, ScoredCandidate)
+        assert isinstance(cand, Candidate)
         assert len(cand.answer) == entry.length
 
 
