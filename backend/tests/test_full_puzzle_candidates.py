@@ -11,7 +11,6 @@ candidate selection and heuristic backtracking.
 
 from __future__ import annotations
 
-import pytest
 from typing import Dict, List, Tuple, TypedDict
 from unittest.mock import patch
 
@@ -40,7 +39,6 @@ def _shift_letters(answer: str) -> str:
     return wrong
 
 
-@pytest.mark.xfail(reason="Mock setup issues with verification", strict=False)
 def test_full_puzzle_scored_candidates_exercises_backtracking():
     grid = create_grid()
 

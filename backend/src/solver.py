@@ -113,65 +113,78 @@ class Solver:
             return self._finalize_event({"event": "solved"}, [])
 
         while True:
+            # Select the best unfilled entry
             selection = self._select_best_unfilled_entry()
             if selection is None:
                 return self._handle_stall([])
-
             entry_id, selection_score = selection
+
+            # Mark this entry as having been attempted in this pass
             self._attempted_this_pass.add(entry_id)
-            
-            # Before placing, check if any crossing entries would be completed and verify them
-            cand = self._select_best_candidate(entry_id)
-            if cand is None:
+
+            # Get the best candidate answer for this entry            
+            scored_candidate = self._select_best_candidate(entry_id)
+            if scored_candidate is None:
                 continue
-            
-            crossing_patterns = self._compute_crossing_patterns_if_placed(entry_id, cand.answer)
-            if crossing_patterns:
+
+            # Check if any crossing entries would be completed by the placement of this answer
+            crossing_entries = self._predict_crossing_entries(entry_id, scored_candidate.answer)
+            if crossing_entries:
                 logger.debug(
-                    f"VERIFY: Checking crossing entries for {entry_id}='{cand.answer}': "
-                    f"{list(crossing_patterns.keys())}"
+                    f"VERIFY: Checking crossing entries for {entry_id}='{scored_candidate.answer}': "
+                    f"{list(crossing_entries.keys())}"
                 )
-            newly_verified, verification_failed = self._verify_entries_with_patterns(crossing_patterns)
-            if verification_failed:
+            # Verify the crossing entries
+            verified_entry_ids, failed_entry_ids = self.verify_answers(crossing_entries)
+            if failed_entry_ids:
                 # Reject this candidate and continue trying others
-                self._reject_candidate(entry_id, cand.answer)
+                self._reject_candidate(entry_id, scored_candidate.answer)
                 continue
             
             # Verification passed - now actually place the entry
-            placed = self._place_entry(entry_id, selection_score)
-            if placed is None:
-                continue
+            candidate = Candidate(entry_id=entry_id, answer=scored_candidate.answer, widening_level=0)
+            self.grid.place_candidate(candidate)
+            self.entries[entry_id].verified = True
+            self._record_placement(
+                entry_id=entry_id,
+                answer=candidate.answer,
+                width_used=0,
+                pattern_at_placement=self.entries[entry_id].pattern,
+                confidence=1.0,
+                score=selection_score,
+                is_fallback=False,
+            )
 
             # Mark crossing entries as verified now that placement is committed
-            for verified_id in newly_verified:
-                self.entries[verified_id].verified = True
+            for verified_entry_id in verified_entry_ids:
+                self.entries[verified_entry_id].verified = True
             
             self._attempted_this_pass.clear()
             self._stall_passes = 0
 
-            rec = self._placed.get(placed.entry_id)
+            rec = self._placed.get(candidate.entry_id)
             confidence = rec.confidence_at_placement if rec is not None else None
             pattern_at_placement = rec.pattern_at_placement if rec is not None else None
             score_at_placement = rec.score_at_placement if rec is not None else None
             logger.debug(
-                f"PLACED entry={entry_id} answer='{placed.answer}' "
+                f"PLACED entry={entry_id} answer='{candidate.answer}' "
                 f"confidence={f'{confidence:.2f}' if confidence is not None else 'N/A'} "
                 f"score={f'{score_at_placement:.2f}' if score_at_placement is not None else 'N/A'} "
-                f"pattern={pattern_at_placement} widening_level={placed.widening_level}"
+                f"pattern={pattern_at_placement} widening_level={candidate.widening_level}"
             )
             return self._finalize_event(
                 {
                     "event": "placed",
                     "candidate": {
-                        "entry_id": placed.entry_id,
-                        "answer": placed.answer,
-                        "widening_level": placed.widening_level,
+                        "entry_id": candidate.entry_id,
+                        "answer": candidate.answer,
+                        "widening_level": candidate.widening_level,
                         "confidence": confidence,
                         "score": score_at_placement,
                         "pattern": pattern_at_placement,
                     },
                 },
-                newly_verified,
+                verified_entry_ids,
             )
 
     def _select_best_unfilled_entry(self) -> tuple[str, float] | None:
@@ -254,53 +267,43 @@ class Solver:
         
         return best_cand
 
-    def _place_entry(self, entry_id: str, selection_score: float) -> Candidate | None:
-        entry = self.entries[entry_id]
-        attempt = self._attempts[entry_id]
-
-        while attempt.current_width <= LLM.MAX_WIDENING:
-            pattern = entry.pattern
-            if attempt.candidates is None or attempt.generated_pattern != pattern:
-                attempt.generated_pattern = pattern
-                attempt.candidates = self._get_candidates(entry_id, pattern, attempt.current_width)
-                attempt.next_index = 0
-
-            key = (entry_id, attempt.generated_pattern, attempt.current_width)
-            penalties = self._penalties.setdefault(key, {})
-
-            while attempt.next_index < len(attempt.candidates):
-                cand = attempt.candidates[attempt.next_index]
-                attempt.next_index += 1
-                if len(cand.answer) != entry.length:
-                    penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
-                    continue
-
-                candidate = Candidate(entry_id=entry_id, answer=cand.answer, widening_level=attempt.current_width)
-                
-                if not self.grid.place_candidate(candidate):
-                    penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
-                    continue
-
-                # Explicit placements are treated as trusted/verified.
-                self.entries[entry_id].verified = True
-
-                self._record_placement(
-                    entry_id=entry_id,
-                    answer=cand.answer,
-                    width_used=attempt.current_width,
-                    pattern_at_placement=pattern,
-                    confidence=cand.confidence,
-                    score=selection_score,
-                    is_fallback=False,
-                )
-                return candidate
-
-            # No candidates fit at this width: widen and regenerate using current pattern.
-            attempt.current_width += 1
-            attempt.candidates = None
-            attempt.next_index = 0
-
-        return None
+    # Old _place_entry logic (commented out for reference)
+    # def _place_entry(self, entry_id: str, selection_score: float) -> Candidate | None:
+    #     entry = self.entries[entry_id]
+    #     attempt = self._attempts[entry_id]
+    #     while attempt.current_width <= LLM.MAX_WIDENING:
+    #         pattern = entry.pattern
+    #         if attempt.candidates is None or attempt.generated_pattern != pattern:
+    #             attempt.generated_pattern = pattern
+    #             attempt.candidates = self._get_candidates(entry_id, pattern, attempt.current_width)
+    #             attempt.next_index = 0
+    #         key = (entry_id, attempt.generated_pattern, attempt.current_width)
+    #         penalties = self._penalties.setdefault(key, {})
+    #         while attempt.next_index < len(attempt.candidates):
+    #             cand = attempt.candidates[attempt.next_index]
+    #             attempt.next_index += 1
+    #             if len(cand.answer) != entry.length:
+    #                 penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
+    #                 continue
+    #             candidate = Candidate(entry_id=entry_id, answer=cand.answer, widening_level=attempt.current_width)
+    #             if not self.grid.place_candidate(candidate):
+    #                 penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
+    #                 continue
+    #             self.entries[entry_id].verified = True
+    #             self._record_placement(
+    #                 entry_id=entry_id,
+    #                 answer=cand.answer,
+    #                 width_used=attempt.current_width,
+    #                 pattern_at_placement=pattern,
+    #                 confidence=cand.confidence,
+    #                 score=selection_score,
+    #                 is_fallback=False,
+    #             )
+    #             return candidate
+    #         attempt.current_width += 1
+    #         attempt.candidates = None
+    #         attempt.next_index = 0
+    #     return None
 
     def _try_apply_fallback_and_create_event(
         self,
@@ -476,15 +479,8 @@ class Solver:
         if rec is None:
             return None
 
-        # Collect crossing entries before removing (by checking all entries for shared cells)
-        entry = self.entries[entry_id]
-        crossing_entries: set[str] = set()
-        for crossing_id, crossing_entry in self.entries.items():
-            if crossing_id == entry_id:
-                continue
-            # If any cell is shared, it's a crossing entry
-            if any(cell in crossing_entry.cells for cell in entry.cells):
-                crossing_entries.add(crossing_id)
+        # Collect crossing entries before removing
+        crossing_entries = self.get_crossing_entry_ids(entry_id)
         logger.debug(f"BACKTRACK: {len(crossing_entries)} crossing entries detected for {entry_id}")
 
         # Remove the answer from the grid and from the Solver's list of placed entries
@@ -603,7 +599,7 @@ class Solver:
             return candidates
         return cached
 
-    def _compute_crossing_patterns_if_placed(self, entry_id: str, answer: str) -> dict[str, str]:
+    def _predict_crossing_entries(self, entry_id: str, answer: str) -> dict[str, str]:
         """Compute hypothetical patterns for crossing entries if we placed this answer.
         
         Returns a dict mapping entry_id -> hypothetical_pattern for entries that would
@@ -613,33 +609,25 @@ class Solver:
         crossing_patterns: dict[str, str] = {}
         seen_crossings: set[str] = set()
         
-        # For each cell in the entry, find ALL crossing entries (not just placed ones)
+        # For each cell in the entry, find crossing entries
         for _, (cell, ch) in enumerate(zip(entry.cells, answer)):
-            # Find all entries that contain this cell
-            for crossing_id, crossing_entry in self.entries.items():
-                if crossing_id == entry_id:
-                    continue
+            for crossing_id in self.get_crossing_entry_ids(entry_id):
                 if crossing_id in seen_crossings:
                     continue
-                    
-                # Check if this crossing entry contains the current cell
+                crossing_entry = self.entries[crossing_id]
                 if cell not in crossing_entry.cells:
                     continue
-                    
                 seen_crossings.add(crossing_id)
-                
                 # Skip if already explicitly placed
                 if crossing_id in self._placed:
                     logger.debug(
                         f"VERIFY SKIP: {crossing_id} already placed (crossing {entry_id})"
                     )
                     continue
-                
                 # Compute what the pattern would be after placing
                 hypothetical_pattern = list(crossing_entry.pattern)
                 crossing_cell_idx = crossing_entry.cells.index(cell)
                 hypothetical_pattern[crossing_cell_idx] = ch
-                
                 pattern_str = "".join(hypothetical_pattern)
                 # Only include if it would be complete
                 if "." not in pattern_str:
@@ -653,21 +641,19 @@ class Solver:
                         f"VERIFY SKIP: {crossing_id} would be incomplete: '{pattern_str}' "
                         f"(crossing {entry_id}='{answer}')"
                     )
-        
         return crossing_patterns
 
-    def _verify_entries_with_patterns(self, patterns: dict[str, str]) -> tuple[list[str], list[str]]:
-        """Verify entries using provided patterns (hypothetical or actual).
-        
+    def verify_answers(self, answers: dict[str, str]) -> tuple[list[str], list[str]]:
+        """Verify answers.
         Returns (newly_verified, failed) lists of entry IDs.
         """
-        if not patterns:
+        if not answers:
             return [], []
             
-        newly_verified: list[str] = []
-        failed: list[str] = []
+        verified_entry_ids: list[str] = []
+        failed_entry_ids: list[str] = []
         
-        for entry_id, pattern in patterns.items():
+        for entry_id, answer in answers.items():
             entry = self.entries.get(entry_id)
             if entry is None:
                 continue
@@ -677,21 +663,21 @@ class Solver:
                 logger.debug(f"VERIFY SKIP: {entry_id} already verified")
                 continue
             
-            if LLM.verify_answer(entry, pattern):
+            if LLM.verify_answer(entry, answer):
                 # Don't set verified flag yet - we haven't actually placed anything
-                newly_verified.append(entry_id)
-                logger.debug(f"VERIFY ✓ SUCCESS: {entry_id}='{pattern}'")
+                verified_entry_ids.append(entry_id)
+                logger.debug(f"VERIFY ✓ SUCCESS: {entry_id}='{answer}'")
             else:
-                failed.append(entry_id)
-                logger.debug(f"VERIFY ✗ FAILED: {entry_id}='{pattern}'")
+                failed_entry_ids.append(entry_id)
+                logger.debug(f"VERIFY ✗ FAILED: {entry_id}='{answer}'")
         
-        if newly_verified or failed:
+        if verified_entry_ids or failed_entry_ids:
             logger.debug(
-                f"VERIFY SUMMARY: {len(newly_verified)} passed, {len(failed)} failed "
-                f"(passed: {newly_verified}, failed: {failed})"
+                f"VERIFY SUMMARY: {len(verified_entry_ids)} passed, {len(failed_entry_ids)} failed "
+                f"(passed: {verified_entry_ids}, failed: {failed_entry_ids})"
             )
         
-        return newly_verified, failed
+        return verified_entry_ids, failed_entry_ids
     
     def _reject_candidate(self, entry_id: str, answer: str) -> None:
         """Reject a candidate by applying a penalty, preventing it from being selected again."""
@@ -712,9 +698,18 @@ class Solver:
         self.record_event(event)
         return event
 
-    # Note: This method is now unused since verification happens before placement.
-    # Keeping it for now in case we need to handle post-placement verification failures
-    # (e.g., from backtracking or fallback operations).
+
+    def get_crossing_entry_ids(self, entry_id: str) -> set[str]:
+        """Return a set of entry IDs that cross the given entry (share at least one cell)."""
+        entry = self.entries[entry_id]
+        crossing_ids: set[str] = set()
+        for other_id, other_entry in self.entries.items():
+            if other_id == entry_id:
+                continue
+            if any(cell in other_entry.cells for cell in entry.cells):
+                crossing_ids.add(other_id)
+        return crossing_ids
+
 
     def get_recording(self) -> dict[str, Any] | None:
         """Get the recorded solve session as a dict. Returns None if recording is disabled."""
@@ -791,3 +786,4 @@ class Solver:
             f"Total events: {event_count}\n"
             f"Event types: {event_types}"
         )
+

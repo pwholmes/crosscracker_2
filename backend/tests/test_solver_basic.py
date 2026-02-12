@@ -50,7 +50,7 @@ def test_verify_entries_checks_crossings_only():
     grid.place_candidate(Candidate("2D", "BD", widening_level=0))
     grid.place_candidate(Candidate("3A", "EF", widening_level=0))
 
-    crossing_ids = solver._get_crossing_entry_ids("1A")
+    crossing_ids = solver.get_crossing_entry_ids("1A")
     assert crossing_ids == {"1D", "2D"}
 
     verified_ids: list[str] = []
@@ -59,10 +59,13 @@ def test_verify_entries_checks_crossings_only():
         verified_ids.append(entry.entry_id)
         return True
 
-    with patch("src.llm.LLM.verify_answer", side_effect=mock_verify):
-        newly_verified, failed = solver._verify_entries(crossing_ids)
+    # Prepare a dict of entry_id -> current pattern (answer) for crossing entries
+    answers = {eid: grid.entries[eid].pattern for eid in crossing_ids}
 
-    assert set(newly_verified) == {"1D", "2D"}
-    assert failed == []
+    with patch("src.llm.LLM.verify_answer", side_effect=mock_verify):
+        verified_entry_ids, failed_entry_ids = solver.verify_answers(answers)
+
+    assert set(verified_entry_ids) == {"1D", "2D"}
+    assert failed_entry_ids == []
     assert grid.entries["3A"].verified is False
     assert set(verified_ids) == {"1D", "2D"}
