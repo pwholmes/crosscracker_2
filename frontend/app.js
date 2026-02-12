@@ -9,6 +9,7 @@ const pauseBtn = document.getElementById("pause");
 const stepBtn = document.getElementById("step");
 const resetBtn = document.getElementById("reset");
 
+
 const modeToggle = document.getElementById('mode-toggle');
 const itemSelect = document.getElementById('item-select');
 const itemSelectLabel = document.getElementById('item-select-label');
@@ -239,7 +240,8 @@ function log(msg) {
 
 async function switchMode(mode) {
   currentMode = mode;
-  
+
+
   if (mode === 'puzzles') {
     itemSelectLabel.textContent = 'Puzzle:';
     replaySpeedControl.style.display = 'none';
@@ -306,7 +308,8 @@ async function refreshItemList() {
       recordings.forEach((rec) => {
         const opt = document.createElement('option');
         opt.value = rec.id;
-        opt.textContent = `${rec.puzzle_id} (${rec.width}x${rec.height}) - ${rec.event_count} events`;
+        const title = rec.puzzle_title || rec.puzzle_id || rec.puzzle || 'Unknown Puzzle';
+        opt.textContent = `${title} (${rec.width}x${rec.height}) - ${rec.event_count} events`;
         itemSelect.appendChild(opt);
       });
     } catch (err) {
@@ -393,6 +396,16 @@ function processMessage(data) {
       statusMessage.className = 'status-solved';
       isPuzzlePlaying = false;
       setCompletedState();
+
+      // Prompt user to save recording
+      setTimeout(() => {
+        if (window.confirm('Puzzle solved! Do you want to save this recording?')) {
+          fetch('/api/save_recording', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      }, 100);
     } else if (ev.event === 'failed') {
       statusMessage.textContent = 'Failed';
       statusMessage.className = 'status-failed';
@@ -613,8 +626,16 @@ async function loadRecording(recordingId) {
       const puzzleRes = await fetch(`/api/puzzle/${currentRecording.puzzle}`);
       if (puzzleRes.ok) {
         const puzzleData = await puzzleRes.json();
+        if (puzzleData.error_type === 'puzzle_not_found') {
+          statusMessage.textContent = `Error: The puzzle for this recording (ID: ${currentRecording.puzzle}) is not available.`;
+          statusMessage.className = 'error';
+          log(`[error] ${puzzleData.error}`);
+          entriesAcrossList.innerHTML = '';
+          entriesDownList.innerHTML = '';
+          setClueHeadingsVisible(false);
+          return;
+        }
         entryToCells = buildEntryToCellsMap(puzzleData);
-        
         // Build base entries template from puzzle data
         const entriesForDisplay = {};
         for (const [entryId, entry] of Object.entries(puzzleData.entries)) {
@@ -626,17 +647,14 @@ async function loadRecording(recordingId) {
             verified: false,
           };
         }
-        
         // Initialize replay base state
         replayBaseGridState = cloneJson(currentRecording.grid_state);
         replayGridState = cloneJson(currentRecording.grid_state);
-        
         // Initialize empty letters matrix (not stored in recording)
         const rows = replayGridState.rows || currentRecording.height;
         const cols = replayGridState.cols || currentRecording.width;
         replayBaseGridState.letters = Array(rows).fill(null).map(() => Array(cols).fill(''));
         replayGridState.letters = Array(rows).fill(null).map(() => Array(cols).fill(''));
-        
         // Compute clue numbers from puzzle data
         const numbers = Array(rows).fill(null).map(() => Array(cols).fill(null));
         for (const [entryId, cells] of Object.entries(entryToCells)) {
@@ -648,13 +666,11 @@ async function loadRecording(recordingId) {
         }
         replayBaseGridState.numbers = numbers;
         replayGridState.numbers = numbers;
-        
         replayBaseEntries = cloneJson(entriesForDisplay);
         replayFallbackEntries.clear();
         replayPlacedEntries.clear();
         replayBacktrackCount = 0;
         replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
-        
         // Dispatch initial state through unified message path
         processMessage({
           type: 'state',

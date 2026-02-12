@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from src.model import Candidate, Cell, Entry, Grid
 from src.solver import Solver
-from src.puzzles.simple_9x9 import create_grid
+from puzzles.crosshare_daybreak_15_9x9 import create_grid
 
 def test_solver_can_start():
     grid = create_grid()

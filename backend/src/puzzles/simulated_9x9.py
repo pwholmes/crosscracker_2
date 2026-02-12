@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Tuple, TypedDict
 
-from .simple_9x9 import create_grid as create_grid_9x9
+from .crosshare_daybreak_15_9x9 import create_grid as create_grid_9x9
 from .registry import GenerateCandidatesHook, register_puzzle
 from model import Grid, Entry, Candidate
 

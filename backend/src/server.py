@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from pydantic import BaseModel
 from typing import Any, Callable, cast
 import uvicorn
@@ -39,9 +39,6 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 RECORDINGS_DIR = BASE_DIR / "backend" / "recordings"
 RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
 PLAY_INTERVAL_SECONDS = 0
-
-# Read RECORDING from .env (default True)
-RECORDING_ENABLED = os.environ.get("RECORDING", "true").lower() in ("1", "true", "yes", "on")
 
 # Logger
 logger = logging.getLogger("src.server")
@@ -209,13 +206,11 @@ def _step_and_update_metrics() -> dict[str, Any]:
     return ev
 
 
-def _save_recording_if_enabled() -> None:
-    """Save the current solver recording if recording is enabled."""
-    if not RECORDING_ENABLED:
-        return
+def _save_recording() -> None:
+    """Save the current solver recording."""
+    # This function is now only called when the user requests to save the recording.
     if solver is None or not hasattr(solver, 'get_recording'):
         return
-    
     recording = solver.get_recording()
     if recording is None:
         return
@@ -225,7 +220,7 @@ def _save_recording_if_enabled() -> None:
         recording['id'] = recording_id
         recording['timestamp'] = datetime.now().isoformat()
         recording['event_count'] = len(recording.get('events', []))
-        
+
         # Add grid state for replay
         if grid is not None:
             # Build initial grid state
@@ -237,25 +232,25 @@ def _save_recording_if_enabled() -> None:
                     used_cells.add((cell.row, cell.col))
                     max_r = max(max_r, cell.row)
                     max_c = max(max_c, cell.col)
+
             rows = max_r + 1
             cols = max_c + 1
-            
+
             blocks = [[True for _ in range(cols)] for _ in range(rows)]
             for e in grid.entries.values():
                 for cell in e.cells:
                     blocks[cell.row][cell.col] = False
-            
+
             recording['grid_state'] = {
                 'rows': rows,
                 'cols': cols,
                 'blocks': blocks,
             }
-        
-        # Generate filename based on puzzle name and ordinal
-        puzzle_name = recording.get('puzzle', 'unknown')
-        # Sanitize puzzle name for filename (replace spaces and special chars)
-        safe_name = puzzle_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
-        
+
+        # Generate filename based on puzzle_id and ordinal
+        puzzle_id = recording.get('puzzle_id', recording.get('puzzle', 'unknown'))
+        safe_name = str(puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_')
+
         # Find next available ordinal
         ordinal = 1
         while True:
@@ -264,12 +259,12 @@ def _save_recording_if_enabled() -> None:
             if not filepath.exists():
                 break
             ordinal += 1
-        
+
         # Save to JSON file
         with open(filepath, 'w') as f:
             json.dump(recording, f, indent=2)
-        
-        logger.info(f"Recording saved: {filename} (id: {recording_id}) for puzzle {puzzle_name}")
+
+        logger.info(f"Recording saved: {filename} (id: {recording_id}) for puzzle {puzzle_id}")
     except Exception as e:
         logger.error(f"Failed to save recording: {e}")
 
@@ -318,8 +313,7 @@ async def start_player() -> None:
                 ev = await _emit_solver_step()
             if ev.get("event") in ("solved", "failed"):
                 play_event.clear()
-                # Save recording when auto-play completes
-                await asyncio.to_thread(_save_recording_if_enabled)
+                # Recording is only saved if user confirms via frontend
             await asyncio.sleep(PLAY_INTERVAL_SECONDS)
 
     asyncio.create_task(player_loop())
@@ -362,9 +356,7 @@ async def step_once() -> dict[str, Any]:
         return {"event": "error", "message": "No puzzle loaded"}
     async with solver_lock:
         ev = await _emit_solver_step()
-    # Save recording when stepping completes the puzzle
-    if ev.get("event") in ("solved", "failed"):
-        await asyncio.to_thread(_save_recording_if_enabled)
+    # Recording is only saved if user confirms via frontend
     return ev
 
 
@@ -389,6 +381,14 @@ async def reset() -> dict[str, str]:
 @app.get("/state")
 async def get_state():
     return serialize_state()
+
+
+@app.post("/api/save_recording")
+async def save_recording_decision(request: Request) -> dict[str, Any]:
+    """Save the current solver recording if the user confirms saving."""
+    _save_recording()
+    logger.info("Recording saved by user request.")
+    return {"success": True, "saved": True}
 
 
 @app.get("/api/recordings")
@@ -442,8 +442,13 @@ def get_puzzle(puzzle_id: str) -> dict[str, Any]:
     """Get puzzle metadata including entries and their cell coordinates."""
     try:
         # Load the puzzle to get its entries
-        grid, _ = puzzles.load_puzzle(puzzle_id=puzzle_id)
-        
+        try:
+            grid, _ = puzzles.load_puzzle(puzzle_id=puzzle_id)
+        except KeyError:
+            msg = f"Puzzle ID '{puzzle_id}' is not registered. This recording or request refers to a puzzle that is not available."
+            logger.warning(msg)
+            return {"error": msg, "error_type": "puzzle_not_found", "puzzle_id": puzzle_id}
+
         # Build entry-to-cells mapping from the grid
         entries: dict[str, dict[str, Any]] = {}
         for entry_id, entry in grid.entries.items():
@@ -451,14 +456,14 @@ def get_puzzle(puzzle_id: str) -> dict[str, Any]:
             cells: list[list[int]] = []
             for cell in entry.cells:
                 cells.append([int(cell.row), int(cell.col)])
-            
+
             entries[entry_id] = {
                 "clue": entry.clue,
                 "answer": entry.correct_answer,
                 "length": entry.length,
                 "cells": cells,
             }
-        
+
         return {
             "puzzle_id": puzzle_id,
             "width": grid.width,
@@ -475,6 +480,7 @@ def get_puzzle(puzzle_id: str) -> dict[str, Any]:
 @app.get("/puzzles")
 def list_puzzles():
     return puzzles.list_puzzles()
+
 
 @app.post("/puzzles/{puzzle_id}/load")
 async def load_puzzle(puzzle_id: str):

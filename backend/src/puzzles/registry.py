@@ -5,7 +5,6 @@ Stores puzzle factories and optional simulation hooks.
 Simulated puzzles can provide a `generate_candidates` hook that the server can
 install into `llm_interface` at load time, allowing UI-driven demo/fixtures.
 """
-
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -63,3 +62,8 @@ def get_default_puzzle_id() -> str:
 def load_puzzle(puzzle_id: str) -> tuple[Grid, GenerateCandidatesHook | None]:
     spec = _PUZZLES[puzzle_id]
     return spec.factory(), spec.generate_candidates_hook
+
+
+def get_puzzle_spec(puzzle_id: str) -> PuzzleSpec | None:
+    """Return the PuzzleSpec for a given puzzle_id, or None if not found."""
+    return _PUZZLES.get(puzzle_id)

@@ -715,9 +715,21 @@ class Solver:
         """Get the recorded solve session as a dict. Returns None if recording is disabled."""
         if self._recording is None:
             return None
-        
+
+        # Try to get puzzle_id and title from the grid and registry
+        puzzle_id = getattr(self.grid, 'puzzle_id', None)
+        puzzle_title = None
+        if puzzle_id is not None:
+            try:
+                from .puzzles.registry import get_puzzle_spec
+                spec = get_puzzle_spec(puzzle_id)
+                if spec is not None:
+                    puzzle_title = spec.title
+            except Exception:
+                pass
         return {
-            "puzzle": self.grid.puzzle_id if hasattr(self.grid, 'puzzle_id') else "unknown",
+            "puzzle_id": puzzle_id or "unknown",
+            "puzzle_title": puzzle_title or puzzle_id or "unknown",
             "width": self.grid.width,
             "height": self.grid.height,
             "events": self._recording,
