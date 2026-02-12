@@ -307,9 +307,8 @@ async function refreshItemList() {
       const recordings = await res.json();
       recordings.forEach((rec) => {
         const opt = document.createElement('option');
-        opt.value = rec.id;
-        const title = rec.puzzle_title || rec.puzzle_id || rec.puzzle || 'Unknown Puzzle';
-        opt.textContent = `${title} (${rec.width}x${rec.height}) - ${rec.event_count} events`;
+        opt.value = rec.recording_id
+        opt.textContent = `${rec.puzzle_title} (${rec.width}x${rec.height}) - ${rec.event_count} events`;
         itemSelect.appendChild(opt);
       });
     } catch (err) {
@@ -607,7 +606,8 @@ function buildEntryToCellsMap(puzzleData) {
   return map;
 }
 
-async function loadRecording(recordingId) {
+async function loadSelectedRecording() {
+  recordingId = itemSelect.value
   try {
     const res = await fetch(`/api/recordings/${recordingId}`);
     if (!res.ok) throw new Error(res.statusText);
@@ -623,11 +623,11 @@ async function loadRecording(recordingId) {
     
     // Load puzzle data to get entry-to-cells mapping for replay
     try {
-      const puzzleRes = await fetch(`/api/puzzle/${currentRecording.puzzle}`);
+      const puzzleRes = await fetch(`/api/puzzle/${currentRecording.puzzle_id}`);
       if (puzzleRes.ok) {
         const puzzleData = await puzzleRes.json();
         if (puzzleData.error_type === 'puzzle_not_found') {
-          statusMessage.textContent = `Error: The puzzle for this recording (ID: ${currentRecording.puzzle}) is not available.`;
+          statusMessage.textContent = `Error: The puzzle for this recording (ID: ${currentRecording.puzzle_id}) is not available.`;
           statusMessage.className = 'error';
           log(`[error] ${puzzleData.error}`);
           entriesAcrossList.innerHTML = '';
@@ -978,13 +978,10 @@ resetBtn.addEventListener('click', () => {
 });
 
 itemSelect.addEventListener('change', async () => {
-  const selectedValue = itemSelect.value;
-  if (!selectedValue) return;
-  
   if (currentMode === 'puzzles') {
     await loadSelectedPuzzle();
   } else if (currentMode === 'recordings') {
-    await loadRecording(selectedValue);
+    await loadSelectedRecording();
   }
 });
 

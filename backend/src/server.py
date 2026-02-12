@@ -220,6 +220,10 @@ def _save_recording() -> None:
         recording['id'] = recording_id
         recording['timestamp'] = datetime.now().isoformat()
         recording['event_count'] = len(recording.get('events', []))
+        # Assign recording_title if missing
+        if not recording.get('recording_title'):
+            puzzle_title = recording.get('puzzle_title') or 'Unknown Puzzle'
+            recording['recording_title'] = f"Recording for {puzzle_title} ({recording_id[:8]})"
 
         # Add grid state for replay
         if grid is not None:
@@ -400,9 +404,17 @@ def list_recordings() -> list[dict[str, Any]]:
             try:
                 with open(json_file, 'r') as f:
                     rec = json.load(f)
+                puzzle_id = rec.get('puzzle_id', 'unknown puzzle_id')
+                puzzle_title = rec.get('puzzle_title', 'unknown puzzle_title')
+                recording_id = rec.get('id', json_file.stem)
+                recording_title = rec.get('recording_title')
+                if not recording_title:
+                    recording_title = f"{puzzle_title}-{recording_id[:8]}"
                 recordings.append({
-                    'id': rec.get('id', json_file.stem),
-                    'puzzle_id': rec.get('puzzle', 'unknown'),
+                    'recording_id': recording_id,
+                    'recording_title': recording_title,
+                    'puzzle_id': puzzle_id,
+                    'puzzle_title': puzzle_title,
                     'width': rec.get('width', 0),
                     'height': rec.get('height', 0),
                     'event_count': rec.get('event_count', len(rec.get('events', []))),
@@ -427,6 +439,7 @@ def get_recording(recording_id: str) -> dict[str, Any]:
                     rec = cast(dict[str, Any], json.load(f))
                 # Check if this recording has the matching ID
                 if rec.get('id') == recording_id:
+                    logger.debug(f"Retrieved recording {recording_id}")
                     return rec
             except Exception:
                 pass
