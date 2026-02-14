@@ -4,8 +4,9 @@ from chromadb import Collection
 from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
 import time
 from pathlib import Path
-from .llm import LLM
-from .model import Entry, Cell
+
+from llm import LLM
+from model import Entry, Cell
 
 
 def open_database() -> Collection:

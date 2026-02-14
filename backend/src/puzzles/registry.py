@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from ..model import Grid, Entry
+from model import Grid, Entry
 
 
 GenerateCandidatesHook = Callable[[Entry, int, int], list[Any]]

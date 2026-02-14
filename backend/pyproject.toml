@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
 markers = [
 	"integration: marks tests that call external services or run slowly",
 ]

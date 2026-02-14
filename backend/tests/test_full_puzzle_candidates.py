@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Dict, List, Tuple, TypedDict
 from unittest.mock import patch
 
-from puzzles.crosshare_daybreak_15_9x9 import create_grid
+from src.puzzles.crosshare_daybreak_15_9x9 import create_grid
 from src.solver import Solver
 from src.model import Entry, Candidate
 

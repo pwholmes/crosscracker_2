@@ -5,7 +5,8 @@ import logging
 import re
 import os
 from dotenv import load_dotenv
-from .model import Cell, Entry, Candidate
+
+from model import Cell, Entry, Candidate
 
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
 _generate_candidates_hook: Callable[[Entry, int, int], list[Any]] | None = None

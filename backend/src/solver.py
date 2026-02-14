@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from typing import Any, Callable
 import asyncio
 import logging
-from .llm import LLM
-from .model import Candidate, CandidateCache, Entry, Grid
+
+from llm import LLM
+from model import Candidate, CandidateCache, Entry, Grid
 
 logger = logging.getLogger("src.solver")
 
@@ -116,7 +117,7 @@ class Solver:
             # Select the best unfilled entry
             selection = self._select_best_unfilled_entry()
             if selection is None:
-                return self._handle_stall([])
+                return self._handle_stall()
             entry_id, selection_score = selection
 
             # Mark this entry as having been attempted in this pass
@@ -150,7 +151,7 @@ class Solver:
                 answer=candidate.answer,
                 width_used=0,
                 pattern_at_placement=self.entries[entry_id].pattern,
-                confidence=1.0,
+                confidence=candidate.confidence,
                 score=selection_score,
                 is_fallback=False,
             )
@@ -267,79 +268,10 @@ class Solver:
         
         return best_cand
 
-    # Old _place_entry logic (commented out for reference)
-    # def _place_entry(self, entry_id: str, selection_score: float) -> Candidate | None:
-    #     entry = self.entries[entry_id]
-    #     attempt = self._attempts[entry_id]
-    #     while attempt.current_width <= LLM.MAX_WIDENING:
-    #         pattern = entry.pattern
-    #         if attempt.candidates is None or attempt.generated_pattern != pattern:
-    #             attempt.generated_pattern = pattern
-    #             attempt.candidates = self._get_candidates(entry_id, pattern, attempt.current_width)
-    #             attempt.next_index = 0
-    #         key = (entry_id, attempt.generated_pattern, attempt.current_width)
-    #         penalties = self._penalties.setdefault(key, {})
-    #         while attempt.next_index < len(attempt.candidates):
-    #             cand = attempt.candidates[attempt.next_index]
-    #             attempt.next_index += 1
-    #             if len(cand.answer) != entry.length:
-    #                 penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
-    #                 continue
-    #             candidate = Candidate(entry_id=entry_id, answer=cand.answer, widening_level=attempt.current_width)
-    #             if not self.grid.place_candidate(candidate):
-    #                 penalties[cand.answer] = penalties.get(cand.answer, 0.0) + 10.0
-    #                 continue
-    #             self.entries[entry_id].verified = True
-    #             self._record_placement(
-    #                 entry_id=entry_id,
-    #                 answer=cand.answer,
-    #                 width_used=attempt.current_width,
-    #                 pattern_at_placement=pattern,
-    #                 confidence=cand.confidence,
-    #                 score=selection_score,
-    #                 is_fallback=False,
-    #             )
-    #             return candidate
-    #         attempt.current_width += 1
-    #         attempt.candidates = None
-    #         attempt.next_index = 0
-    #     return None
 
-    def _try_apply_fallback_and_create_event(
-        self,
-        newly_verified: list[str],
-        entry: Entry | None = None,
-        extra_event_fields: dict[str, Any] | None = None,
-    ) -> dict[str, Any] | None:
-        """Apply a fallback (for a specific entry or any entry) and create the event.
-        
-        Returns the placed_fallback event dict if successful, None otherwise.
-        """
-        fallback = self._apply_fallback_with_conflict_removal(entry)
-        if fallback is None:
-            return None
-        
-        rec, conflicts_removed = fallback
-        event: dict[str, Any] = {
-            "event": "placed_fallback",
-            "candidate": {
-                "entry_id": rec.entry_id,
-                "answer": rec.answer,
-                "widening_level": 0,
-                "confidence": rec.confidence_at_placement,
-                "pattern": rec.pattern_at_placement,
-            },
-            "conflicts_removed": conflicts_removed,
-        }
-        
-        # Merge in any extra fields (e.g., verification_failed)
-        if extra_event_fields:
-            event.update(extra_event_fields)
-        
-        return self._finalize_event(event, newly_verified)
-
-    def _handle_stall(self, newly_verified: list[str]) -> dict[str, Any]:
+    def _handle_stall(self) -> dict[str, Any]:
         """Handle a stall: no placements were made in this pass.
+        Returns the backtrack event.
         
         Strategy:
         1. Try to backtrack a placed entry to open up new possibilities
@@ -352,7 +284,7 @@ class Solver:
         self._attempted_this_pass.clear()
 
         # Try to select a backtrack target
-        target = self._choose_backtrack_target()
+        target = self._select_best_backtrack_target()
         if target is not None:
             removed = self._remove_placed(target)
             if removed is not None:
@@ -369,7 +301,7 @@ class Solver:
                             f"FORCING FALLBACK: entry_id={removed_candidate.entry_id} "
                             f"backtrack_count={backtrack_count}"
                         )
-                        fallback_event = self._try_apply_fallback_and_create_event(newly_verified, entry)
+                        fallback_event = self._apply_fallback(entry)
                         if fallback_event is not None:
                             return fallback_event
                 
@@ -393,18 +325,20 @@ class Solver:
                             "pattern": removed_record.pattern_at_placement,
                         },
                     },
-                    newly_verified,
+                    [],
                 )
 
-        # No backtrack target available - try to apply any fallback
-        fallback_event = self._try_apply_fallback_and_create_event(newly_verified)
-        if fallback_event is not None:
-            return fallback_event
+        # No backtrack target available - instead try to select an entry for fallback
+        entry = self._select_best_fallback_target()
+        if entry is not None:
+            fallback_event = self._apply_fallback(entry)
+            if fallback_event is not None:
+                return fallback_event
 
         # No backtrack and no fallback possible - puzzle has failed
-        return self._finalize_event({"event": "failed"}, newly_verified)
+        return self._finalize_event({"event": "failed"}, [])
 
-    def _choose_backtrack_target(self) -> str | None:
+    def _select_best_backtrack_target(self) -> str | None:
         """Select a backtrack target by finding the entry that appears most frequently
         as a crossing to unfilled entries.
         
@@ -451,6 +385,7 @@ class Solver:
         )
         return selected.entry_id
 
+
     def _record_placement(
         self,
         entry_id: str,
@@ -471,8 +406,87 @@ class Solver:
             is_fallback=is_fallback,
         )
 
+
     def _record_backtrack(self, entry_id: str) -> None:
         self._entry_backtracks[entry_id] = self._entry_backtracks.get(entry_id, 0) + 1
+
+
+    def _apply_fallback(self, entry: Entry) -> dict[str, Any] | None:
+        """Apply a fallback for a specific entry and create the event.
+        
+        Returns the placed_fallback event, which includes a list of any entries removed 
+        due to conflict, or None if unsuccessful.
+        """
+        fallback = self._apply_fallback_with_conflict_removal(entry)
+        if fallback is None:
+            return None
+        
+        rec, conflicts_removed = fallback
+        event: dict[str, Any] = {
+            "event": "placed_fallback",
+            "candidate": {
+                "entry_id": rec.entry_id,
+                "answer": rec.answer,
+                "widening_level": 0,
+                "confidence": rec.confidence_at_placement,
+                "pattern": rec.pattern_at_placement,
+            },
+            "conflicts_removed": conflicts_removed,
+        }
+        
+        return self._finalize_event(event, [])
+    
+
+    def _apply_fallback_with_conflict_removal(self, entry: Entry) -> tuple[PlacedRecord, list[str]] | None:
+        """
+        Apply a fallback answer for the specified entry, removing any conflicting
+        non-fallback placements until the fallback fits.
+        Args:
+            entry (Entry | None): The entry to apply the fallback to. If None, selects 
+            an entry automatically.
+        Returns:
+            tuple[PlacedRecord, list[str]] | None: A tuple containing the original placement 
+                record for the selcted fallack entry and a list of any entry IDs that were
+                removed due to conflicts; or None if no fallback could be applied.
+        """
+        eid = entry.entry_id
+        answer = entry.correct_answer
+        if len(answer) != entry.length:
+            return None
+
+        # Remove conflicting non-fallback placements until this fallback fits.
+        removed_entries: list[str] = []
+        while True:
+            conflicting: set[str] = set()
+            for cell, ch in zip(entry.cells, answer):
+                if cell.letter is not None and cell.letter != ch:
+                    conflicting.update(cell.sources)
+            conflicting.discard(eid)
+
+            to_remove = [c for c in conflicting if c in self._placed and not self._placed[c].is_fallback]
+            if not to_remove:
+                break
+            for c in to_remove:
+                if self._remove_placed(c) is not None:
+                    removed_entries.append(c)
+
+        candidate = Candidate(eid, answer, widening_level=0, is_fallback=True)
+        if not self.grid.place_candidate(candidate):
+            return None
+
+        entry.used_fallback = True
+        entry.verified = True
+        self._record_placement(
+            entry_id=eid,
+            answer=answer,
+            width_used=0,
+            pattern_at_placement=entry.pattern,
+            confidence=1.0,
+            score=1.0,
+            is_fallback=True,
+        )
+        return self._placed[eid], removed_entries
+
 
     def _remove_placed(self, entry_id: str) -> tuple[Candidate, PlacedRecord] | None:
         rec = self._placed.get(entry_id)
@@ -518,51 +532,7 @@ class Solver:
 
         return candidate, rec
 
-    def _apply_fallback_with_conflict_removal(self, entry: Entry | None = None) -> tuple[PlacedRecord, list[str]] | None:
-        if entry is None:
-            entry = self._select_fallback_entry()
-        if entry is None:
-            return None
-
-        eid = entry.entry_id
-        answer = entry.correct_answer
-        if len(answer) != entry.length:
-            return None
-
-        # Remove conflicting non-fallback placements until this fallback fits.
-        removed_entries: list[str] = []
-        while True:
-            conflicting: set[str] = set()
-            for cell, ch in zip(entry.cells, answer):
-                if cell.letter is not None and cell.letter != ch:
-                    conflicting.update(cell.sources)
-            conflicting.discard(eid)
-
-            to_remove = [c for c in conflicting if c in self._placed and not self._placed[c].is_fallback]
-            if not to_remove:
-                break
-            for c in to_remove:
-                if self._remove_placed(c) is not None:
-                    removed_entries.append(c)
-
-        candidate = Candidate(eid, answer, widening_level=0, is_fallback=True)
-        if not self.grid.place_candidate(candidate):
-            return None
-
-        entry.used_fallback = True
-        entry.verified = True
-        self._record_placement(
-            entry_id=eid,
-            answer=answer,
-            width_used=0,
-            pattern_at_placement=entry.pattern,
-            confidence=1.0,
-            score=1.0,
-            is_fallback=True,
-        )
-        return self._placed[eid], removed_entries
-
-    def _select_fallback_entry(self, *, threshold_only: bool = False) -> Entry | None:
+    def _select_best_fallback_target(self, *, threshold_only: bool = False) -> Entry | None:
         entries: list[Entry] = [e for e in self.entries.values() if "." in e.pattern and e.correct_answer]
         if threshold_only:
             entries = [
@@ -689,6 +659,7 @@ class Solver:
 
     def _all_entries_verified(self) -> bool:
         return all(e.verified for e in self.entries.values())
+
 
     def _finalize_event(self, event: dict[str, Any], newly_verified: list[str]) -> dict[str, Any]:
         if newly_verified:

@@ -3,8 +3,6 @@ import asyncio
 from threading import Lock
 import os
 from dotenv import load_dotenv
-
-load_dotenv()
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from pydantic import BaseModel
 from typing import Any, Callable, cast
@@ -15,11 +13,16 @@ from pathlib import Path
 from datetime import datetime
 import uuid
 
-from .model import Grid
-from .llm import LLM
-from .solver import Solver
-from .vector import populate_hints
-from . import puzzles
+# Load .env file before importing other source files.
+# Any file that uses .env values at the global level should call load_dotenv() itself
+# just to be sure the env values are loaded, but it doesn't hurt to call it more than once.
+load_dotenv()
+
+from model import Grid
+from llm import LLM
+from solver import Solver
+from vector import populate_hints
+import puzzles
 
 # Initialize puzzle registry 
 current_puzzle_id: str | None = None

@@ -1,5 +1,6 @@
 from __future__ import annotations
-from ..model import Cell, Entry, Grid
+
+from model import Cell, Entry, Grid
 from .registry import register_puzzle
 
 def create_grid() -> Grid:
