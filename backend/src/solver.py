@@ -615,7 +615,7 @@ class Solver:
 
     def verify_answers(self, answers: dict[str, str]) -> tuple[list[str], list[str]]:
         """Verify answers.
-        Returns (newly_verified, failed) lists of entry IDs.
+        Returns tuple(list[verified_entry_ids], list[failed_entry_ids])
         """
         if not answers:
             return [], []

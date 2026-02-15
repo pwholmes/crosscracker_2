@@ -27,7 +27,7 @@ def test_generate_candidates_with_mock():
     }
     mock_scoring_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', side_effect=[mock_generation_response, mock_scoring_response]) as mock_post:
+    with patch('llm.requests.post', side_effect=[mock_generation_response, mock_scoring_response]) as mock_post:
         candidates = LLM.generate_candidates(entry, widening_level=0)
         
         # Verify requests.post was called twice (generation + scoring)
@@ -51,7 +51,7 @@ def test_generate_candidates_with_malformed_response():
     }
     mock_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response):
+    with patch('llm.requests.post', return_value=mock_response):
         candidates = LLM.generate_candidates(entry, widening_level=0)
         
         # Should return empty list or only valid candidates
@@ -63,7 +63,7 @@ def test_generate_candidates_with_network_error():
     """Test that generate_candidates handles network errors gracefully."""
     entry = create_test_entry("Test clue", "TESTS", 5)
     
-    with patch('src.llm.requests.post', side_effect=Exception("Network error")):
+    with patch('llm.requests.post', side_effect=Exception("Network error")):
         candidates = LLM.generate_candidates(entry, widening_level=0)
         
         # Should return empty list on error
@@ -81,7 +81,7 @@ def test_generate_candidates_respects_max_candidates():
     }
     mock_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response):
+    with patch('llm.requests.post', return_value=mock_response):
         candidates = LLM.generate_candidates(entry, widening_level=0)
         
         # Should return only MAX_CANDIDATES candidates
@@ -99,7 +99,7 @@ def test_generate_candidates_filters_by_length():
     }
     mock_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response):
+    with patch('llm.requests.post', return_value=mock_response):
         candidates = LLM.generate_candidates(entry, widening_level=0)
         
         # Should only return answers with length 4
@@ -122,7 +122,7 @@ def test_generate_candidates_with_hook():
     LLM.set_generate_candidates_hook(mock_hook)
     
     try:
-        with patch('src.llm.requests.post') as mock_post:
+        with patch('llm.requests.post') as mock_post:
             candidates = LLM.generate_candidates(entry, widening_level=0)
             
             # Verify hook was called and requests.post was NOT called
@@ -149,7 +149,7 @@ def test_verify_answer_returns_true_for_yes():
     }
     mock_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response) as mock_post:
+    with patch('llm.requests.post', return_value=mock_response) as mock_post:
         result = LLM.verify_answer(entry, answer)
         
         # Verify requests.post was called with correct parameters
@@ -181,7 +181,7 @@ def test_verify_answer_returns_false_for_no():
     }
     mock_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response):
+    with patch('llm.requests.post', return_value=mock_response):
         result = LLM.verify_answer(entry, answer)
         
         # Verify the result is False
@@ -204,7 +204,7 @@ def test_verify_answer_returns_false_for_other_response():
         }
         mock_response.raise_for_status = Mock()
         
-        with patch('src.llm.requests.post', return_value=mock_response):
+        with patch('llm.requests.post', return_value=mock_response):
             result = LLM.verify_answer(entry, answer)
             
             # Should return False for any response other than exactly "Yes"
@@ -217,7 +217,7 @@ def test_verify_answer_handles_network_error():
     answer = "TESTS"
     entry = create_test_entry(clue, answer, len(answer))
     
-    with patch('src.llm.requests.post', side_effect=Exception("Network error")):
+    with patch('llm.requests.post', side_effect=Exception("Network error")):
         result = LLM.verify_answer(entry, answer)
         
         # Should return False on error
@@ -230,7 +230,7 @@ def test_verify_answer_handles_timeout():
     answer = "TESTS"
     entry = create_test_entry(clue, answer, len(answer))
     
-    with patch('src.llm.requests.post', side_effect=TimeoutError("Request timed out")):
+    with patch('llm.requests.post', side_effect=TimeoutError("Request timed out")):
         result = LLM.verify_answer(entry, answer)
         
         # Should return False on timeout
@@ -246,7 +246,7 @@ def test_verify_answer_handles_http_error():
     mock_response = Mock()
     mock_response.raise_for_status.side_effect = Exception("HTTP 500")
     
-    with patch('src.llm.requests.post', return_value=mock_response):
+    with patch('llm.requests.post', return_value=mock_response):
         result = LLM.verify_answer(entry, answer)
         
         # Should return False on HTTP error
@@ -265,7 +265,7 @@ def test_verify_answer_uses_correct_timeout():
     }
     mock_response.raise_for_status = Mock()
     
-    with patch('src.llm.requests.post', return_value=mock_response) as mock_post:
+    with patch('llm.requests.post', return_value=mock_response) as mock_post:
         LLM.verify_answer(entry, answer)
         
         # Verify timeout parameter is set to 30 seconds

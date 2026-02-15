@@ -1,3 +1,4 @@
+import pytest
 from src.vector import open_database, query_database
 from src.model import Entry, Cell
 
@@ -12,7 +13,7 @@ def create_cell_grid(rows: int, columns: int) -> list[list[Cell]]:
         grid.append(grid_row)
     return grid
 
-
+@pytest.mark.integration
 def test_query_database():
     """Test that query_database retrieves hints for entries."""
     # Create a small grid
