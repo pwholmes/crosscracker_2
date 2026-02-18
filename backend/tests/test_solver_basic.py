@@ -46,9 +46,9 @@ def test_verify_entries_checks_crossings_only():
     solver = Solver(grid, defer_candidate_init=True)
 
     # Pre-fill crossing entries and an unrelated entry.
-    grid.place_candidate(Candidate("1D", "AC", widening_level=0))
-    grid.place_candidate(Candidate("2D", "BD", widening_level=0))
-    grid.place_candidate(Candidate("3A", "EF", widening_level=0))
+    grid.place_candidate(Candidate("1D", "AC", search_level=0))
+    grid.place_candidate(Candidate("2D", "BD", search_level=0))
+    grid.place_candidate(Candidate("3A", "EF", search_level=0))
 
     crossing_ids = solver.get_crossing_entry_ids("1A")
     assert crossing_ids == {"1D", "2D"}

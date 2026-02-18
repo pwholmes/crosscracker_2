@@ -23,7 +23,7 @@ def normalize_candidate(answer: str) -> str:
 
 class LLM:
     # Configuration for candidate generation behavior
-    MAX_WIDENING: int = 0
+    MAX_SEARCH_LEVEL: int = 0
     MAX_CANDIDATES: int = 5
     # Load environment variables from .env
     load_dotenv()
@@ -58,7 +58,7 @@ class LLM:
     @staticmethod
     def generate_candidates(
             entry: Entry,
-            widening_level: int,
+            search_level: int,
             max_candidates: int | None = None,
     ) -> list[Candidate]:
         """
@@ -76,21 +76,21 @@ class LLM:
             object contains lots of contexual info we pass to the LLM in the prompt, including the 
             answer's length, the pattern of known crossing letters, the list of "hints" obtained 
             from the vector DB, and of course the clue itself.
-        :param widening_level: Measures how "creative" we want the LLM to be.  The first time we ask,
+        :param search_level: Measures how "creative" we want the LLM to be.  The first time we ask,
             it's at the minimum level (0), but if the LLM is unable to produce any viable candidates,
-            we increase ("widen") this value.  The effect is that at higher levels, the prompt we pass
+            we increase this value.  The effect is that at higher levels, the prompt we pass
             to the LLM will have additional instructions, like "consider multiword answers".  The
-            widenening level is unique for each different pattern of letters passed to the LLM.
+            search level is unique for each different pattern of letters passed to the LLM.
         :param max_candidates: The maximum number of candidate answers allowed.
         :return: A list of candidate answers, paired with independently-evaluated confidence ratings.
         """
         if max_candidates is None:
             max_candidates = LLM.MAX_CANDIDATES
         if _generate_candidates_hook is not None:
-            return _generate_candidates_hook(entry, widening_level, max_candidates)
+            return _generate_candidates_hook(entry, search_level, max_candidates)
 
         # Step 1: Generate candidate answers (without embedded scoring)
-        answers = LLM._generate_candidate_answers(entry, widening_level, max_candidates)
+        answers = LLM._generate_candidate_answers(entry, search_level, max_candidates)
         if not answers:
             return []
         
@@ -104,24 +104,24 @@ class LLM:
     @staticmethod
     def _generate_candidate_answers(
             entry: Entry,
-            widening_level: int,
+            search_level: int,
             max_candidates: int,
     ) -> list[str]:
         """
         Generate candidate answers for a clue (generation phase only, no scoring).
         
         :param entry: The crossword entry
-        :param widening_level: How creative to be with candidates
+        :param search_level: How creative to be with candidates
         :param max_candidates: Maximum number of candidates to generate
         :return: List of normalized candidate answers (strings)
         """
-        prompt: str = LLM.create_prompt(entry, widening_level)
+        prompt: str = LLM.create_prompt(entry, search_level)
         
         def matches_pattern(candidate: str, pattern: str) -> bool:
             return all(p == "." or p == c for c, p in zip(candidate, pattern))
 
         try:
-            logger.debug(f"[LLM GENERATE] Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern}")
+            logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern}")
             if entry.hints:
                 hints_str = ", ".join(f"'{clue}'->{answer}" for clue, answer in entry.hints)
                 logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
@@ -223,7 +223,7 @@ class LLM:
         prompt += "- ONLY provide the lines with answers and confidence, no other text.\n"
         
         try:
-            logger.debug(f"[LLM SCORE] Scoring {len(answers)} candidates for clue '{clue}'")
+            logger.debug(f"[LLM SCORE] Scoring {len(answers)} candidates for entry {entry.entry_id}, clue '{clue}'")
             response = requests.post(
                 LLM.OLLAMA_URL,
                 json = {
@@ -256,14 +256,14 @@ class LLM:
             result_candidates: list[Candidate] = []
             for answer in answers:
                 confidence = scored.get(answer, 25.0)  # Default to low confidence if not scored
-                result_candidates.append(Candidate(answer=answer, confidence=confidence))
+                result_candidates.append(Candidate(entry_id=entry.entry_id, answer=answer, confidence=confidence))
             
             logger.debug(f"[LLM SCORE RESULT] Scored candidates: {[(c.answer, c.confidence) for c in result_candidates]}")
             return result_candidates
         except Exception as e:
             logger.error(f"Ollama scoring query failed: {e}")
             # Fallback: return unscored candidates with default confidence
-            return [Candidate(answer=answer, confidence=25.0) for answer in answers]
+            return [Candidate(entry_id=entry.entry_id, answer=answer, confidence=25.0) for answer in answers]
 
     @staticmethod
     def verify_answer(
@@ -308,7 +308,7 @@ class LLM:
             return False
 
     @staticmethod
-    def create_prompt(entry: Entry, widening_level: int) -> str:
+    def create_prompt(entry: Entry, search_level: int) -> str:
         """
         Fashion an appropriate prompt for the LLM to deduce a list of candidate answers.
         We will provide explicit instructions, the clue, the constraints (e.g., the length of the 
@@ -325,9 +325,9 @@ class LLM:
         
         :param entry: The crossword clue for which candidate answers are being generated.  See
             generate_candidates() for a fuller description.
-        :param widening_level: Measures how "creative" we want the LLM to be with its answers.  See
+        :param search_level: Measures how "creative" we want the LLM to be with its answers.  See
             generate_candidates() for a fuller description.
-            NOTE: For now, the max_widening_level is 0 and this parameter is ignored.  We'll
+            NOTE: For now, the max_search_level is 0 and this parameter is ignored.  We'll
             elaborate on more creative prompt generation later.
         :return: The prompt we will pass to the LLM.
         """
@@ -386,7 +386,7 @@ if __name__ == "__main__":
     entry = Entry("1A", clue, answer, grid, (0, 0), length)
 
     print(f"Clue: {entry.clue}")
-    candidates = LLM.generate_candidates(entry, widening_level=0)
+    candidates = LLM.generate_candidates(entry, search_level=0)
     print("Candidates:")
     for cand in candidates:
         print(f"- {cand.answer} ({cand.confidence})")

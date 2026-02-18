@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass
@@ -10,26 +11,46 @@ class Cell:
     sources: set[str] = field(default_factory=lambda: set[str]())
     revealed_by_fallback: bool = False
 
+@dataclass
+class CandidatesAtSearchLevel:
+    """ Candidates are generated at a specific search level for each pattern.  """
+    search_level: int
+    candidates: list[Candidate]
+
 
 @dataclass
+class Placement:
+    entry_id: str
+    answer: str
+    search_level: int
+    pattern: str
+    confidence: float
+    selection_score: float
+    is_fallback: bool = False
+
+
 class Entry:
     entry_id: str
     clue: str
     correct_answer: str
     cells: list[Cell]
     hints: list[tuple[str,str]] | None = None
-    wrong_answers : list[str] | None = None
+    placement: Optional[Placement] = None
+    backtracks: int = 0
     used_fallback: bool = False
-    verified: bool = False
+    _candidates_at_search_level: dict[str, CandidatesAtSearchLevel]
+    """ The candidate list AND search level for this entry, keyed by pattern.  We store 
+    these together as a class instead of keying candidate by pattern and search level
+    because we NEVER need to go back to a previous search level for a given entry+pattern. """
 
     def __init__(
-            self,
-            entry_id: str,
-            clue: str,
-            correct_answer: str,
-            grid: list[list[Cell]],
-            start: tuple[int,int],
-            length: int):
+                self,
+                entry_id: str,
+                clue: str,
+                correct_answer: str,
+                grid: list[list[Cell]],
+                start: tuple[int,int],
+                length: int):
         """
         :param self: Description
         :param entry_id: The Entry's designation in the puzzle, given as a number plus the 
@@ -45,6 +66,7 @@ class Entry:
         self.clue = clue
         self.correct_answer = correct_answer
         self.cells = []
+        self._candidates_at_search_level = {}
 
         r, c = start
         if entry_id[-1].upper() == "A":  # across
@@ -66,8 +88,41 @@ class Entry:
 
     @property
     def pattern(self) -> str:
+        """Dynamically generates the Entry's current pattern.  Will return the full
+        answer if it has been placed."""
         return "".join(cell.letter or "." for cell in self.cells)
     
+    @property
+    def search_level(self, pattern: str|None = None) -> int:
+        """Returns the CURRENT search level for the specified pattern"""
+        if pattern is None:
+            pattern = self.pattern
+        candidates_at_search_level = self._candidates_at_search_level.get(self.pattern)
+        if candidates_at_search_level is None:
+            return 0
+        return self._candidates_at_search_level[self.pattern].search_level
+    
+    @property
+    def completed(self) -> bool:
+        return "." not in self.pattern
+    
+    @property
+    def verified(self) -> bool:
+        """An entry is 'verified' if it is complete without having been explicitly placed;
+        that is, it was completed entirely via crossing entries"""
+        return self.completed and self.placement is None
+
+    def get_candidates(self) -> list[Candidate]:
+        from llm import LLM
+
+        if self.pattern in self._candidates_at_search_level:
+            return self._candidates_at_search_level[self.pattern].candidates
+        
+        candidates = LLM.generate_candidates(self, self.search_level)
+        self._candidates_at_search_level[self.pattern] = CandidatesAtSearchLevel(self.search_level, candidates)
+
+        return candidates
+
 
 
 @dataclass
@@ -76,18 +131,19 @@ class Candidate:
     Represents a possible answer for a crossword entry, including scoring and placement context.
     Combines the previous Candidate and ScoredCandidate classes.
     """
-    entry_id: str = ""
-    answer: str = ""
-    widening_level: int = 0
+    entry_id: str
+    answer: str
+    search_level: int = 0
     is_fallback: bool = False
-    confidence: float = 0.0
+    confidence: float = 50.0
+    penalty: float = 0.0
     selection_score: float = 0.0
 
 
 class Grid:
     def __init__(self, entries: dict[str, Entry]):
-        self.entries = entries  # all Entries keyed by entry_id
         self.puzzle_id: str | None = None  # Set by server when puzzle is loaded
+        self.entries = entries  # all Entries keyed by entry_id
         
         # Calculate grid dimensions from cell positions
         max_row = 0
@@ -101,6 +157,7 @@ class Grid:
         self.height = max_row + 1
 
     def place_candidate(self, candidate: Candidate) -> bool:
+        print(candidate)
         entry = self.entries[candidate.entry_id]
         for cell, ch in zip(entry.cells, candidate.answer):
             if cell.letter is not None and cell.letter != ch:
@@ -126,27 +183,3 @@ class Grid:
         return self.entries[entry_id].pattern
 
 
-class CandidateCache:
-    """Cache candidate lists by (entry_id, pattern, widening_level)."""
-    def __init__(self):
-        """Initialize the in-memory cache store."""
-        self._cache: dict[tuple[str, str, int], list[Candidate]] = {}
-
-    def get(
-        self,
-        entry_id: str,
-        pattern: str,
-        widening_level: int,
-    ) -> list[Candidate] | None:
-        """Return cached candidates for the given key, or None if not present."""
-        return self._cache.get((entry_id, pattern, widening_level))
-
-    def put(
-        self,
-        entry_id: str,
-        pattern: str,
-        widening_level: int,
-        candidates: list[Candidate],
-    ) -> None:
-        """Store candidates for the given key, overwriting any existing entry."""
-        self._cache[(entry_id, pattern, widening_level)] = candidates
