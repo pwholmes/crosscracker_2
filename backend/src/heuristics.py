@@ -48,9 +48,9 @@ class BasicStrategy:
 
     @staticmethod
     def select_best_candidate(entry: Entry) -> Candidate | None:
-        logger = logging.getLogger("src.heuristics")
+        #logger = logging.getLogger("src.heuristics")
         candidates = entry.get_candidates()
-        logger.debug(f"[HEURISTICS]: Candidates for {entry.entry_id}: {candidates}")
+        #logger.debug(f"[HEURISTICS]: Candidates for {entry.entry_id}: {candidates}")
 
         best_candidate = None
         best_effective_confidence = float("-inf")
@@ -106,6 +106,10 @@ class BasicStrategy:
                 if not crossing_entry.completed:
                     total += 1
             points[entry.entry_id] = total
+
+        # If no entries were added to the points list, we couldn't find an entry to backtrack
+        if not points:
+            return None
 
         # Find the entry with the most points
         max_points = max(points.values())
