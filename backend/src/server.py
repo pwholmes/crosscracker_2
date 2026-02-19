@@ -374,9 +374,30 @@ async def reset() -> dict[str, str]:
         return {"status": "no puzzle loaded"}
     play_event.clear()
     async with solver_lock:
+        # Reload the puzzle and its candidate-generation hook
         grid, hook = puzzles.load_puzzle(puzzle_id=current_puzzle_id)
+        grid.puzzle_id = current_puzzle_id
         LLM.set_generate_candidates_hook(hook)
-        solver = Solver(grid, record=True)
+
+        # Create the solver but defer candidate init; we'll initialize with progress
+        solver = Solver(grid, defer_candidate_init=True, record=True)
+
+        # Progress callback to notify clients during initialization
+        async def progress_callback(current: int, total: int):
+            await manager.broadcast({
+                "type": "init_progress",
+                "current": current,
+                "total": total,
+                "percentage": round((current / total) * 100),
+            })
+
+        # Initialize candidates for all entries (async) so UI can show progress
+        try:
+            await solver.async_initialize_with_progress(progress_callback)
+        except Exception:
+            # If initialization fails, log but continue to reset solver state
+            logger.exception("Candidate initialization failed during reset")
+
         with _metrics_lock:
             steps_executed = 0
             fallbacks_used = 0
