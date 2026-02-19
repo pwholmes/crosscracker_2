@@ -11,6 +11,7 @@ class Cell:
     sources: set[str] = field(default_factory=lambda: set[str]())
     revealed_by_fallback: bool = False
 
+
 @dataclass
 class CandidatesAtSearchLevel:
     """ Candidates are generated at a specific search level for each pattern.  """
@@ -38,10 +39,12 @@ class Entry:
     placement: Optional[Placement] = None
     backtracks: int = 0
     used_fallback: bool = False
-    _candidates_at_search_level: dict[str, CandidatesAtSearchLevel]
-    """ The candidate list AND search level for this entry, keyed by pattern.  We store 
-    these together as a class instead of keying candidate by pattern and search level
-    because we NEVER need to go back to a previous search level for a given entry+pattern. """
+    _candidates: dict[str,Candidate]
+    """The pool of all candidates that have been generated for this entry, regardless 
+    of whether they fit the current (or any other) pattern.  Keyed by answer."""
+    _pattern_levels: dict[str,int]
+    """The letter patterns that have been used to generate candidates for this entry,
+    paired with the last search level each was used with.  Keyed by pattern."""
 
     def __init__(
                 self,
@@ -66,7 +69,8 @@ class Entry:
         self.clue = clue
         self.correct_answer = correct_answer
         self.cells = []
-        self._candidates_at_search_level = {}
+        self._candidates = {}
+        self._pattern_levels = {}
 
         r, c = start
         if entry_id[-1].upper() == "A":  # across
@@ -97,10 +101,7 @@ class Entry:
         """Returns the CURRENT search level for the specified pattern"""
         if pattern is None:
             pattern = self.pattern
-        candidates_at_search_level = self._candidates_at_search_level.get(self.pattern)
-        if candidates_at_search_level is None:
-            return 0
-        return self._candidates_at_search_level[self.pattern].search_level
+        return self._pattern_levels.get(self.pattern, 0)
     
     @property
     def completed(self) -> bool:
@@ -112,17 +113,28 @@ class Entry:
         that is, it was completed entirely via crossing entries"""
         return self.completed and self.placement is None
 
-    def get_candidates(self) -> list[Candidate]:
+    def get_candidates(self, widen_search: bool = False) -> list[Candidate]:
+        """Get the pool of candidates for this entry, generating new candidates as
+        necessary based on:
+          - Whether we have generated candidates for the current pattern before.
+          - If the widen_search parameter is True we will generate new candidates if the
+          current search level is less than the maximum.
+        NOTE: This list is NOT filtered, even by pattern.  This is more of a "throw as 
+        many darts as you can" approach.  It's up to the caller to filter the results."""
         from llm import LLM
 
-        if self.pattern in self._candidates_at_search_level:
-            return self._candidates_at_search_level[self.pattern].candidates
-        
-        candidates = LLM.generate_candidates(self, self.search_level)
-        self._candidates_at_search_level[self.pattern] = CandidatesAtSearchLevel(self.search_level, candidates)
+        # If the current pattern has not been used to generate candidates, do so now.
+        search_level = self._pattern_levels.get(self.pattern, -1)
+        if search_level == -1 or (widen_search and search_level < LLM.MAX_SEARCH_LEVEL):
+            search_level += 1
+            # Call the LLM to generate candidates
+            new_candidates = LLM.generate_candidates(self, search_level)
+            # Store candidates and the pattern/search level used to generate them
+            self._pattern_levels[self.pattern] = search_level
+            for new_candidate in new_candidates:
+                self._candidates[new_candidate.answer] = new_candidate
 
-        return candidates
-
+        return list(self._candidates.values())
 
 
 @dataclass
