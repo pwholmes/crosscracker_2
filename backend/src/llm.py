@@ -95,7 +95,7 @@ class LLM:
             return []
         
         # Step 2: Score each candidate independently
-        scored_candidates = LLM._score_candidates(entry, answers)
+        scored_candidates = LLM._score_candidates(entry, search_level, answers)
         
         # Debug print: show all candidates and their confidence levels
         logger.debug("[LLM RESPONSE]: " + ", ".join(f"{c.answer} ({c.confidence})" for c in scored_candidates))
@@ -178,6 +178,7 @@ class LLM:
     @staticmethod
     def _score_candidates(
             entry: Entry,
+            search_level: int,
             answers: list[str],
     ) -> list[Candidate]:
         """
@@ -256,7 +257,7 @@ class LLM:
             result_candidates: list[Candidate] = []
             for answer in answers:
                 confidence = scored.get(answer, 25.0)  # Default to low confidence if not scored
-                result_candidates.append(Candidate(entry_id=entry.entry_id, answer=answer, confidence=confidence))
+                result_candidates.append(Candidate(entry_id=entry.entry_id, answer=answer, confidence=confidence, search_level=search_level))
             
             logger.debug(f"[LLM SCORE RESULT] Scored candidates: {[(c.answer, c.confidence) for c in result_candidates]}")
             return result_candidates
