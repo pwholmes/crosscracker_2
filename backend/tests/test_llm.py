@@ -28,7 +28,7 @@ def test_generate_candidates_with_mock():
     mock_scoring_response.raise_for_status = Mock()
     
     with patch('llm.requests.post', side_effect=[mock_generation_response, mock_scoring_response]) as mock_post:
-        candidates = LLM.generate_candidates(entry, widening_level=0)
+        candidates = LLM.generate_candidates(entry, search_level=0)
         
         # Verify requests.post was called twice (generation + scoring)
         assert mock_post.call_count == 2
@@ -52,7 +52,7 @@ def test_generate_candidates_with_malformed_response():
     mock_response.raise_for_status = Mock()
     
     with patch('llm.requests.post', return_value=mock_response):
-        candidates = LLM.generate_candidates(entry, widening_level=0)
+        candidates = LLM.generate_candidates(entry, search_level=0)
         
         # Should return empty list or only valid candidates
         assert isinstance(candidates, list)
@@ -64,7 +64,7 @@ def test_generate_candidates_with_network_error():
     entry = create_test_entry("Test clue", "TESTS", 5)
     
     with patch('llm.requests.post', side_effect=Exception("Network error")):
-        candidates = LLM.generate_candidates(entry, widening_level=0)
+        candidates = LLM.generate_candidates(entry, search_level=0)
         
         # Should return empty list on error
         assert candidates == []
@@ -82,7 +82,7 @@ def test_generate_candidates_respects_max_candidates():
     mock_response.raise_for_status = Mock()
     
     with patch('llm.requests.post', return_value=mock_response):
-        candidates = LLM.generate_candidates(entry, widening_level=0)
+        candidates = LLM.generate_candidates(entry, search_level=0)
         
         # Should return only MAX_CANDIDATES candidates
         assert len(candidates) <= LLM.MAX_CANDIDATES
@@ -100,7 +100,7 @@ def test_generate_candidates_filters_by_length():
     mock_response.raise_for_status = Mock()
     
     with patch('llm.requests.post', return_value=mock_response):
-        candidates = LLM.generate_candidates(entry, widening_level=0)
+        candidates = LLM.generate_candidates(entry, search_level=0)
         
         # Should only return answers with length 4
         assert all(len(c.answer) == 4 for c in candidates)
@@ -114,8 +114,8 @@ def test_generate_candidates_with_hook():
     
     # Create a mock hook
     mock_hook = Mock(return_value=[
-        Candidate(answer="HOOKA", confidence=100.0),
-        Candidate(answer="HOOKB", confidence=90.0),
+        Candidate(entry_id=entry.entry_id, answer="HOOKA", confidence=100.0),
+        Candidate(entry_id=entry.entry_id, answer="HOOKB", confidence=90.0),
     ])
     
     # Set the hook
@@ -123,7 +123,7 @@ def test_generate_candidates_with_hook():
     
     try:
         with patch('llm.requests.post') as mock_post:
-            candidates = LLM.generate_candidates(entry, widening_level=0)
+            candidates = LLM.generate_candidates(entry, search_level=0)
             
             # Verify hook was called and requests.post was NOT called
             mock_hook.assert_called_once_with(entry, 0, LLM.MAX_CANDIDATES)

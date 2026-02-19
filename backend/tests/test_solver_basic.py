@@ -14,7 +14,7 @@ def test_solver_can_start():
         widening_level: int,
         max_candidates: int | None = None,
     ) -> list[Candidate]:
-        return [Candidate(answer=entry.correct_answer, confidence=1.0)]
+        return [Candidate(entry_id=entry.entry_id, answer=entry.correct_answer, confidence=1.0)]
     
     def mock_verify(clue: str, answer: str) -> bool:
         """Verify answer by checking against correct answer in grid."""
