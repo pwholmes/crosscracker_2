@@ -134,10 +134,9 @@ class Candidate:
     entry_id: str
     answer: str
     search_level: int = 0
-    is_fallback: bool = False
     confidence: float = 50.0
     penalty: float = 0.0
-    selection_score: float = 0.0
+    is_fallback: bool = False
 
 
 class Grid:
