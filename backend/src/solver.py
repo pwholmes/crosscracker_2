@@ -214,6 +214,7 @@ class Solver:
                 )
 
         # No backtrack target available - instead try to select an entry for fallback
+        logger.debug(f"[STALLED]: No backtrack target available, selecting fallback...")
         entry = BasicStrategy.select_best_fallback_target(self.grid, self.get_crossing_entry_ids)
         if entry is not None:
             fallback_event = self._apply_fallback(entry)
