@@ -88,7 +88,7 @@ def _make_hook(backtrack: bool) -> GenerateCandidatesHook:
         use_init = widening_level == 0 and empty_pattern
         chosen: List[CandidateItem] = cands[0] if use_init else cands[1]
         selected: List[CandidateItem] = chosen[:max_candidates]
-        return [Candidate(answer=item["answer"], confidence=item["confidence"]) for item in selected]
+        return [Candidate(entry_id=entry.entry_id, answer=item["answer"], confidence=item["confidence"]) for item in selected]
 
     return hook
 
