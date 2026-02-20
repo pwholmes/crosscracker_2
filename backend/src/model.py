@@ -1,7 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
+import logging
 
+logger = logging.getLogger("src.model")
 
 @dataclass
 class Cell:
@@ -130,11 +132,22 @@ class Entry:
             # Call the LLM to generate candidates
             new_candidates = LLM.generate_candidates(self, search_level)
             # Store candidates and the pattern/search level used to generate them
+            logger.debug(f"[ENTRY] Storing entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}")
             self._pattern_levels[self.pattern] = search_level
             for new_candidate in new_candidates:
                 self._candidates[new_candidate.answer] = new_candidate
 
+        # If we didn't find any candidates and we're at less than the maximum search
+        # level, call this function recusrively with the flag to bump the search level.
+        if len (self._candidates) == 0:
+             if self.search_level < LLM.MAX_SEARCH_LEVEL:
+                 logger.debug("[ENTRY GET CANDIDATES]: Recursively calling get_candidates() to bump search level.")
+                 return self.get_candidates(True)
+
         return list(self._candidates.values())
+
+    def __str__(self):
+        return f"Entry {self.entry_id}: Candidates: {str(self._candidates)}"
 
 
 @dataclass
@@ -168,7 +181,7 @@ class Grid:
         self.height = max_row + 1
 
     def place_candidate(self, candidate: Candidate) -> bool:
-        print(candidate)
+        logger.debug(f"[GRID]: Placing candidate: {candidate}")
         entry = self.entries[candidate.entry_id]
         for cell, ch in zip(entry.cells, candidate.answer):
             if cell.letter is not None and cell.letter != ch:

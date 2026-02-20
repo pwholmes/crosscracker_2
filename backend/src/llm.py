@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from model import Cell, Entry, Candidate
 
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
-_generate_candidates_hook: Callable[[Entry, int, int], list[Any]] | None = None
+_generate_candidates_hook: Callable[[Entry, int, int], list[Candidate]] | None = None
 
 #logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("src.llm")
@@ -23,8 +23,9 @@ def normalize_candidate(answer: str) -> str:
 
 class LLM:
     # Configuration for candidate generation behavior
-    MAX_SEARCH_LEVEL: int = 0
-    MAX_CANDIDATES: int = 5
+    MAX_SEARCH_LEVEL: int = 1
+    MAX_CANDIDATES_0: int = 5
+    MAX_CANDIDATES_1: int = 10
     # Load environment variables from .env
     load_dotenv()
     MODEL_NAME: str = os.environ.get("MODEL_NAME", "llama3.1:8b")
@@ -85,7 +86,11 @@ class LLM:
         :return: A list of candidate answers, paired with independently-evaluated confidence ratings.
         """
         if max_candidates is None:
-            max_candidates = LLM.MAX_CANDIDATES
+            if search_level == 0:
+                max_candidates = LLM.MAX_CANDIDATES_0
+            else:
+                max_candidates = LLM.MAX_CANDIDATES_1
+
         if _generate_candidates_hook is not None:
             return _generate_candidates_hook(entry, search_level, max_candidates)
 
@@ -115,7 +120,7 @@ class LLM:
         :param max_candidates: Maximum number of candidates to generate
         :return: List of normalized candidate answers (strings)
         """
-        prompt: str = LLM.create_prompt(entry, search_level)
+        prompt: str = LLM.create_prompt(entry, search_level, max_candidates)
         
         def matches_pattern(candidate: str, pattern: str) -> bool:
             return all(p == "." or p == c for c, p in zip(candidate, pattern))
@@ -309,7 +314,7 @@ class LLM:
             return False
 
     @staticmethod
-    def create_prompt(entry: Entry, search_level: int) -> str:
+    def create_prompt(entry: Entry, search_level: int, max_candidates: int) -> str:
         """
         Fashion an appropriate prompt for the LLM to deduce a list of candidate answers.
         We will provide explicit instructions, the clue, the constraints (e.g., the length of the 
@@ -357,14 +362,15 @@ class LLM:
         prompt += "- HINTS are unranked, and may be only loosely related to the TARGET CLUE.\n"
         prompt += "- HINTS do not provide an exhastive list of CANDIDATES, but they should be given additional weight.\n"
         prompt += "- If any HINT answers match the LENGTH and PATTERN, you MUST include them in the CANDIDATES.\n"
-        prompt += "- Order CANDIDATES from most likely to least likely.\n"
+        #prompt += "- Order CANDIDATES from most likely to least likely.\n"
         #prompt += "- CANDIDATES may be inferred from general crossword knowledge and common idiomatic usage, even if not present in the HINTS.\n"
         #prompt += "- HINTS should be used to infer patterns or meanings.\n"
-        #prompt += "- Generate creative and diverse CANDIDATES, even if unusual or speculative.\n"
+        if (search_level > 0):
+            prompt += "- Generate creative and diverse CANDIDATES, even if unusual or speculative.\n"
         prompt += "OUTPUT FORMAT:\n"
-        prompt += "- Provide a list of up to ten CANDIDATES.\n"
+        prompt += f"- Provide a list of up to {max_candidates} CANDIDATES.\n"
         prompt += "- Each CANDIDATE must be on its own line.\n"
-        prompt += "- IMPORTANT: DO NOT provide any other text or confidence scores.\n"
+        prompt += "- IMPORTANT: DO NOT provide any other text, ratings or scores.\n"
         if hints is not None and len(hints) > 0:
             prompt += "\nHINTS:\n"
             for hint_clue, hint_answer in hints:
