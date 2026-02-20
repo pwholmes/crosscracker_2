@@ -1,0 +1,507 @@
+{
+  "puzzle_id": "crosshare-daybreak-15",
+  "puzzle_title": "Crosshare Daybreak #15 (9x9, flawed solution)",
+  "width": 9,
+  "height": 9,
+  "events": [
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "20A",
+        "answer": "FIRESALE",
+        "pattern": "........",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 43.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "23D",
+        "answer": "AVA",
+        "pattern": "A..",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection score": 52.666666666666664
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "22D",
+        "answer": "SIT",
+        "pattern": "S..",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 52.06666666666666
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "25A",
+        "answer": "PENTA",
+        "pattern": "...TA",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 45.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "13A",
+        "answer": "BASTE",
+        "pattern": ".....",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection score": 40.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "1D",
+        "answer": "AHAB",
+        "pattern": "...B",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection score": 50.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "11A",
+        "answer": "ANTIPASTI",
+        "pattern": "A........",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 52.05555555555556
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "4D",
+        "answer": "ELITE",
+        "pattern": "..IT.",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 59.4
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "1A",
+        "answer": "AXLE",
+        "pattern": "A..E",
+        "search_level": 0,
+        "confidence": 99.0,
+        "selection score": 62.7
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "2D",
+        "answer": "XENA",
+        "pattern": "X.NA",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 74.9
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "8A",
+        "answer": "HEEL",
+        "pattern": "HE.L",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 74.9
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "6D",
+        "answer": "RESEMBLE",
+        "pattern": "..S...L.",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 57.9
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "16A",
+        "answer": "MAI",
+        "pattern": "M..",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 51.166666666666664
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "9A",
+        "answer": "REAL",
+        "pattern": ".E..",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection score": 50.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "5D",
+        "answer": "BRA",
+        "pattern": ".RA",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 54.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "5A",
+        "answer": "BRR",
+        "pattern": "BR.",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection score": 69.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "15A",
+        "answer": "DEN",
+        "pattern": ".E.",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 49.666666666666664
+      },
+      "verified": [
+        "12D"
+      ]
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "BCC",
+        "pattern": "B..",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 49.666666666666664
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "17A",
+        "answer": "SSA",
+        "pattern": "...",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 21.0
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "20A",
+        "answer": "FIRESALE",
+        "pattern": "........",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection_score": 43.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "LETSDANCE",
+        "pattern": "LETSDA..E",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 71.88888888888889
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "24A",
+        "answer": "RECEIVED",
+        "pattern": "..C.IVE.",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 68.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "18D",
+        "answer": "SEEP",
+        "pattern": "S.EP",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 60.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "17D",
+        "answer": "STR",
+        "pattern": "S.R",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 54.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "20A",
+        "answer": "TENTSALE",
+        "pattern": "TEN.SAL.",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection score": 68.5
+      },
+      "verified": [
+        "21D"
+      ]
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "BCC",
+        "pattern": "B..",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection_score": 49.666666666666664
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "BCC",
+        "pattern": "B..",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 49.666666666666664
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "BCC",
+        "pattern": "B..",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection_score": 49.666666666666664
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "BCC",
+        "pattern": "B..",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 49.666666666666664
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "BCC",
+        "pattern": "B..",
+        "search_level": 0,
+        "confidence": 100,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "11A",
+        "answer": "ANTIPASTI",
+        "pattern": "A........",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection_score": 52.05555555555556
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "10D",
+        "answer": "LOGIC",
+        "pattern": "L..IC",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 67.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "11A",
+        "answer": "ANTIPASTO",
+        "pattern": "ANTI.AS.O",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection score": 86.88888888888889
+      },
+      "verified": [
+        "12D"
+      ]
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "14A",
+        "answer": "ERG",
+        "pattern": "E.G",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 67.83333333333333
+      },
+      "verified": [
+        "7D"
+      ]
+    },
+    {
+      "event": "solved"
+    }
+  ],
+  "id": "83309ab7-39a1-4969-a829-e78990088414",
+  "timestamp": "2026-02-18T17:45:30.820722",
+  "event_count": 35,
+  "recording_title": "Recording for crosshare-daybreak-15 (83309ab7)",
+  "grid_state": {
+    "rows": 9,
+    "cols": 9,
+    "blocks": [
+      [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
+      ]
+    ]
+  }
+}
