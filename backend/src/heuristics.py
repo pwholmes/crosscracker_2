@@ -47,10 +47,8 @@ class BasicStrategy:
         return best_entry_id, best_score
 
     @staticmethod
-    def select_best_candidate(entry: Entry) -> Candidate | None:
-        #logger = logging.getLogger("src.heuristics")
-        candidates = entry.get_candidates()
-        #logger.debug(f"[HEURISTICS]: Candidates for {entry.entry_id}: {candidates}")
+    def select_best_candidate(entry: Entry, widen_search: bool = False) -> Candidate | None:
+        candidates = entry.get_candidates(widen_search)
 
         best_candidate = None
         best_effective_confidence = float("-inf")
