@@ -24,8 +24,8 @@ def normalize_candidate(answer: str) -> str:
 class LLM:
     # Configuration for candidate generation behavior
     MAX_SEARCH_LEVEL: int = 1
-    MAX_CANDIDATES_0: int = 5
-    MAX_CANDIDATES_1: int = 10
+    MAX_CANDIDATES_0: int = 7
+    MAX_CANDIDATES_1: int = 12
     # Load environment variables from .env
     load_dotenv()
     MODEL_NAME: str = os.environ.get("MODEL_NAME", "llama3.1:8b")
@@ -350,13 +350,12 @@ class LLM:
         prompt += "- A CANDIDATE is a potential answer deduced for the TARGET CLUE.\n"
         prompt += "- Many correct crossword answers are multi-word phrases.\n"
         prompt += "- Actively consider multi-word answers when deducing CANDIDATES.\n"
-        prompt += "- If the clue is plural (ends in 's', 'es', or clearly refers to multiple items), the CANDIDATE must be plural.\n"
-        prompt += "- If the clue is singular, the CANDIDATE must be singular.\n"
-        prompt += "- Do not return answers with mismatched plurality.\n"
         prompt += "- Normalize each CANDIDATE by removing all spaces and punctuation and converting to upper case.\n"
-        prompt += (f"- A normalized CANDIDATE must be {length} characters.\n")
+        prompt += f"- A normalized CANDIDATE must be {length} characters.\n"
+        prompt += "- If a word must be truncated or altered to fit the length, it is NOT a valid candidate — discard it and find a different answer.\n"        
         if valid_pattern:
-            prompt += (f"- A normalized CANDIDATE should match this PATTERN, where a period . is an unknown character: {pattern}\n")
+            prompt += f"The PATTERN is: {pattern}"
+            prompt += (f"- A normalized CANDIDATE should match this PATTERN, where a period . is an unknown character.\n")
             prompt += "- When a PATTERN has only one or two unknown letters, focus on finding CANDIDATES that match the PATTERN exactly.\n"
         prompt += "- HINTS are past crossword clue-answer pairs semantically similar to the TARGET CLUE.\n"
         prompt += "- HINTS are unranked, and may be only loosely related to the TARGET CLUE.\n"
