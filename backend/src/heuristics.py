@@ -33,10 +33,13 @@ class BasicStrategy:
             filled_count = entry.length - blank_count
             completeness = filled_count / entry.length
 
-            # Total score = confidence (0-100) + completeness bonus - penalty
-            score = CONFIDENCE_WEIGHT * (cand.confidence - cand.penalty) + \
-                    LENGTH_WEIGHT * min(entry.length,10)/10 * 100 + \
-                    COMPLETENESS_WEIGHT * completeness * 100
+            confidence_score = CONFIDENCE_WEIGHT * (cand.confidence - cand.penalty)
+            # This length score favors longer answers
+            #length_score = LENGTH_WEIGHT * min(entry.length,10)/10 * 100
+            # This length score favors shorter answers
+            length_score = LENGTH_WEIGHT * max(0, 100 - 100/9 * (entry.length - 1))
+            completeness_score = COMPLETENESS_WEIGHT * completeness * 100
+            score =  confidence_score + length_score + completeness_score
 
             if best_entry_id is None or score > best_score:
                 best_entry_id = entry.entry_id
@@ -70,9 +73,15 @@ class BasicStrategy:
 
     @staticmethod
     def _can_place(entry: Entry, answer: str) -> bool:
-        for cell, ch in zip(entry.cells, answer):
-            if cell.letter is not None and cell.letter != ch:
+        #for cell, ch in zip(entry.cells, answer):
+        #    if cell.letter is not None and cell.letter != ch:
+        #        return False
+        if len(answer) != entry.length:
+            return False
+        for c_pattern, c_answer in zip(entry.pattern, answer):
+            if c_pattern is not "." and c_pattern != c_answer:
                 return False
+
         return True
 
 
