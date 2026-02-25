@@ -11,15 +11,16 @@ class BasicStrategy:
         3. Entry length (longer entries preferred)
         """
         # These should sum to 1.0d
-        CONFIDENCE_WEIGHT = 0.3
+        CONFIDENCE_WEIGHT = 0.25
         LENGTH_WEIGHT = 0.2
-        COMPLETENESS_WEIGHT = 0.5
+        COMPLETENESS_WEIGHT = 0.35
+        CONSTRAINT_WEIGHT = 0.2
 
         best_entry_id: str | None = None
         best_score: float = float("-inf")
 
         for entry in entries.values():
-            if "." not in entry.pattern:
+            if entry.completed:
                 continue
             if entry.entry_id in attempted_entries:
                 continue
@@ -35,11 +36,12 @@ class BasicStrategy:
 
             confidence_score = CONFIDENCE_WEIGHT * (cand.confidence - cand.penalty)
             # This length score favors longer answers
-            #length_score = LENGTH_WEIGHT * min(entry.length,10)/10 * 100
+            length_score = LENGTH_WEIGHT * min(entry.length,10)/10 * 100
             # This length score favors shorter answers
-            length_score = LENGTH_WEIGHT * max(0, 100 - 100/9 * (entry.length - 1))
+            #length_score = LENGTH_WEIGHT * max(0, 100 - 100/9 * (entry.length - 1))
             completeness_score = COMPLETENESS_WEIGHT * completeness * 100
-            score =  confidence_score + length_score + completeness_score
+            constraint_weight = CONSTRAINT_WEIGHT * (100 / max(1, entry.num_candidates(True)))
+            score =  confidence_score + length_score + completeness_score + constraint_weight
 
             if best_entry_id is None or score > best_score:
                 best_entry_id = entry.entry_id
@@ -48,6 +50,7 @@ class BasicStrategy:
         if best_entry_id is None:
             return None
         return best_entry_id, best_score
+
 
     @staticmethod
     def select_best_candidate(entry: Entry, widen_search: bool = False) -> Candidate | None:
@@ -59,7 +62,7 @@ class BasicStrategy:
         for candidate in candidates:
             if len(candidate.answer) != entry.length:
                 continue
-            if not BasicStrategy._can_place(entry, candidate.answer):
+            if not entry.can_place_answer(candidate.answer):
                 continue
 
             # Calculate effective confidence (confidence minus penalty)
@@ -71,22 +74,97 @@ class BasicStrategy:
 
         return best_candidate
 
-    @staticmethod
-    def _can_place(entry: Entry, answer: str) -> bool:
-        #for cell, ch in zip(entry.cells, answer):
-        #    if cell.letter is not None and cell.letter != ch:
-        #        return False
-        if len(answer) != entry.length:
-            return False
-        for c_pattern, c_answer in zip(entry.pattern, answer):
-            if c_pattern is not "." and c_pattern != c_answer:
-                return False
-
-        return True
-
 
     @staticmethod
-    def select_best_backtrack_target(grid: Grid, get_crossing_ids_func: Callable[[str], set[str]]) -> str | None:
+    def select_best_backtrack_target(grid: Grid, get_crossing_ids_func: Callable[[str], set[str]], top_n_candidates: int = 5) -> str | None:
+        """Select a backtrack target by finding the placed entry most likely to be
+        blocking progress on unfilled entries.
+        
+        Algorithm:
+        For each unplaced entry (the "stuck" entry):
+          - If it has no candidates, directly blame all placed crossing entries,
+            weighted by inverse confidence (shakier crossings get more blame)
+          - Otherwise, examine its top N candidates
+          - For each placed crossing entry, determine what letter it contributes
+            at the shared cell
+          - Count how many of the stuck entry's top N candidates conflict with
+            that crossing letter
+          - Award blame to the crossing entry proportional to the conflict ratio,
+            weighted by candidate scarcity
+        Select the placed entry with the highest total blame score.
+        Break ties by lowest confidence.
+        """
+        logger = logging.getLogger("src.heuristics")
+        entries = grid.entries.values()
+        blame: dict[str, float] = {}
+
+        # Initialize blame scores for all eligible entries
+        for entry in entries:
+            if entry.placement is not None and not entry.used_fallback:
+                blame[entry.entry_id] = 0.0
+
+        # Loop through stuck (unplaced) entries and blame their crossing entries
+        for entry in entries:
+            if entry.completed:
+                continue
+
+            candidates: list[Candidate] = entry.get_candidates()[:top_n_candidates]
+            crossing_entry_ids = get_crossing_ids_func(entry.entry_id)
+
+            if not candidates:
+                # No candidates at all -- directly blame all placed crossing entries,
+                # weighted by inverse confidence so shakier entries get more blame
+                for crossing_entry_id in crossing_entry_ids:
+                    crossing_entry = grid.entries[crossing_entry_id]
+                    if crossing_entry.placement is None or crossing_entry.used_fallback:
+                        continue
+                    blame[crossing_entry_id] = blame.get(crossing_entry_id, 0.0) + (1.0 - crossing_entry.placement.confidence)
+                continue
+
+            scarcity_weight = 1.0 + (1.0 / len(candidates))  # more weight when fewer candidates exist
+
+            for crossing_entry_id in crossing_entry_ids:
+                crossing_entry = grid.entries[crossing_entry_id]
+                if crossing_entry.placement is None or crossing_entry.used_fallback:
+                    continue
+
+                # What letter is the crossing entry contributing at the shared cell?
+                cross_position, crossing_letter = entry.get_crossing_letter(crossing_entry)
+                if cross_position is None or crossing_letter is None:
+                    continue
+
+                # How many of this entry's candidates conflict with that letter?
+                conflicting = sum(
+                    1 for candidate in candidates
+                    if candidate.answer[cross_position] != crossing_letter
+                )
+                conflict_ratio = conflicting / len(candidates)
+                blame[crossing_entry_id] = blame.get(crossing_entry_id, 0.0) + conflict_ratio * scarcity_weight
+
+        if not blame:
+            return None
+
+        # Filter to only entries that have any blame at all, falling back to all entries if none do
+        blamed_entries = {k: v for k, v in blame.items() if v > 0}
+        pool = blamed_entries if blamed_entries else blame
+
+        max_blame = max(pool.values())
+        tied_entries = [entry for entry in entries if entry.entry_id in pool and pool[entry.entry_id] == max_blame]
+
+        # Break ties by lowest confidence score
+        selected = min(tied_entries, key=lambda rec: rec.placement.confidence if rec.placement is not None else float("inf"))
+
+        logger.debug(
+            f"BACKTRACK TARGET SELECTED: entry_id={selected.entry_id} "
+            f"blame={max_blame:.2f} "
+            + (f"confidence={selected.placement.confidence:.2f}" if selected.placement is not None else "confidence=None")
+        )
+
+        return selected.entry_id
+
+
+    @staticmethod
+    def select_best_backtrack_target_old(grid: Grid, get_crossing_ids_func: Callable[[str], set[str]]) -> str | None:
         """Select a backtrack target by finding the entry that appears most frequently
         as a crossing to unfilled entries.
         
@@ -152,7 +230,7 @@ class BasicStrategy:
             filled_count = 0
             for crossing_entry_id in crossing_entry_ids:
                 crossing_entry = grid.entries[crossing_entry_id]
-                if "." in crossing_entry.pattern:
+                if not crossing_entry.completed:
                     unfilled_count += 1
                 else:
                     filled_count += 1
