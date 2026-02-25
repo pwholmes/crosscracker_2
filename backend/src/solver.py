@@ -326,7 +326,7 @@ class Solver:
 
 
     def _all_filled(self) -> bool:
-        return all("." not in e.pattern for e in self.grid.entries.values())
+        return all(e.completed for e in self.grid.entries.values())
 
 
     def _predict_crossing_entries(self, entry_id: str, answer: str) -> dict[str, str]:
