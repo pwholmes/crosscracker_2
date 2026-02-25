@@ -107,7 +107,7 @@ def test_full_puzzle_scored_candidates_exercises_backtracking():
         assert all(len(item["answer"]) == len(out_dicts[0]["answer"]) for item in out_dicts)
         
         # Convert to Candidate objects
-        return [Candidate(entry_id=entry.entry_id, answer=item["answer"], confidence=item["confidence"]) for item in out_dicts]
+        return [Candidate(entry_id=entry.entry_id, answer=item["answer"], llm_confidence=item["confidence"]) for item in out_dicts]
 
     def mock_verify(clue: str, answer: str) -> bool:
         """Verify answer by checking against correct answer in grid."""

@@ -17,7 +17,7 @@ from model import Grid, Entry, Candidate
 
 class CandidateItem(TypedDict):
     answer: str
-    confidence: float
+    llm_confidence: float
 
 
 def _shift_letters(answer: str) -> str:
@@ -60,35 +60,36 @@ def _make_hook(backtrack: bool) -> GenerateCandidatesHook:
 
         if eid in wrong_top_ids:
             init: List[CandidateItem] = [
-                {"answer": wrong1, "confidence": 0.99},
-                {"answer": correct, "confidence": 0.90},
-                {"answer": wrong2, "confidence": 0.10},
+                {"answer": wrong1, "llm_confidence": 0.99},
+                {"answer": correct, "llm_confidence": 0.90},
+                {"answer": wrong2, "llm_confidence": 0.10},
             ]
         else:
             init = [
-                {"answer": correct, "confidence": float(top_conf)},
-                {"answer": wrong1, "confidence": float(max(0.05, top_conf - 0.35))},
-                {"answer": wrong2, "confidence": 0.05},
+                {"answer": correct, "llm_confidence": float(top_conf)},
+                {"answer": wrong1, "llm_confidence": float(max(0.05, top_conf - 0.35))},
+                {"answer": wrong2, "llm_confidence": 0.05},
             ]
 
         refined: List[CandidateItem] = [
-            {"answer": correct, "confidence": float(min(0.99, max(top_conf, 0.8)))},
-            {"answer": wrong1, "confidence": 0.10},
-            {"answer": wrong2, "confidence": 0.05},
+            {"answer": correct, "llm_confidence": float(min(0.99, max(top_conf, 0.8)))},
+            {"answer": wrong1, "llm_confidence": 0.10},
+            {"answer": wrong2, "llm_confidence": 0.05},
         ]
 
         by_clue[entry.clue] = (init, refined)
 
-    def hook(entry: Entry, widening_level: int, max_candidates: int) -> list[Candidate]:
+    def hook(entry: Entry, search_level: int) -> list[Candidate]:
         cands = by_clue.get(entry.clue)
         if cands is None:
             return []
 
         empty_pattern = set(entry.pattern) == {"."}
-        use_init = widening_level == 0 and empty_pattern
+        use_init = search_level == 0 and empty_pattern
         chosen: List[CandidateItem] = cands[0] if use_init else cands[1]
+        max_candidates = 7
         selected: List[CandidateItem] = chosen[:max_candidates]
-        return [Candidate(entry_id=entry.entry_id, answer=item["answer"], confidence=item["confidence"]) for item in selected]
+        return [Candidate(entry_id=entry.entry_id, answer=item["answer"], llm_confidence=item["llm_confidence"]) for item in selected]
 
     return hook
 

@@ -14,7 +14,7 @@ from typing import Any
 from model import Grid, Entry
 
 
-GenerateCandidatesHook = Callable[[Entry, int, int], list[Any]]
+GenerateCandidatesHook = Callable[[Entry, int], list[Any]]
 
 
 @dataclass(frozen=True)
