@@ -15,11 +15,33 @@ class Cell:
 
 
 @dataclass
-class CandidatesAtSearchLevel:
-    """ Candidates are generated at a specific search level for each pattern.  """
-    search_level: int
-    candidates: list[Candidate]
+class Candidate:
+    """
+    Represents a possible answer for a crossword entry, including scoring and placement context.
+    Combines the previous Candidate and ScoredCandidate classes.
+    """
+    LLM_CONFIDENCE_WEIGHT = 0.6
+    LOGPROB_CONFIDENCE_WEIGHT = 1 - LLM_CONFIDENCE_WEIGHT
+    entry_id: str
+    answer: str
+    search_level: int = 0
+    llm_confidence: float = 0.0
+    logprob_confidence: float = 0.0
+    penalty: float = 0.0
+    is_fallback: bool = False
 
+    def merge(self, candidate: Candidate) -> Candidate:
+        self.search_level = max(self.search_level, candidate.search_level)
+        self.llm_confidence = max(self.llm_confidence, candidate.llm_confidence)
+        self.logprob_confidence = max(self.logprob_confidence, candidate.logprob_confidence)
+        self.penalty = self.penalty + candidate.penalty
+        self.is_fallback = self.is_fallback or candidate.is_fallback
+        return self
+    
+    @property
+    def confidence(self) -> float:
+        return self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
+            self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
 
 @dataclass
 class Placement:
@@ -115,6 +137,19 @@ class Entry:
         that is, it was completed entirely via crossing entries"""
         return self.completed and self.placement is None
 
+    def add_candidate(self, answer: str, llm_confidence: float = 0, logprob_confidence: float = 0) -> None:
+        candidate = self._candidates.get(answer)
+        if candidate is None:
+            candidate = Candidate(
+                entry_id=self.entry_id,
+                answer=answer, 
+                llm_confidence=llm_confidence,
+                logprob_confidence=logprob_confidence
+            )
+        else:
+            candidate.llm_confidence = llm_confidence
+            candidate.logprob_confidence = logprob_confidence
+
     def get_candidates(self, widen_search: bool = False) -> list[Candidate]:
         """Get the pool of candidates for this entry, generating new candidates as
         necessary based on:
@@ -146,22 +181,40 @@ class Entry:
 
         return list(self._candidates.values())
 
+    
+    def can_place_answer(self, answer: str, pattern: str|None = None) -> bool:
+        if pattern is None:
+            pattern = self.pattern
+        return Entry.answer_matches_pattern(answer, pattern)
+
+    @staticmethod
+    def answer_matches_pattern(answer: str, pattern: str) -> bool:
+        if len(answer) != len(pattern):
+            return False
+        return all(p == "." or p == a for p, a in zip(pattern, answer))
+
+    def num_candidates(self, matching_only: bool = False) -> int:
+        if matching_only:
+            return sum(self.can_place_answer(c.answer) for c in self._candidates.values())
+        else:
+            return len(self._candidates)
+
     def __str__(self):
         return f"Entry {self.entry_id}: Candidates: {str(self._candidates)}"
 
-
-@dataclass
-class Candidate:
-    """
-    Represents a possible answer for a crossword entry, including scoring and placement context.
-    Combines the previous Candidate and ScoredCandidate classes.
-    """
-    entry_id: str
-    answer: str
-    search_level: int = 0
-    confidence: float = 50.0
-    penalty: float = 0.0
-    is_fallback: bool = False
+    def get_crossing_letter(self, crossing_entry: Entry) -> tuple[int | None, str | None]:
+        """
+        Returns the position (index) in entry where it crosses crossing_entry,
+        and the letter contributed by crossing_entry at that cell.
+        If no crossing exists, returns (None, None).
+        """
+        # Find the shared cell
+        for idx_entry, cell_entry in enumerate(self.cells):
+            for cell_cross in crossing_entry.cells:
+                if cell_entry is cell_cross:
+                    # Return the index in stuck_entry and the letter
+                    return idx_entry, cell_cross.letter
+        return None, None
 
 
 class Grid:
