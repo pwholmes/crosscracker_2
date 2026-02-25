@@ -4,12 +4,13 @@ import requests
 import logging
 import re
 import os
+import math
 from dotenv import load_dotenv
 
 from model import Cell, Entry, Candidate
 
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
-_generate_candidates_hook: Callable[[Entry, int, int], list[Candidate]] | None = None
+_generate_candidates_hook: Callable[[Entry, int], list[Candidate]] | None = None
 
 #logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("src.llm")
@@ -23,9 +24,15 @@ def normalize_candidate(answer: str) -> str:
 
 class LLM:
     # Configuration for candidate generation behavior
-    MAX_SEARCH_LEVEL: int = 1
-    MAX_CANDIDATES_0: int = 7
-    MAX_CANDIDATES_1: int = 12
+    DEFAULT_CONFIDENCE = 40.0
+    MAX_SEARCH_LEVEL: int = 2
+    MAX_CANDIDATES: list[int] = [7, 12, 15]
+    TUNING_PARAMS: list[dict[str,str]] = [
+        {"temperature": "0.25", "top_p": "0.8", "top_k": "10"},
+        {"temperature": "0.75", "top_p": "0.9", "top_k": "40"},
+        {"temperature": "1.20", "top_p": "0.99", "top_k": "100"}
+    ]
+
     # Load environment variables from .env
     load_dotenv()
     MODEL_NAME: str = os.environ.get("MODEL_NAME", "llama3.1:8b")
@@ -37,9 +44,10 @@ class LLM:
     # This enables deterministic, repeatable puzzle solves for testing and demos.
     _generate_candidates_hook: Callable[[Entry, int, int], list[Any]] | None = None
 
+
     @staticmethod
     def set_generate_candidates_hook(
-            hook: Callable[[Entry, int, int], list[Any]] | None
+            hook: Callable[[Entry, int], list[Any]] | None
     ) -> None:
         """
         Install or clear a custom candidate generation hook.
@@ -59,8 +67,7 @@ class LLM:
     @staticmethod
     def generate_candidates(
             entry: Entry,
-            search_level: int,
-            max_candidates: int | None = None,
+            search_level: int
     ) -> list[Candidate]:
         """
         Given all the information we have about a particular crossword clue, prompt the LLM for a
@@ -73,45 +80,39 @@ class LLM:
         This separation improves calibration by having the LLM evaluate candidates in a
         distinct context, where it tends to be more conservative and accurate.
         
-        :param entry: The crossword clue for which candidate answers are being generated.   The Entry
-            object contains lots of contexual info we pass to the LLM in the prompt, including the 
-            answer's length, the pattern of known crossing letters, the list of "hints" obtained 
-            from the vector DB, and of course the clue itself.
-        :param search_level: Measures how "creative" we want the LLM to be.  The first time we ask,
-            it's at the minimum level (0), but if the LLM is unable to produce any viable candidates,
-            we increase this value.  The effect is that at higher levels, the prompt we pass
-            to the LLM will have additional instructions, like "consider multiword answers".  The
-            search level is unique for each different pattern of letters passed to the LLM.
-        :param max_candidates: The maximum number of candidate answers allowed.
-        :return: A list of candidate answers, paired with independently-evaluated confidence ratings.
+        :param entry: The crossword clue for which candidate answers are being generated.
+            The Entry object contains lots of contexual info we pass to the LLM in the prompt,
+            including the answer's length, the pattern of known crossing letters, the list of
+            "hints" obtained from the vector DB, and of course the clue itself.
+        :param search_level: Measures how "creative" we want the LLM to be.  The first time 
+            we ask, it's at the minimum level (0), but if the LLM is unable to produce any
+            viable candidates, we increase this value.  At higher levels, the API's tuning
+            parameters (tempeature, top_p, top_k) are adjusted, and also the prompt we pass 
+            to the LLM will have additional instructions, like "consider multiword answers".
+            The search level is unique for each different pattern of letters passed to the LLM.
+        :return: A list of candidate answers.
         """
-        if max_candidates is None:
-            if search_level == 0:
-                max_candidates = LLM.MAX_CANDIDATES_0
-            else:
-                max_candidates = LLM.MAX_CANDIDATES_1
-
         if _generate_candidates_hook is not None:
-            return _generate_candidates_hook(entry, search_level, max_candidates)
+            return _generate_candidates_hook(entry, search_level)
 
-        # Step 1: Generate candidate answers (without embedded scoring)
-        answers = LLM._generate_candidate_answers(entry, search_level, max_candidates)
-        if not answers:
+        # LLM CALL #1: Generate candidate answers
+        candidates = LLM._generate_candidate_answers(entry, search_level)
+        if not candidates:
             return []
         
-        # Step 2: Score each candidate independently
-        scored_candidates = LLM._score_candidates(entry, search_level, answers)
-        
-        # Debug print: show all candidates and their confidence levels
-        logger.debug("[LLM RESPONSE]: " + ", ".join(f"{c.answer} ({c.confidence})" for c in scored_candidates))
+        # LLM CALL #2: Score each candidate independently
+        scored_candidates = LLM._score_candidates(entry, candidates, search_level)
+
+        # Debug print: show all candidates and their aggregate confidence levels
+        logger.debug("[LLM FINAL RESPONSE]: " + ", ".join(f"{c.answer} ({c.confidence:.1f})" for c in scored_candidates))
         return scored_candidates
+
 
     @staticmethod
     def _generate_candidate_answers(
             entry: Entry,
-            search_level: int,
-            max_candidates: int,
-    ) -> list[str]:
+            search_level: int
+    ) -> dict[str, Candidate]:
         """
         Generate candidate answers for a clue (generation phase only, no scoring).
         
@@ -120,11 +121,8 @@ class LLM:
         :param max_candidates: Maximum number of candidates to generate
         :return: List of normalized candidate answers (strings)
         """
-        prompt: str = LLM.create_prompt(entry, search_level, max_candidates)
+        prompt: str = LLM.create_prompt(entry, search_level)
         
-        def matches_pattern(candidate: str, pattern: str) -> bool:
-            return all(p == "." or p == c for c, p in zip(candidate, pattern))
-
         try:
             logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern}")
             if entry.hints:
@@ -136,55 +134,154 @@ class LLM:
                 json = {
                     "model": LLM.MODEL_NAME,
                     "prompt": prompt,
-                    "stream": False
+                    "stream": False,
+                    "logprobs": True,
+                    "top_logprobs": 5
                 },
                 timeout=30
             )
             response.raise_for_status()
             result = response.json()
-            output = result.get("response", "")
-            #logger.debug(f"[LLM GENERATE RAW RESPONSE]\n{output}")
+            response = result.get("response", "")
+            logprobs = result.get("logprobs", [])
+            logprob_results = LLM._aggregate_logprobs(logprobs, entry.length)
 
-            # Parse answers (no confidence in generation phase)
-            answers: list[str] = []
-            for part in output.split("\n"):
-                part = part.strip()
-                if not part:
+            formatted_output = ", ".join([f"{word} ({int(confidence)})" for word, confidence in logprob_results])
+            logger.debug(f"[LOGPROBS RESULT] {formatted_output}")
+
+            # Parse the LLM response and add answers that match the criteria to result set
+            candidates: dict[str, Candidate] = {}
+            for answer in response.split("\n"):
+                answer = answer.strip()
+                if not answer:
                     continue
-                # Remove pipe and everything after it if present (in case LLM includes it anyway)
-                if "|" in part:
-                    part = part.split("|", 1)[0].strip()
-                answer = normalize_candidate(part)
-                # Only include answers of the correct length
-                if len(answer) == entry.length and answer not in answers:
-                    answers.append(answer)
-                if len(answers) >= max_candidates:
-                    break
-            hint_matches: list[str] = []
-            if entry.hints:
-                for _, hint_answer in entry.hints:
-                    normalized_hint = normalize_candidate(hint_answer)
-                    if len(normalized_hint) != entry.length:
-                        continue
-                    if not matches_pattern(normalized_hint, entry.pattern):
-                        continue
-                    if normalized_hint not in hint_matches:
-                        hint_matches.append(normalized_hint)
+                if len(answer) != entry.length:
+                    continue
+                #if not matches_pattern(answer, entry.pattern):
+                #    continue
+                candidates[answer] = Candidate(
+                    entry_id=entry.entry_id, 
+                    answer=answer
+                )
 
-            ordered = hint_matches + [answer for answer in answers if answer not in hint_matches]
-            limit = max(max_candidates, len(hint_matches))
-            ordered = ordered[:limit]
-            logger.debug(f"[LLM GENERATE RESULT] Generated {len(ordered)} candidates: {ordered}")
-            return ordered
+            # Add hints that match the criteria to the result set
+            if entry.hints:
+                for _, answer in entry.hints:
+                    if len(answer) != entry.length:
+                        continue
+                    #if not matches_pattern(answer, entry.pattern):
+                    #    continue
+                    candidates[answer] = Candidate(
+                        entry_id=entry.entry_id, 
+                        answer=answer
+                    )
+
+            # Add logprob words that match the criterua to the result set
+            for answer, confidence in logprob_results:
+                if len(answer) != entry.length:
+                    continue
+                #if not matches_pattern(answer, entry.pattern):
+                #    continue
+                candidates[answer] = Candidate(
+                    entry_id=entry.entry_id, 
+                    answer=answer,
+                    logprob_confidence=confidence
+                )
+
+            logger.debug(f"[LLM GENERATE RESULT] Generated {len(candidates)} candidates: {', '.join(c.answer for c in candidates.values())}")
+            return candidates
         except Exception as e:
-            logger.error(f"Ollama generation query failed: {e}")
-            return []
+            logger.error(f"[LLM GENERATE FATAL ERROR] Ollama generation query failed: {e}")
+            raise
+
+
+    @staticmethod
+    def _aggregate_logprobs(
+        logprobs_data: list[dict[str, Any]], 
+        target_length: int,
+        min_confidence: float = 0.0
+    ) -> list[tuple[str, float]]:
+        """
+        Aggregates token-level log probabilities into word-level confidence scores.
+
+        This function processes raw logprob data from an LLM, grouping sequential 
+        tokens into candidate words based on delimiters (newlines, semicolons, etc.). 
+        It normalizes candidates by converting them to uppercase and removing non-alphabetic 
+        characters. If multiple instances of the same word (or truncated prefix) appear 
+        in the data, their linear probabilities are summed to account for duplicates, 
+        then capped at 100%.
+
+        Args:
+            logprobs_data: A list of dictionaries, where each dict contains a "token" 
+                (str) and its associated "logprob" (float).
+            target_length: The number of characters to truncate the normalized word 
+                to for categorization/matching (useful for crossword slot constraints).
+            min_confidence: The minimum confidence percentage (0.0 to 100.0) required 
+                for a word to be included in the final results.
+
+        Returns:
+            A list of (word, confidence) tuples, where 'word' is the uppercase 
+            alphabetic string of 'target_length' and 'confidence' is a float 
+            between 0.0 and 100.0. The list is sorted by confidence in descending order.
+
+        Note:
+            The function uses a 'sentinel' pattern to ensure the final word in the 
+            buffer is processed without redundant code blocks.
+        """        
+        word_probs: dict[str, float] = {} 
+        current_tokens: list[str] = []
+        current_logprob_sum: float = 0.0
+
+        # Sentinel forces the loop to process the final word buffer
+        sentinel: dict[str,str|float] = {"token": "\n", "logprob": 0.0}
+        rejected_words: list[str] = []
+        for entry in logprobs_data + [sentinel]:
+            token: str = entry.get("token", "")
+            logprob: float = entry.get("logprob", 0.0)
+
+            is_delimiter = "\n" in token or "\\n" in token or token.strip() in {",", ";", ""}
+            
+            if is_delimiter:
+                if current_tokens:
+                    # Join tokens into one uppercase string
+                    word = "".join(current_tokens).upper()
+                    # Filter non-alpha characters and rejoin into one string
+                    word = "".join(filter(str.isalpha, word))
+
+                    # Add words of the proper length to the dictionary (or combine if it's already there)
+                    if len(word) == target_length:
+                        word_probs[word] = word_probs.get(word, 0.0) + math.exp(current_logprob_sum)
+                    else:
+                        rejected_words.append(word)
+
+                current_tokens = []
+                current_logprob_sum = 0.0
+            else:
+                if len("".join(current_tokens)) < target_length:
+                    current_tokens.append(token.strip())
+                    current_logprob_sum += logprob
+
+        if rejected_words:
+            logger.debug(f"[LOGPROBS] Rejecting words of wrong length: {", ".join(w for w in rejected_words)}")
+                
+        # Cap at 1.0 (100%) and apply min_confidence filter
+        final_results = [
+            (word, min(1.0, prob) * 100)
+            for word, prob in word_probs.items()
+            if (min(1.0, prob) * 100) >= min_confidence
+        ]
+        # Round confidence values to one decimal place
+        final_results = [(word, round(conf, 1)) for word, conf in final_results]
+
+        # Sort by confidence (index 1) descending
+        return sorted(final_results, key=lambda x: x[1], reverse=True)
+
 
     @staticmethod
     def _score_candidates(
             entry: Entry,
-            search_level: int,
-            answers: list[str],
+            candidates: dict[str,Candidate],
+            search_level: int
     ) -> list[Candidate]:
         """
         Score a list of candidate answers independently (evaluation phase).
@@ -196,7 +293,7 @@ class LLM:
         :param answers: List of candidate answers to score
         :return: List of Candidate with confidence ratings
         """
-        if not answers:
+        if not candidates:
             return []
         
         clue = entry.clue
@@ -207,7 +304,6 @@ class LLM:
         prompt += "\nRULES:\n"
         prompt += "- For each CANDIDATE, determine if it is a plausible answer for the CLUE.\n"
         prompt += "- HINTS are provided for context but are not exhaustive.\n"
-        prompt += "- Be conservative: rate candidates lower if there is any doubt.\n"
         prompt += "\nCONFIDENCE RUBRIC:\n"
         prompt += "- 90-100: Definitive answer; very confident match.\n"
         prompt += "- 80-89: Strong match with subtle interpretation.\n"
@@ -221,15 +317,16 @@ class LLM:
         
         prompt += f"\nCLUE: {clue}\n"
         prompt += "\nCANDIDATES TO EVALUATE:\n"
-        for answer in answers:
-            prompt += f"- {answer}\n"
+        for candidate in candidates.values():
+            prompt += f"- {candidate.answer}\n"
         
         prompt += "\nRESPONSE FORMAT:\n"
         prompt += "- For each candidate, provide: ANSWER | CONFIDENCE\n"
-        prompt += "- ONLY provide the lines with answers and confidence, no other text.\n"
+        prompt += "- ONLY provide ANSWER and CONFIDENCE, no other text.\n"
+        prompt += "- Select a single value for CONFIDENCE, do not specify a range.\n"
         
         try:
-            logger.debug(f"[LLM SCORE] Scoring {len(answers)} candidates for entry {entry.entry_id}, clue '{clue}'")
+            #logger.debug(f"[LLM SCORE] Scoring {len(candidates)} candidates for entry {entry.entry_id}, clue '{clue}'")
             response = requests.post(
                 LLM.OLLAMA_URL,
                 json = {
@@ -244,7 +341,6 @@ class LLM:
             output = result.get("response", "")
             
             # Parse scored candidates
-            scored: dict[str, float] = {}
             for part in output.split("\n"):
                 part = part.strip()
                 if "|" in part:
@@ -254,22 +350,23 @@ class LLM:
                         confidence = int(conf.strip())
                         confidence = max(0, min(confidence, 100))
                     except ValueError:
-                        confidence = 50
-                    if answer in answers:
-                        scored[answer] = float(confidence)
+                        logger.error(f"[LLM SCORE ERROR] Unable to parse score for answer {part}, using default.")
+                        confidence = LLM.DEFAULT_CONFIDENCE
+                    exsting_candidate = candidates.get(answer)
+                    if exsting_candidate is not None:
+                        exsting_candidate.llm_confidence = float(confidence)
+                    
             
-            # Return scored candidates, maintaining original order
-            result_candidates: list[Candidate] = []
-            for answer in answers:
-                confidence = scored.get(answer, 25.0)  # Default to low confidence if not scored
-                result_candidates.append(Candidate(entry_id=entry.entry_id, answer=answer, confidence=confidence, search_level=search_level))
-            
-            logger.debug(f"[LLM SCORE RESULT] Scored candidates: {[(c.answer, c.confidence) for c in result_candidates]}")
-            return result_candidates
+            # Sort candidates by confidence descending
+            sorted_candidates = sorted(candidates.values(), key=lambda c: c.llm_confidence, reverse=True)
+
+            formatted_output = ", ".join([f"{c.answer} ({c.llm_confidence:.1f})" for c in sorted_candidates])
+            logger.debug(f"[LLM SCORE RESULT] {formatted_output}")
+
+            return sorted_candidates
         except Exception as e:
-            logger.error(f"Ollama scoring query failed: {e}")
-            # Fallback: return unscored candidates with default confidence
-            return [Candidate(entry_id=entry.entry_id, answer=answer, confidence=25.0) for answer in answers]
+            logger.error(f"[LLM SCORE FATAL ERROR] {e}")
+            raise
 
     @staticmethod
     def verify_answer(
@@ -286,10 +383,12 @@ class LLM:
         clue = entry.clue
         length = entry.length
         
-        prompt: str = "Given a crossword clue, expected answer length, and a candidate answer, decide if the answer is plausible.\n"
+        #prompt: str = "Given a crossword clue, expected answer length, and a candidate answer, decide if the answer is plausible.\n"
+        prompt: str = "Does the given ANSWER satisfy the given crossword CLUE?\n"
         prompt += (f"CLUE: {clue}\n")
         prompt += (f"EXPECTED LENGTH: {length}\n")
         prompt += (f"ANSWER: {answer}\n")
+        prompt += "Unless it is a proper noun or abbreviation, it must be a valid word, spelled correctly.\n"
         prompt += "Respond ONLY with the word Yes or No and no other text.\n"
 
         try:
@@ -313,8 +412,9 @@ class LLM:
             logger.error(f"Ollama query failed: {e}")
             return False
 
+
     @staticmethod
-    def create_prompt(entry: Entry, search_level: int, max_candidates: int) -> str:
+    def create_prompt(entry: Entry, search_level: int, max_candidates: int = 0) -> str:
         """
         Fashion an appropriate prompt for the LLM to deduce a list of candidate answers.
         We will provide explicit instructions, the clue, the constraints (e.g., the length of the 
@@ -344,6 +444,8 @@ class LLM:
 
         matcher: str = f'[^{re.escape(".")}]'
         valid_pattern: bool = (re.search(matcher, entry.pattern) is not None)
+        if max_candidates == 0:
+            max_candidates = LLM.MAX_CANDIDATES[search_level]
 
         prompt =  "TASK: Given a crossword clue and contextual hints, deduce CANDIDATE crossword answers.\n"
         prompt += "\nRULES:\n"
@@ -352,7 +454,7 @@ class LLM:
         prompt += "- Actively consider multi-word answers when deducing CANDIDATES.\n"
         prompt += "- Normalize each CANDIDATE by removing all spaces and punctuation and converting to upper case.\n"
         prompt += f"- A normalized CANDIDATE must be {length} characters.\n"
-        prompt += "- If a word must be truncated or altered to fit the length, it is NOT a valid candidate — discard it and find a different answer.\n"        
+        prompt += "- If a word must be truncated or altered to fit the LENGTH, it is NOT a valid CANDIDATE and must be discarded.\n"        
         if valid_pattern:
             prompt += f"The PATTERN is: {pattern}"
             prompt += (f"- A normalized CANDIDATE should match this PATTERN, where a period . is an unknown character.\n")
@@ -360,8 +462,6 @@ class LLM:
         prompt += "- HINTS are past crossword clue-answer pairs semantically similar to the TARGET CLUE.\n"
         prompt += "- HINTS are unranked, and may be only loosely related to the TARGET CLUE.\n"
         prompt += "- HINTS do not provide an exhastive list of CANDIDATES, but they should be given additional weight.\n"
-        prompt += "- If any HINT answers match the LENGTH and PATTERN, you MUST include them in the CANDIDATES.\n"
-        #prompt += "- Order CANDIDATES from most likely to least likely.\n"
         #prompt += "- CANDIDATES may be inferred from general crossword knowledge and common idiomatic usage, even if not present in the HINTS.\n"
         #prompt += "- HINTS should be used to infer patterns or meanings.\n"
         if (search_level > 0):
