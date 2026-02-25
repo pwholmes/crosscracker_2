@@ -86,21 +86,3 @@ def populate_hints(entries: list[Entry]) -> None:
     """Populate `Entry.hints` by querying the vector database."""
     collection: Collection = open_database()
     query_database(collection, entries)
-
-
-def get_answer(entries: list[Entry]):
-    start = time.perf_counter()
-
-    # Open the clue database
-    collection: Collection = open_database()
-
-    # Query the clue database.
-    query_database(collection, entries)
-
-    # Fashion an appropriate LLM prompt for each clue using the available context data.
-    for entry in entries:
-        prompt = LLM.create_prompt(entry, 0)
-        print(prompt)
-
-    end = time.perf_counter()
-    print(f"Elapsed time: {end-start}")
