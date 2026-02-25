@@ -75,7 +75,7 @@ class Entry:
                 entry_id: str,
                 clue: str,
                 correct_answer: str,
-                grid: list[list[Cell]],
+                cells: list[list[Cell]],
                 start: tuple[int,int],
                 length: int):
         """
@@ -99,14 +99,14 @@ class Entry:
         r, c = start
         if entry_id[-1].upper() == "A":  # across
             for i in range(length):
-                if c + i >= len(grid[0]):
+                if c + i >= len(cells[0]):
                     raise ValueError(f"Cell out of bounds at ({r},{c+i}) for {entry_id}")
-                self.cells.append(grid[r][c + i])
+                self.cells.append(cells[r][c + i])
         elif entry_id[-1].upper() == "D":  # down
             for i in range(length):
-                if r + i >= len(grid):
+                if r + i >= len(cells):
                     raise ValueError(f"Cell out of bounds at ({r+i},{c}) for {entry_id}")
-                self.cells.append(grid[r + i][c])
+                self.cells.append(cells[r + i][c])
         else:
             raise ValueError(f"Invalid entry_id {entry_id}, must end with 'A' or 'D'")
 
