@@ -4,28 +4,29 @@ from collections.abc import Callable
 
 class BasicStrategy:
     @staticmethod
-    def select_best_unfilled_entry(entries: dict[str,Entry], attempted_entries: set[str]) -> tuple[str, float] | None:
+    def select_best_unfilled_entry(entries: dict[str,Entry], attempted_entries: set[tuple[str, str]]) -> tuple[Entry, Candidate, float] | None:
         """Select the best unfilled entry using a heuristic that balances:
         1. Candidate confidence
         2. Entry completeness (filled letters)
         3. Entry length (longer entries preferred)
         """
-        # These should sum to 1.0d
+        # These should sum to 1.0
         CONFIDENCE_WEIGHT = 0.25
         LENGTH_WEIGHT = 0.2
         COMPLETENESS_WEIGHT = 0.35
         CONSTRAINT_WEIGHT = 0.2
 
-        best_entry_id: str | None = None
+        best_entry: Entry | None = None
+        best_candidate: Candidate | None = None
         best_score: float = float("-inf")
 
         for entry in entries.values():
             if entry.completed:
                 continue
-            if entry.entry_id in attempted_entries:
-                continue
 
-            cand = BasicStrategy.select_best_candidate(entry)
+            attempted_candidates = {answer for entry_id, answer in attempted_entries if entry_id == entry.entry_id}
+
+            cand = BasicStrategy.select_best_candidate(entry, attempted_candidates)
             if cand is None:
                 continue
 
@@ -43,23 +44,26 @@ class BasicStrategy:
             constraint_weight = CONSTRAINT_WEIGHT * (100 / max(1, entry.num_candidates(True)))
             score =  confidence_score + length_score + completeness_score + constraint_weight
 
-            if best_entry_id is None or score > best_score:
-                best_entry_id = entry.entry_id
+            if best_entry is None or score > best_score:
+                best_entry = entry
+                best_candidate = cand
                 best_score = score
 
-        if best_entry_id is None:
+        if best_entry is None or best_candidate is None:
             return None
-        return best_entry_id, best_score
+        return best_entry, best_candidate, best_score
 
 
     @staticmethod
-    def select_best_candidate(entry: Entry, widen_search: bool = False) -> Candidate | None:
+    def select_best_candidate(entry: Entry, attempted_candidates: set[str], widen_search: bool = False) -> Candidate | None:
         candidates = entry.get_candidates(widen_search)
 
         best_candidate = None
         best_effective_confidence = float("-inf")
 
         for candidate in candidates:
+            if (candidate in attempted_candidates):
+                continue
             if len(candidate.answer) != entry.length:
                 continue
             if not entry.can_place_answer(candidate.answer):

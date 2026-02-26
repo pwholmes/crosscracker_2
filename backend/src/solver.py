@@ -78,32 +78,25 @@ class Solver:
         # viable Candidate, or that would cause crossing entries to fail to verify,
         # in which case we have to continue looping.  If we can't pick ANY viable Entry,
         # we are "stalled", in which case we call the stall logic to backtrack.
-        attempted_entries: set[str] = set()
+        attempted_entries: set[tuple[str, str]] = set()
         while True:
             # Select the best unfilled entry
             selection = BasicStrategy.select_best_unfilled_entry(self.grid.entries, attempted_entries)
             if selection is None:
                 logger.debug(f"[STEP SELECT ENTRY]: No viable entry found, invoking stall logic")
                 return self._handle_stall()
-            entry_id, selection_score = selection
-            logger.debug(f"[STEP SELECT ENTRY]: Selected entry {entry_id} with selection score {selection_score}")
+            entry, candidate, selection_score = selection
+            logger.debug(f"[STEP SELECT ENTRY]: Selected entry {entry.entry_id} with candidate {candidate.answer}, confidence {candidate.confidence}, selection score {selection_score}")
 
-            # Mark this entry as having been attempted in this pass
-            attempted_entries.add(entry_id)
-
-            # Get the best candidate answer for this entry
-            entry = self.grid.entries[entry_id]
-            candidate = BasicStrategy.select_best_candidate(entry)
-            if candidate is None:
-                logger.debug(f"[STEP SELECT CANDIDATE]: Entry {entry_id} no viable candidate found, trying another entry")
-                continue
-            logger.debug(f"[STEP SELECT CANDIDATE]: Entry {entry_id} selected candidate '{candidate.answer}' with confidence {candidate.confidence}")
+            # The selected Entry/Candidate might still be rejected if any crossing entry fails
+            # verification. Mark this (entry_id, candidate.answer) as attempted so we don't pick it again.
+            attempted_entries.add((entry.entry_id, candidate.answer))
 
             # Check if any crossing entries would be completed by the placement of this answer
-            crossing_entries = self._predict_crossing_entries(entry_id, candidate.answer)
+            crossing_entries = self._predict_crossing_entries(entry.entry_id, candidate.answer)
             if crossing_entries:
                 logger.debug(
-                    f"[STEP VERIFY]: Checking crossing entries for {entry_id}='{candidate.answer}': "
+                    f"[STEP VERIFY]: Checking crossing entries for {entry.entry_id}='{candidate.answer}': "
                     f"{list(crossing_entries.keys())}"
                 )
             # Verify the crossing entries
@@ -111,23 +104,25 @@ class Solver:
             if failed_entry_ids:
                 # Reject this candidate and continue trying others
                 candidate.penalty += 50
-                logger.debug(f"[STEP VERIFY]: REJECTED {entry_id}='{candidate.answer}', "
+                logger.debug(f"[STEP VERIFY]: REJECTED {entry.entry_id}='{candidate.answer}', "
                              f"verification failed for crossing entries: {list(failed_entry_ids)}"
                 )
                 continue
-            logger.debug(f"[STEP VERIFY]: PASSED entry {entry_id}")
+            logger.debug(f"[STEP VERIFY]: PASSED entry {entry.entry_id}")
 
             # Verification passed - now actually place the entry
             placement = Placement(
-                entry_id=entry_id,
+                entry_id=entry.entry_id,
                 answer=candidate.answer,
                 pattern=entry.pattern,
                 search_level=0,
                 confidence=candidate.confidence,
                 selection_score=selection_score
             )
-            self.grid.place_candidate(candidate)
-            self.grid.entries[entry_id].placement = placement
+            if not self.grid.place_candidate(candidate):
+                logger.error(f"[STEP ERROR] Unable to place candidate {candidate.answer} for entry {entry.entry_id}")
+                return self._finalize_event({"event": "fatal error"}, [])
+            self.grid.entries[entry.entry_id].placement = placement
 
             # Log the placement and return an event for the UI.
             logger.debug(
