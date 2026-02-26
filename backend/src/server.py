@@ -302,13 +302,23 @@ async def _emit_solver_step() -> dict[str, Any]:
     """
     if solver is None:
         raise RuntimeError("Solver not initialized")
-    
+    # Broadcast 'Solving...' status before step
+    await manager.broadcast({
+        "type": "status",
+        "message": "Solving...",
+        "state": "solving"
+    })
     # Execute step (automatically records event via Solver.record_event)
     ev = await asyncio.to_thread(_step_and_update_metrics)
-    
     # Broadcast the event and state to all connected clients
     await broadcast_step_events(ev)
-    
+    # If not solved/failed, broadcast 'Awaiting user input'
+    if ev.get("event") not in ("solved", "failed"):
+        await manager.broadcast({
+            "type": "status",
+            "message": "Awaiting user input",
+            "state": "awaiting_input"
+        })
     return ev
 
 async def start_player() -> None:
@@ -348,12 +358,24 @@ async def websocket_endpoint(ws: WebSocket):
 @app.post("/play")
 async def play() -> dict[str, str]:
     play_event.set()
+    # Broadcast 'Solving...' status when play is triggered
+    await manager.broadcast({
+        "type": "status",
+        "message": "Solving...",
+        "state": "solving"
+    })
     return {"status": "playing"}
 
 
 @app.post("/pause")
 async def pause() -> dict[str, str]:
     play_event.clear()
+    # Broadcast 'Awaiting user input' status when paused
+    await manager.broadcast({
+        "type": "status",
+        "message": "Awaiting user input",
+        "state": "awaiting_input"
+    })
     return {"status": "paused"}
 
 
