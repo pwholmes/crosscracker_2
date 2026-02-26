@@ -3,6 +3,13 @@ from model import Grid, Entry, Candidate
 from collections.abc import Callable
 
 class BasicStrategy:
+    # Weights should sum to 1.0
+    SELECTION_CONFIDENCE_WEIGHT = 0.25
+    SELECTION_LENGTH_WEIGHT = 0.2
+    SELECTION_COMPLETENESS_WEIGHT = 0.35
+    SELECTION_CONSTRAINT_WEIGHT = 0.2
+    MIN_CANDIDATE_CONFIDENCE_THRESHOLD = 20
+
     @staticmethod
     def select_best_unfilled_entry(entries: dict[str,Entry], attempted_entries: set[tuple[str, str]]) -> tuple[Entry, Candidate, float] | None:
         """Select the best unfilled entry using a heuristic that balances:
@@ -11,10 +18,6 @@ class BasicStrategy:
         3. Entry length (longer entries preferred)
         """
         # These should sum to 1.0
-        CONFIDENCE_WEIGHT = 0.25
-        LENGTH_WEIGHT = 0.2
-        COMPLETENESS_WEIGHT = 0.35
-        CONSTRAINT_WEIGHT = 0.2
 
         best_entry: Entry | None = None
         best_candidate: Candidate | None = None
@@ -35,13 +38,13 @@ class BasicStrategy:
             filled_count = entry.length - blank_count
             completeness = filled_count / entry.length
 
-            confidence_score = CONFIDENCE_WEIGHT * (cand.confidence - cand.penalty)
+            confidence_score = BasicStrategy.SELECTION_CONFIDENCE_WEIGHT * (cand.confidence - cand.penalty)
             # This length score favors longer answers
-            length_score = LENGTH_WEIGHT * min(entry.length,10)/10 * 100
+            length_score = BasicStrategy.SELECTION_LENGTH_WEIGHT * min(entry.length,10)/10 * 100
             # This length score favors shorter answers
             #length_score = LENGTH_WEIGHT * max(0, 100 - 100/9 * (entry.length - 1))
-            completeness_score = COMPLETENESS_WEIGHT * completeness * 100
-            constraint_weight = CONSTRAINT_WEIGHT * (100 / max(1, entry.num_candidates(True)))
+            completeness_score = BasicStrategy.SELECTION_COMPLETENESS_WEIGHT * completeness * 100
+            constraint_weight = BasicStrategy.SELECTION_CONSTRAINT_WEIGHT * (100 / max(1, entry.num_candidates(True)))
             score =  confidence_score + length_score + completeness_score + constraint_weight
 
             if best_entry is None or score > best_score:
@@ -62,9 +65,12 @@ class BasicStrategy:
         best_effective_confidence = float("-inf")
 
         for candidate in candidates:
-            if (candidate in attempted_candidates):
+            if candidate.answer in attempted_candidates:
                 continue
+            attempted_candidates.add(candidate.answer)
             if len(candidate.answer) != entry.length:
+                continue
+            if candidate.confidence < BasicStrategy.MIN_CANDIDATE_CONFIDENCE_THRESHOLD:
                 continue
             if not entry.can_place_answer(candidate.answer):
                 continue
