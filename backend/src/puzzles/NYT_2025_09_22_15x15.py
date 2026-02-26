@@ -58,7 +58,7 @@ def create_grid() -> Grid:
         "5D": Entry("5D", "Like some bars in gymnastics", "UNEVEN", cells, (0,5), 6),
         "6D": Entry("6D", "One who is barely seen?", "NUDIST", cells, (0,6), 6),
         "7D": Entry("7D", "Jeer", "GIBE", cells, (0,7), 4),
-        "8D": Entry("8D", "'How was _ __ know?'", "ITO", cells, (0,8), 8),
+        "8D": Entry("8D", "'How was _ __ know?'", "ITO", cells, (0,8), 3),
         "9D": Entry("9D", "Pamper", "Coddle", cells, (0,10), 6),
         "10D": Entry("10D", "Tour guide?", "AREAMAP", cells, (0,11), 7),
         "11D": Entry("11D", "Crash of thunder", "CLAP", cells, (0,12), 4),
