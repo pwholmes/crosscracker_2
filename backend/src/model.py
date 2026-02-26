@@ -43,6 +43,16 @@ class Candidate:
         return self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
             self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
 
+    def __hash__(self) -> int:
+        # Hash based on entry_id and answer, which uniquely identify a candidate
+        return hash((self.entry_id, self.answer))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Candidate):
+            return False
+        return (self.entry_id, self.answer) == (other.entry_id, other.answer)
+
+
 @dataclass
 class Placement:
     entry_id: str
@@ -137,27 +147,14 @@ class Entry:
         that is, it was completed entirely via crossing entries"""
         return self.completed and self.placement is None
 
-    def add_candidate(self, answer: str, llm_confidence: float = 0, logprob_confidence: float = 0) -> None:
-        candidate = self._candidates.get(answer)
-        if candidate is None:
-            candidate = Candidate(
-                entry_id=self.entry_id,
-                answer=answer, 
-                llm_confidence=llm_confidence,
-                logprob_confidence=logprob_confidence
-            )
-        else:
-            candidate.llm_confidence = llm_confidence
-            candidate.logprob_confidence = logprob_confidence
 
-    def get_candidates(self, widen_search: bool = False) -> list[Candidate]:
+    def get_candidates(self, widen_search: bool = False, matching_only: bool = True) -> list[Candidate]:
         """Get the pool of candidates for this entry, generating new candidates as
         necessary based on:
           - Whether we have generated candidates for the current pattern before.
           - If the widen_search parameter is True we will generate new candidates if the
           current search level is less than the maximum.
-        NOTE: This list is NOT filtered, even by pattern.  This is more of a "throw as 
-        many darts as you can" approach.  It's up to the caller to filter the results."""
+        If matching_only is True, only candidates matching the current pattern are returned."""
         from llm import LLM
 
         # If the current pattern has not been used to generate candidates, do so now.
@@ -167,19 +164,27 @@ class Entry:
             # Call the LLM to generate candidates
             new_candidates = LLM.generate_candidates(self, search_level)
             # Store candidates and the pattern/search level used to generate them
-            logger.debug(f"[ENTRY] Storing entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}")
             self._pattern_levels[self.pattern] = search_level
             for new_candidate in new_candidates:
-                self._candidates[new_candidate.answer] = new_candidate
+                existing_candidate = self._candidates.get(new_candidate.answer)
+                if existing_candidate:
+                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}: Merging candidate {new_candidate.answer}")
+                    existing_candidate.merge(new_candidate)
+                else:
+                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}: Storing new candidate {new_candidate}")
+                    self._candidates[new_candidate.answer] = new_candidate
 
         # If we didn't find any candidates and we're at less than the maximum search
-        # level, call this function recusrively with the flag to bump the search level.
-        if len (self._candidates) == 0:
-             if self.search_level < LLM.MAX_SEARCH_LEVEL:
-                 logger.debug("[ENTRY GET CANDIDATES]: Recursively calling get_candidates() to bump search level.")
-                 return self.get_candidates(True)
+        # level, call this function recursively with the flag to bump the search level.
+        if len(self._candidates) == 0:
+            if self.search_level < LLM.MAX_SEARCH_LEVEL:
+                logger.debug("[ENTRY GET CANDIDATES]: Recursively calling get_candidates() to bump search level.")
+                return self.get_candidates(True, matching_only)
 
-        return list(self._candidates.values())
+        candidates = list(self._candidates.values())
+        if matching_only:
+            candidates = [c for c in candidates if self.can_place_answer(c.answer)]
+        return candidates
 
     
     def can_place_answer(self, answer: str, pattern: str|None = None) -> bool:
@@ -187,11 +192,13 @@ class Entry:
             pattern = self.pattern
         return Entry.answer_matches_pattern(answer, pattern)
 
+
     @staticmethod
     def answer_matches_pattern(answer: str, pattern: str) -> bool:
         if len(answer) != len(pattern):
             return False
         return all(p == "." or p == a for p, a in zip(pattern, answer))
+
 
     def num_candidates(self, matching_only: bool = False) -> int:
         if matching_only:
@@ -199,8 +206,6 @@ class Entry:
         else:
             return len(self._candidates)
 
-    def __str__(self):
-        return f"Entry {self.entry_id}: Candidates: {str(self._candidates)}"
 
     def get_crossing_letter(self, crossing_entry: Entry) -> tuple[int | None, str | None]:
         """
@@ -215,6 +220,10 @@ class Entry:
                     # Return the index in stuck_entry and the letter
                     return idx_entry, cell_cross.letter
         return None, None
+
+
+    def __str__(self):
+        return f"Entry {self.entry_id}: Clue: {self.clue}, Candidates: {str(self._candidates)}"
 
 
 class Grid:
@@ -233,28 +242,39 @@ class Grid:
         self.width = max_col + 1
         self.height = max_row + 1
 
+
     def place_candidate(self, candidate: Candidate) -> bool:
         logger.debug(f"[GRID]: Placing candidate: {candidate}")
         entry = self.entries[candidate.entry_id]
+        
+        # Make sure there are no conflicts with existing letters
         for cell, ch in zip(entry.cells, candidate.answer):
             if cell.letter is not None and cell.letter != ch:
+                logger.error(f"[GRID ERROR] Unable to place candidate; candidate letter {ch} does not match existing letter {cell.letter}")
                 return False
+        
+        # Add new letters to grid, noting if they are placed because this entry is a fallback
         for cell, ch in zip(entry.cells, candidate.answer):
             was_empty = cell.letter is None
             cell.letter = ch
             cell.sources.add(entry.entry_id)
             if candidate.is_fallback and was_empty:
                 cell.revealed_by_fallback = True
+
         return True
+
 
     def remove_candidate(self, candidate: Candidate):
         entry = self.entries[candidate.entry_id]
+
+        # Remove from grid all letters not also placed by a crossing entry
         for cell in entry.cells:
             if entry.entry_id in cell.sources:
                 cell.sources.remove(entry.entry_id)
                 if not cell.sources:
                     cell.letter = None
                     cell.revealed_by_fallback = False
+
 
     def pattern_for_entry(self, entry_id: str) -> str:
         return self.entries[entry_id].pattern
