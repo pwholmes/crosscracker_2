@@ -86,7 +86,7 @@ class Solver:
                 logger.debug(f"[STEP SELECT ENTRY]: No viable entry found, invoking stall logic")
                 return self._handle_stall()
             entry, candidate, selection_score = selection
-            logger.debug(f"[STEP SELECT ENTRY]: Selected entry {entry.entry_id} with candidate {candidate.answer}, confidence {candidate.confidence}, selection score {selection_score}")
+            logger.debug(f"[STEP SELECT]: Selected entry {entry.entry_id} with candidate {candidate.answer}, confidence {candidate.confidence:.1f}, selection score {selection_score:.1f}")
 
             # The selected Entry/Candidate might still be rejected if any crossing entry fails
             # verification. Mark this (entry_id, candidate.answer) as attempted so we don't pick it again.
@@ -126,12 +126,12 @@ class Solver:
 
             # Log the placement and return an event for the UI.
             logger.debug(
-                f"PLACED entry={placement.entry_id} "
+                f"[STEP PLACE] entry={placement.entry_id} "
                 f"answer='{placement.answer}' "
                 f"pattern={placement.pattern} "
                 f"search_level={placement.search_level} "
-                f"confidence={placement.confidence:.2f} "
-                f"selection score={placement.selection_score:.2f} "
+                f"confidence={placement.confidence:.1f} "
+                f"selection score={placement.selection_score:.1f} "
             )
 
             return self._finalize_event(
@@ -189,8 +189,8 @@ class Solver:
                     f"answer={placement.answer} "
                     f"pattern={placement.pattern} "
                     f"search_level={placement.search_level}"
-                    f"confidence={placement.confidence:.2f} "
-                    f"selection score={placement.selection_score:.2f} "
+                    f"confidence={placement.confidence:.1f} "
+                    f"selection score={placement.selection_score:.1f} "
                 )
 
                 return self._finalize_event(
