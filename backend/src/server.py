@@ -100,6 +100,16 @@ manager = WSManager()
 
 play_event = asyncio.Event()
 
+# --- Reusable progress bar broadcast function ---
+async def broadcast_progress(current: int, total: int, *, operation: str = "load"):
+    await manager.broadcast({
+        "type": "init_progress",
+        "current": current,
+        "total": total,
+        "percentage": round((current / total) * 100) if total else 0,
+        "operation": operation,
+    })
+
 # utility to serialize state
 def serialize_state() -> dict[str, Any]:
     # If no puzzle is loaded, return minimal state
@@ -308,10 +318,20 @@ async def _emit_solver_step() -> dict[str, Any]:
         "message": "Solving...",
         "state": "solving"
     })
-    # Execute step (automatically records event via Solver.record_event)
-    ev = await asyncio.to_thread(_step_and_update_metrics)
-    # Broadcast the event and state to all connected clients
-    await broadcast_step_events(ev)
+    # Progress callback for step candidate retrieval
+    async def progress_callback(current: int, total: int):
+        await broadcast_progress(current, total, operation="step")
+    # Placement event broadcast callback
+    async def broadcast_event_callback(ev: dict[str, Any]):
+        await broadcast_step_events(ev)
+    # Execute step with progress bar, broadcasting placement event first
+    if hasattr(solver, "async_step_with_progress"):
+        ev = await solver.async_step_with_progress(progress_callback, broadcast_event_callback)
+        # Send progress_done message to hide progress bar
+        await manager.broadcast({"type": "progress_done", "operation": "step"})
+    else:
+        ev = await asyncio.to_thread(_step_and_update_metrics)
+        await broadcast_step_events(ev)
     # If not solved/failed, broadcast 'Awaiting user input'
     if ev.get("event") not in ("solved", "failed"):
         await manager.broadcast({
@@ -404,14 +424,9 @@ async def reset() -> dict[str, str]:
         # Create the solver but defer candidate init; we'll initialize with progress
         solver = Solver(grid, defer_candidate_init=True, record=True)
 
-        # Progress callback to notify clients during initialization
+        # Use the reusable progress function
         async def progress_callback(current: int, total: int):
-            await manager.broadcast({
-                "type": "init_progress",
-                "current": current,
-                "total": total,
-                "percentage": round((current / total) * 100),
-            })
+            await broadcast_progress(current, total, operation="reset")
 
         # Initialize candidates for all entries (async) so UI can show progress
         try:
@@ -574,15 +589,10 @@ async def load_puzzle(puzzle_id: str):
         # Create solver with recording enabled
         solver = Solver(grid, defer_candidate_init=True, record=True)
         
-        # Initialize candidates with progress callback for UI feedback
+        # Use the reusable progress function
         async def progress_callback(current: int, total: int):
-            await manager.broadcast({
-                "type": "init_progress",
-                "current": current,
-                "total": total,
-                "percentage": round((current / total) * 100)
-            })
-        
+            await broadcast_progress(current, total, operation="load")
+
         await solver.async_initialize_with_progress(progress_callback)
         
         with _metrics_lock:

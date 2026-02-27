@@ -58,6 +58,32 @@ class Solver:
                 await result
             await asyncio.sleep(0)
 
+    async def async_step_with_progress(self, progress_callback: Callable[[int, int], Any], broadcast_event_callback: Callable[[dict[str, Any]], Any] | None = None) -> dict[str, Any]:
+        """Perform a step, broadcast placement event, then retrieve candidates for crossing entries with progress reporting."""
+        # Perform the step and get the placed entry
+        event = self.step()
+        # Broadcast the placement event immediately if callback is provided
+        if broadcast_event_callback is not None:
+            result = broadcast_event_callback(event)
+            if asyncio.iscoroutine(result):
+                await result
+        placed_entry_id = None
+        candidate_info = event.get("candidate")
+        if candidate_info:
+            placed_entry_id = candidate_info.get("entry_id")
+        # If no entry was placed, nothing to update
+        if not placed_entry_id:
+            return event
+        crossing_ids = self.get_crossing_entry_ids(placed_entry_id)
+        affected_entries = [self.grid.entries[eid] for eid in crossing_ids if not self.grid.entries[eid].completed]
+        total = len(affected_entries)
+        for idx, entry in enumerate(affected_entries, 1):
+            entry.get_candidates()
+            result = progress_callback(idx, total)
+            if asyncio.iscoroutine(result):
+                await result
+            await asyncio.sleep(0)
+        return event
 
     def solve(self) -> bool:
         """Run to completion (blocking)."""
@@ -93,7 +119,7 @@ class Solver:
             attempted_entries.add((entry.entry_id, candidate.answer))
 
             # Check if any crossing entries would be completed by the placement of this answer
-            crossing_entries = self._predict_crossing_entries(entry.entry_id, candidate.answer)
+            crossing_entries = self._predict_crossing_entry_patterns(entry.entry_id, candidate.answer)
             if crossing_entries:
                 logger.debug(
                     f"[STEP VERIFY]: Checking crossing entries for {entry.entry_id}='{candidate.answer}': "
@@ -324,7 +350,7 @@ class Solver:
         return all(e.completed for e in self.grid.entries.values())
 
 
-    def _predict_crossing_entries(self, entry_id: str, answer: str) -> dict[str, str]:
+    def _predict_crossing_entry_patterns(self, entry_id: str, answer: str) -> dict[str, str]:
         """Compute hypothetical patterns for crossing entries if we placed this answer.
         
         Returns a dict mapping entry_id -> hypothetical_pattern for entries that would

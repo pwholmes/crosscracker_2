@@ -320,6 +320,7 @@ async function refreshItemList() {
 // ============ CENTRALIZED MESSAGE PROCESSOR ============
 
 function processMessage(data) {
+  log("Message received: " + JSON.stringify(data))
   if (data.type === 'state') {
     gridState = data.grid;
     renderGrid(data.grid);
@@ -375,8 +376,12 @@ function processMessage(data) {
     const percentage = data.percentage || 0;
     if (!initProgressStarted) {
       progressText.style.display = 'block';
-      // Clear status message when progress starts
-      statusMessage.textContent = 'Initializing entries...';
+      // Set progress bar label based on operation
+      if (data.operation === 'step') {
+        statusMessage.textContent = 'Step progress...';
+      } else {
+        statusMessage.textContent = 'Initializing entries...';
+      }
       statusMessage.className = '';
       initProgressStarted = true;
     }
@@ -395,7 +400,6 @@ function processMessage(data) {
       statusMessage.className = 'status-solved';
       isPuzzlePlaying = false;
       setCompletedState();
-
       // Only prompt to save recording in puzzle mode
       if (!isReplayMode) {
         setTimeout(() => {
@@ -433,6 +437,13 @@ function processMessage(data) {
         log(`verified ${eid}`);
       });
     }
+  } else if (data.type === 'progress_done') {
+    log("ALL DONE")
+    // Hide progress bar and reset progress state
+    initProgressDiv.style.display = 'none';
+    progressText.textContent = '0 / 0 entries';
+    progressBarFill.style.width = '0%';
+    initProgressStarted = false;
   }
 }
 
