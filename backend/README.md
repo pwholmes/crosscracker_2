@@ -36,28 +36,47 @@ For what it's worth, here's "chroma-down".  Not sure kill is "graceful", but it'
 Note that this database requires about 12 GB of RAM.  Chroma allocates the memory the first time you run a query against the database (i.e., not when you start Chroma), and keeps it allocated until you stop Chroma.
 
 4. Start the LLM
-I'm using Ollama with the llama3.1:8b LLM, which runs in 6-8 GB of RAM.  Feel free to use a bigger/better LLM if you want.  There's a constant in llm.py where you set the model name.  Run the LLM using:
+I'm using Ollama with the llama3.1:8b LLM, which runs in 6-8 GB of RAM.  Feel free to use a bigger/better LLM if you want.  There's a constant in llm.py where you set the model name.  It is NOT NECESSARY to run Ollama manually -- there is a background daemon that services requests and loads the appropriate LLM as necessary.  But you can run the LLM from the command line if you want to query it manually using:
 
    ollama run llama3.1:8b
 
-5. Start the server:
+5. Start the app by running this *from the /backend subdirectory*:
 
-   uvicorn backend.src.server:app --port 8000
+	../.venv/bin/uvicorn server:app --app-dir src --port 8000 --reload
+
+...or because I set up a Makefile to make this easier:
+
+   make run
 
 6. Open the front-end by opening `frontend/index.html` in your browser (or serve it with a static server).
 
-Select a puzzle using the dropdown, and use the Play, Pause, Step, and Solve buttons to solve the puzzle.  You'll see the grid update via WebSocket events as the app solves the puzzle.  Solve was supposed to be a "fast" solution that doesn't pause between steps, but the app is
-now bound by how long it takes to run the LLM queries, which is much longer than the .25 second delay I put in the UI to pause beteen steps so you can watch things happening when you press Play.  Solve is only useful for test puzzles where we mock calls to the LLM, to exercise the solver logic.
+Select a puzzle using the dropdown, and use the Play, Pause, and Step to execute the solver.
+
+7. To execute the unit tests, run this *from the /backend subdirectory*:
+
+   pytest
+
+...or again, an arguably easier mnemonic:
+
+   make test
+
+A couple of the tests are marked as "integration tests" because they result in actual database queries instead of mocking them.  These tests are skipped during normal test execution.  To run the integration tests (only), run this *from the /backend subdirectory*:
+
+   pytest -m integration
+
+...or again, using make:
+
+   make itest
 
 
 APP ARCHITECTURE
 ----------------
 1. FastAPI
-This app uses a FastApi framework for the "back end".  FastApi is basically a lightweight REST API framework similar to Flask.  But CrossCracker not actually a traditional client-server app that can run across the Internet.  I couldn't put the back end on an AWS server and then run the interface in a browser on my phone.  Everything runs locally.  We're using FastAPI mainly to cleanly separate the front end and make it easy to build a UI using well-known tools like HTML and JavaScript.  Making it Internet-capable is *possible* (I did it with CrossCracker version 1)... but it's impractical.  It simply passes too much data back and forth on every guess and would take forever to run as a web app.  It might be intersting to implement that feature at some point, but we'll cross that bridge if we ever come to it.
+This app uses a FastApi framework for the "back end".  FastApi is basically a lightweight REST API framework similar to Flask.  But CrossCracker not actually a traditional client-server app that can run across the Internet.  I couldn't put the back end on an AWS server and then run the interface in a browser on my phone.  Everything runs locally.  We're using FastAPI mainly to cleanly separate the front end from the back end and make it easy to build a UI using well-known tools like HTML and JavaScript.  Making it Internet-capable is *possible* (I did it with CrossCracker version 1)... but it's impractical.  It might be intersting to implement that at some point, but we'll cross that bridge if we ever come to it.
 
 
 2. ChromaDB and RAG
-The app uses a ChromaDB vector database to store a knowledge base of past crossword clue-answer pairs.  It was populated using a dataset obtained from Hugging Face with about 6.4 million rows.  Vector databases use a neural network to retrieve data "similar" to the given input.  This makes them useful for all sorts of things, from helpbots to medical diagnosis apps.  In this app, we use the vector database on startup to get a set of clue-answer pairs that are "semantically similar" to each clue in the database.  In other words, we get a list of "hints" for each clue.  We then pass those hints to an LLM to help it select and rank a list of possible candidate answers for a clue.  This is classic RAG technology -- Retrieval Augmented Generation.
+The app uses a ChromaDB vector database to store a knowledge base of past crossword clue-answer pairs.  It was populated using a dataset obtained from Hugging Face with about 6.4 million rows.  Vector databases use a neural network to retrieve data "similar" to the given input.  This makes them useful for all sorts of things, from helpbots to medical diagnosis apps.  In this app, we use the vector database on startup to get a set of clue-answer pairs that are "semantically similar" to each clue in the puzzle.  In other words, we get a list of "hints" for each clue.  We then pass those hints to an LLM to help it select and rank a list of possible candidate answers for a clue.  This is classic RAG technology -- Retrieval Augmented Generation.
 
 
 IMPORTANT: When installing a new environment with "pip install -r requirements.txt", chromadb has dependencies on both onnxruntime and onnxruntime-gpu.  BUT THEY ARE MUTUALLY EXCLUSIVE AND CONFLICT WITH EACH OTHER.  Not only that, but BOTH LIBRARIES IT INSTALLS ARE OBSOLETE!  We only want the latest version of the -gpu version.  There are several workarounds to this, but the simplest is to run this after installing the requirements.txt:
