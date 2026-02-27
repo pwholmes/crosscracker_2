@@ -8,6 +8,10 @@ from pathlib import Path
 from llm import LLM
 from model import Entry, Cell
 
+CHROMA_HOST = 'localhost'
+CHROMA_PORT = 8001
+COLLECTION_NAME = "crossword_1"
+EXECUTION_PROVIDER = 'CUDAExecutionProvider'
 
 def open_database() -> Collection:
     print("Opening database...")
@@ -23,7 +27,7 @@ def open_database() -> Collection:
     # BTW, you can close the database server with Ctrl+\ or just closing the terminal window.
     #db_path = Path(__file__).resolve().parent.parent / "db"
     #client = chromadb.PersistentClient(path=str(db_path))
-    client = chromadb.HttpClient(host='localhost', port=8001)
+    client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 
     # The SentenceTransformer embedding function is allegedly much faster than the 
     # ONNXMiniLM_L6_V2 embedding function, at the cost of using much more memory.  Unfortunately 
@@ -35,9 +39,9 @@ def open_database() -> Collection:
     # the GPU instead of the CPU.)
     #print(ort.get_available_providers())
     #gpu_ef = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2", device="cuda")
-    gpu_ef = ONNXMiniLM_L6_V2(preferred_providers=['CUDAExecutionProvider'])
+    gpu_ef = ONNXMiniLM_L6_V2(preferred_providers=[EXECUTION_PROVIDER])
 
-    collection: Collection = client.get_or_create_collection(name="crossword_1", embedding_function=gpu_ef) #type: ignore
+    collection: Collection = client.get_or_create_collection(name=COLLECTION_NAME, embedding_function=gpu_ef) #type: ignore
     return collection
 
 def query_database(collection: Collection, entries: list[Entry]):
