@@ -86,7 +86,7 @@ class BasicStrategy:
 
 
     @staticmethod
-    def select_best_backtrack_target(grid: Grid, get_crossing_ids_func: Callable[[str], set[str]], top_n_candidates: int = 5) -> str | None:
+    def select_best_backtrack_target(grid: Grid, get_crossing_ids_func: Callable[[str], set[str]]) -> str | None:
         """Select a backtrack target by finding the placed entry most likely to be
         blocking progress on unfilled entries.
         
@@ -118,7 +118,7 @@ class BasicStrategy:
             if entry.completed:
                 continue
 
-            candidates: list[Candidate] = entry.get_candidates()[:top_n_candidates]
+            candidates: list[Candidate] = entry.get_candidates()
             crossing_entry_ids = get_crossing_ids_func(entry.entry_id)
 
             if not candidates:
