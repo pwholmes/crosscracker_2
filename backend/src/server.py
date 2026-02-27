@@ -336,7 +336,7 @@ async def _emit_solver_step() -> dict[str, Any]:
     if ev.get("event") not in ("solved", "failed"):
         await manager.broadcast({
             "type": "status",
-            "message": "Awaiting user input",
+            "message": "Ready",
             "state": "awaiting_input"
         })
     return ev
@@ -393,7 +393,7 @@ async def pause() -> dict[str, str]:
     # Broadcast 'Awaiting user input' status when paused
     await manager.broadcast({
         "type": "status",
-        "message": "Awaiting user input",
+        "message": "Ready",
         "state": "awaiting_input"
     })
     return {"status": "paused"}
