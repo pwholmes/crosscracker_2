@@ -74,7 +74,7 @@ class Solver:
         # If no entry was placed, nothing to update
         if not placed_entry_id:
             return event
-        crossing_ids = self.get_crossing_entry_ids(placed_entry_id)
+        crossing_ids = self.grid.get_crossing_entry_ids(placed_entry_id)
         affected_entries = [self.grid.entries[eid] for eid in crossing_ids if not self.grid.entries[eid].completed]
         total = len(affected_entries)
         for idx, entry in enumerate(affected_entries, 1):
@@ -107,7 +107,7 @@ class Solver:
         attempted_entries: set[tuple[str, str]] = set()
         while True:
             # Select the best unfilled entry
-            selection = BasicStrategy.select_best_unfilled_entry(self.grid.entries, attempted_entries)
+            selection = BasicStrategy.select_best_unfilled_entry(self.grid, attempted_entries)
             if selection is None:
                 logger.debug(f"[STEP SELECT ENTRY]: No viable entry found, invoking stall logic")
                 return self._handle_stall()
@@ -189,7 +189,7 @@ class Solver:
         4. If no fallback possible, puzzle has failed
         """
         # Try to select a backtrack target
-        entry_id = BasicStrategy.select_best_backtrack_target(self.grid, self.get_crossing_entry_ids)
+        entry_id = BasicStrategy.select_best_backtrack_target(self.grid)
         if entry_id is not None:
             entry = self.grid.entries[entry_id]
             placement = entry.placement
@@ -236,7 +236,7 @@ class Solver:
 
         # No backtrack target available - instead try to select an entry for fallback
         logger.debug(f"[STALLED]: No backtrack target available, selecting fallback...")
-        entry = BasicStrategy.select_best_fallback_target(self.grid, self.get_crossing_entry_ids)
+        entry = BasicStrategy.select_best_fallback_target(self.grid)
         if entry is not None:
             fallback_event = self._apply_fallback(entry)
             if fallback_event is not None:
@@ -320,7 +320,7 @@ class Solver:
             return False
 
         # Collect crossing entries before removing
-        crossing_entry_ids = self.get_crossing_entry_ids(entry_id)
+        crossing_entry_ids = self.grid.get_crossing_entry_ids(entry_id)
         logger.debug(f"BACKTRACK: {len(crossing_entry_ids)} crossing entries detected for {entry_id}")
 
         # Remove the answer from the grid and from the Solver's list of placed entries.
@@ -447,18 +447,6 @@ class Solver:
             event["event"] = "failed"
         self.record_event(event)
         return event
-
-
-    def get_crossing_entry_ids(self, entry_id: str) -> set[str]:
-        """Return a set of entry IDs that cross the given entry (share at least one cell)."""
-        entry = self.grid.entries[entry_id]
-        crossing_ids: set[str] = set()
-        for other_id, other_entry in self.grid.entries.items():
-            if other_id == entry_id:
-                continue
-            if any(cell in other_entry.cells for cell in entry.cells):
-                crossing_ids.add(other_id)
-        return crossing_ids
 
 
     def get_recording(self) -> dict[str, Any] | None:

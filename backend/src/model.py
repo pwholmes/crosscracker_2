@@ -280,3 +280,18 @@ class Grid:
         return self.entries[entry_id].pattern
 
 
+    def get_crossing_entry_ids(self, entry_id: str, incomplete_only: bool = False) -> set[str]:
+        """Return a set of entry IDs that cross the given entry (share at least one cell)."""
+        entry = self.entries[entry_id]
+        crossing_ids: set[str] = set()
+        for other_id, other_entry in self.entries.items():
+            # Skip this entry
+            if other_id == entry_id:
+                continue
+            # If specified, skip completed entries
+            if incomplete_only and other_entry.completed:
+                continue
+            # Select only entries that share a cell with this entry
+            if any(cell in other_entry.cells for cell in entry.cells):
+                crossing_ids.add(other_id)
+        return crossing_ids        
