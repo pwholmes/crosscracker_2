@@ -375,7 +375,6 @@ function processMessage(data) {
     const total = data.total || 1;
     const percentage = data.percentage || 0;
     if (!initProgressStarted) {
-      progressText.style.display = 'block';
       // Set progress bar label based on operation
       if (data.operation === 'step') {
         statusMessage.textContent = 'Step progress...';
@@ -387,7 +386,7 @@ function processMessage(data) {
     }
     progressText.textContent = `${current} / ${total} entries`;
     progressBarFill.style.width = `${percentage}%`;
-    initProgressDiv.style.display = 'block';
+    initProgressDiv.style.display = 'flex';
   } else if (data.type === 'event') {
     const ev = data.event;
     log('[event] ' + formatEvent(ev));
