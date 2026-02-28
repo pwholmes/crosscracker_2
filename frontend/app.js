@@ -354,7 +354,9 @@ function processMessage(data) {
       setClueHeadingsVisible(true);
       // Enable controls now that puzzle is loaded (unless currently playing or completed)
       const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
-      if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted) {
+      // Only reset controls when we're not actively playing/replaying and
+      // when there is no in-progress initialization/step progress being reported.
+      if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted && !initProgressStarted) {
         setPlayingState(false);
       }
       // Hide progress bar when puzzle is fully loaded
