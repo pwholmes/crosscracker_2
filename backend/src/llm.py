@@ -454,9 +454,10 @@ class LLM:
         prompt += "- Actively consider multi-word answers when deducing CANDIDATES.\n"
         prompt += "- Normalize each CANDIDATE by removing all spaces and punctuation and converting to upper case.\n"
         prompt += f"- A normalized CANDIDATE must be {length} characters.\n"
-        prompt += "- If a word must be truncated or altered to fit the LENGTH, it is NOT a valid CANDIDATE and must be discarded.\n"        
+        prompt += "- DO NOT truncate or alter a CANDIDATE to fit the LENGTH, even if it seems like a good semantic fit.\n"
+        prompt += "- DO alter a CANDIDATE's plurality or verb tense to match the TARGET CLUE.\n"
         if valid_pattern:
-            prompt += f"The PATTERN is: {pattern}"
+            prompt += f"The PATTERN of known letters is: {pattern}"
             prompt += (f"- A normalized CANDIDATE should match this PATTERN, where a period . is an unknown character.\n")
             prompt += "- When a PATTERN has only one or two unknown letters, focus on finding CANDIDATES that match the PATTERN exactly.\n"
         prompt += "- HINTS are past crossword clue-answer pairs semantically similar to the TARGET CLUE.\n"
