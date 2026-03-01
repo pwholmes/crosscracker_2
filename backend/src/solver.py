@@ -9,6 +9,9 @@ from heuristics import BasicStrategy
 
 logger = logging.getLogger("src.solver")
 
+FALLBACK_PENALTY = 25
+VERIFICATION_FAILURE_PENALTY = 25
+
 class Solver:
     """A solver that can be driven step-by-step.
 
@@ -129,7 +132,7 @@ class Solver:
             verified_entry_ids, failed_entry_ids = self.verify_answers(crossing_entries)
             if failed_entry_ids:
                 # Reject this candidate and continue trying others
-                candidate.penalty += 50
+                candidate.penalty += VERIFICATION_FAILURE_PENALTY
                 logger.debug(f"[STEP VERIFY]: REJECTED {entry.entry_id}='{candidate.answer}', "
                              f"verification failed for crossing entries: {list(failed_entry_ids)}"
                 )
@@ -139,13 +142,13 @@ class Solver:
             # Verification passed - now actually place the entry
             placement = Placement(
                 entry_id=entry.entry_id,
-                answer=candidate.answer,
+                candidate=candidate,
                 pattern=entry.pattern,
                 search_level=0,
-                confidence=candidate.confidence,
-                selection_score=selection_score
+                selection_score=selection_score,
+                is_fallback=False
             )
-            if not self.grid.place_candidate(candidate):
+            if not self.grid.place_entry(entry, candidate.answer, False):
                 logger.error(f"[STEP ERROR] Unable to place candidate {candidate.answer} for entry {entry.entry_id}")
                 return self._finalize_event({"event": "fatal error"}, [])
             self.grid.entries[entry.entry_id].placement = placement
@@ -153,10 +156,10 @@ class Solver:
             # Log the placement and return an event for the UI.
             logger.debug(
                 f"[STEP PLACE] entry={placement.entry_id} "
-                f"answer='{placement.answer}' "
+                f"answer='{placement.candidate.answer}' "
                 f"pattern={placement.pattern} "
                 f"search_level={placement.search_level} "
-                f"confidence={placement.confidence:.1f} "
+                f"confidence={placement.candidate.confidence:.1f} "
                 f"selection score={placement.selection_score:.1f} "
             )
 
@@ -165,10 +168,10 @@ class Solver:
                     "event": "placed",
                     "candidate": {
                         "entry_id": placement.entry_id,
-                        "answer": placement.answer,
+                        "answer": placement.candidate.answer,
                         "pattern": placement.pattern,
                         "search_level": placement.search_level,
-                        "confidence": placement.confidence,
+                        "confidence": placement.candidate.confidence,
                         "selection score": placement.selection_score,
                     },
                 },
@@ -212,10 +215,10 @@ class Solver:
                 # Normal backtrack - return backtrack event
                 logger.debug(
                     f"BACKTRACK: entry_id={placement.entry_id} "
-                    f"answer={placement.answer} "
+                    f"answer={placement.candidate.answer} "
                     f"pattern={placement.pattern} "
-                    f"search_level={placement.search_level}"
-                    f"confidence={placement.confidence:.1f} "
+                    f"search_level={placement.search_level} "
+                    f"confidence={placement.candidate.confidence:.1f} "
                     f"selection score={placement.selection_score:.1f} "
                 )
 
@@ -224,10 +227,10 @@ class Solver:
                         "event": "backtrack",
                         "candidate": {
                             "entry_id": placement.entry_id,
-                            "answer": placement.answer,
+                            "answer": placement.candidate.answer,
                             "pattern": placement.pattern,
                             "search_level": placement.search_level,
-                            "confidence": placement.confidence,
+                            "confidence": placement.candidate.confidence,
                             "selection_score": placement.selection_score,
                         },
                     },
@@ -280,18 +283,18 @@ class Solver:
                 removed_entry_ids.append(conflicting_entry_id)
 
         # Create a new "candidate" for the fallback answer.
-        candidate = Candidate(entry.entry_id, answer, search_level=0, is_fallback=True)
+        candidate = Candidate(entry.entry_id, answer, search_level=0)
 
         # Now the way is clear for the placement of the fallback entry.
         placement = Placement(
             entry_id=entry.entry_id,
-            answer=answer,
+            candidate=candidate,
             pattern=entry.pattern,
             search_level=0,
-            confidence=100,
-            selection_score=100
+            selection_score=100,
+            is_fallback=True
         )
-        self.grid.place_candidate(candidate)
+        self.grid.place_entry(entry, candidate.answer, True)
         entry.placement = placement                
 
         # Mark it as a fallback
@@ -302,10 +305,10 @@ class Solver:
             "event": "placed_fallback",
             "candidate": {
                 "entry_id": placement.entry_id,
-                "answer": placement.answer,
+                "answer": placement.candidate.answer,
                 "pattern": placement.pattern,
                 "search_level": placement.search_level,
-                "confidence": placement.confidence,
+                "confidence": placement.candidate.confidence,
                 "selection_score": placement.selection_score
             },
             "conflicts_removed": removed_entry_ids,
@@ -316,19 +319,18 @@ class Solver:
 
     def _remove_placed(self, entry_id: str) -> bool:
         entry = self.grid.entries.get(entry_id)
-        if entry is None:
-            return False
+        assert entry is not None, f"[REMOVE PLACED] Entry {entry_id} not found"
+        assert entry.placement is not None, f"[REMOVE PLACED] Entry {entry_id} missing placement record"
 
         # Collect crossing entries before removing
         crossing_entry_ids = self.grid.get_crossing_entry_ids(entry_id)
         logger.debug(f"BACKTRACK: {len(crossing_entry_ids)} crossing entries detected for {entry_id}")
 
-        # Remove the answer from the grid and from the Solver's list of placed entries.
-        candidate = Candidate(entry_id=entry.entry_id, answer=entry.pattern, search_level=entry.search_level)
-        self.grid.remove_candidate(candidate)
+        # Remove the answer from the grid
+        self.grid.remove_entry(entry)
 
-        # Apply a penalty to this answer so it is less likely (but not impossible!) to use again.
-        candidate.penalty += 20
+        # Apply a penalty to the candidate so it is less likely (but not impossible!) to use again.
+        entry.placement.candidate.penalty += FALLBACK_PENALTY
 
         # Reset the entry's placement record
         self.grid.entries[entry_id].placement = None
