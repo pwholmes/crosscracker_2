@@ -178,12 +178,12 @@ class BasicStrategy:
         tied_entries = [entry for entry in entries if entry.entry_id in tied_ids]
 
         # Break ties by lowest confidence score
-        selected = min(tied_entries, key=lambda rec: rec.placement.confidence if rec.placement is not None else float("inf"))
+        selected = min(tied_entries, key=lambda rec: rec.placement.candidate.confidence if rec.placement is not None else float("inf"))
 
         logger.debug(
             f"BACKTRACK TARGET SELECTED: entry_id={selected.entry_id} "
             f"blame={max_blame:.2f} "
-            + (f"confidence={selected.placement.confidence:.2f}" if selected.placement is not None else "confidence=None")
+            + (f"confidence={selected.placement.candidate.confidence:.2f}" if selected.placement is not None else "confidence=None")
         )
 
         return selected.entry_id
@@ -228,11 +228,11 @@ class BasicStrategy:
         tied_entries = [entry for entry in entries if entry.entry_id in points and points[entry.entry_id] == max_points]
 
         # Break ties by lowest confidence score
-        selected = min(tied_entries, key=lambda rec: rec.placement.confidence if rec.placement is not None else float("inf"))
+        selected = min(tied_entries, key=lambda rec: rec.placement.candidate.confidence if rec.placement is not None else float("inf"))
         logger.debug(
             f"BACKTRACK TARGET SELECTED: entry_id={selected.entry_id} "
             f"points={max_points} "
-            f"confidence={selected.placement.confidence:.2f}" if selected.placement is not None else "confidence=None"
+            f"confidence={selected.placement.candidate.confidence:.2f}" if selected.placement is not None else "confidence=None"
         )
 
         return selected.entry_id

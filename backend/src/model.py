@@ -28,14 +28,12 @@ class Candidate:
     llm_confidence: float = 0.0
     logprob_confidence: float = 0.0
     penalty: float = 0.0
-    is_fallback: bool = False
 
     def merge(self, candidate: Candidate) -> Candidate:
         self.search_level = max(self.search_level, candidate.search_level)
         self.llm_confidence = max(self.llm_confidence, candidate.llm_confidence)
         self.logprob_confidence = max(self.logprob_confidence, candidate.logprob_confidence)
         self.penalty = self.penalty + candidate.penalty
-        self.is_fallback = self.is_fallback or candidate.is_fallback
         return self
     
     @property
@@ -56,10 +54,9 @@ class Candidate:
 @dataclass
 class Placement:
     entry_id: str
-    answer: str
+    candidate: Candidate
     search_level: int
     pattern: str
-    confidence: float
     selection_score: float
     is_fallback: bool = False
 
@@ -243,30 +240,27 @@ class Grid:
         self.height = max_row + 1
 
 
-    def place_candidate(self, candidate: Candidate) -> bool:
-        logger.debug(f"[GRID]: Placing candidate: {candidate}")
-        entry = self.entries[candidate.entry_id]
+    def place_entry(self, entry: Entry, answer: str, is_fallback: bool) -> bool:
+        logger.debug(f"[GRID]: Placing answer: {entry.entry_id} = {answer}")
         
         # Make sure there are no conflicts with existing letters
-        for cell, ch in zip(entry.cells, candidate.answer):
+        for cell, ch in zip(entry.cells, answer):
             if cell.letter is not None and cell.letter != ch:
                 logger.error(f"[GRID ERROR] Unable to place candidate; candidate letter {ch} does not match existing letter {cell.letter}")
                 return False
         
         # Add new letters to grid, noting if they are placed because this entry is a fallback
-        for cell, ch in zip(entry.cells, candidate.answer):
+        for cell, ch in zip(entry.cells, answer):
             was_empty = cell.letter is None
             cell.letter = ch
             cell.sources.add(entry.entry_id)
-            if candidate.is_fallback and was_empty:
+            if is_fallback and was_empty:
                 cell.revealed_by_fallback = True
 
         return True
 
 
-    def remove_candidate(self, candidate: Candidate):
-        entry = self.entries[candidate.entry_id]
-
+    def remove_entry(self, entry: Entry):
         # Remove from grid all letters not also placed by a crossing entry
         for cell in entry.cells:
             if entry.entry_id in cell.sources:
