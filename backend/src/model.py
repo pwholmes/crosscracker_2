@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 import logging
 
 logger = logging.getLogger("src.model")
@@ -50,6 +50,28 @@ class Candidate:
             return False
         return (self.entry_id, self.answer) == (other.entry_id, other.answer)
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize this candidate to a dict."""
+        return {
+            "answer": self.answer,
+            "search_level": self.search_level,
+            "llm_confidence": self.llm_confidence,
+            "logprob_confidence": self.logprob_confidence,
+            "penalty": self.penalty,
+        }
+    
+    @staticmethod
+    def deserialize(entry_id: str, data: dict[str, Any]) -> Candidate:
+        """Deserialize a candidate from a dict."""
+        return Candidate(
+            entry_id=entry_id,
+            answer=data["answer"],
+            search_level=data.get("search_level", 0),
+            llm_confidence=data.get("llm_confidence", 0.0),
+            logprob_confidence=data.get("logprob_confidence", 0.0),
+            penalty=data.get("penalty", 0.0),
+        )
+
 
 @dataclass
 class Placement:
@@ -59,6 +81,30 @@ class Placement:
     pattern: str
     selection_score: float
     is_fallback: bool = False
+    
+    def serialize(self) -> dict[str, Any]:
+        """Serialize this placement to a dict."""
+        return {
+            "entry_id": self.entry_id,
+            "candidate": self.candidate.serialize(),
+            "search_level": self.search_level,
+            "pattern": self.pattern,
+            "selection_score": self.selection_score,
+            "is_fallback": self.is_fallback,
+        }
+    
+    @staticmethod
+    def deserialize(data: dict[str, Any]) -> Placement:
+        """Deserialize a placement from a dict."""
+        candidate = Candidate.deserialize(data["entry_id"], data["candidate"])
+        return Placement(
+            entry_id=data["entry_id"],
+            candidate=candidate,
+            search_level=data.get("search_level", 0),
+            pattern=data["pattern"],
+            selection_score=data["selection_score"],
+            is_fallback=data.get("is_fallback", False),
+        )
 
 
 class Entry:
@@ -219,6 +265,54 @@ class Entry:
         return None, None
 
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize this entry's state for checkpointing.
+        
+        Returns a dict containing candidates, pattern levels, placement, and other state.
+        """
+        # Serialize all candidates for this entry
+        candidates_list: list[dict[str, Any]] = []
+        for candidate in self._candidates.values():
+            candidates_list.append(candidate.serialize())
+        
+        # Serialize placement if exists
+        placement_data: dict[str, Any] | None = None
+        if self.placement:
+            placement_data = self.placement.serialize()
+        
+        return {
+            "candidates": candidates_list,
+            "pattern_levels": dict(self._pattern_levels),
+            "placement": placement_data,
+            "backtracks": self.backtracks,
+            "used_fallback": self.used_fallback,
+        }
+    
+    def deserialize(self, entry_data: dict[str, Any]) -> None:
+        """Restore this entry's state from checkpoint data.
+        
+        Reconstructs candidates, pattern levels, placement, and other state.
+        """
+        # Restore candidates (entry._candidates is already empty due to defer_candidate_init=True)
+        candidates = entry_data.get("candidates", [])
+        for cand_data in candidates:
+            candidate = Candidate.deserialize(self.entry_id, cand_data)
+            self._candidates[candidate.answer] = candidate
+        
+        # Restore pattern levels
+        self._pattern_levels = dict(entry_data.get("pattern_levels", {}))
+        
+        # Restore placement
+        placement_data = entry_data.get("placement")
+        if placement_data:
+            self.placement = Placement.deserialize(placement_data)
+        else:
+            self.placement = None
+        
+        # Restore other state
+        self.backtracks = entry_data.get("backtracks", 0)
+        self.used_fallback = entry_data.get("used_fallback", False)
+
     def __str__(self):
         return f"Entry {self.entry_id}: Clue: {self.clue}, Candidates: {str(self._candidates)}"
 
@@ -288,4 +382,70 @@ class Grid:
             # Select only entries that share a cell with this entry
             if any(cell in other_entry.cells for cell in entry.cells):
                 crossing_ids.add(other_id)
-        return crossing_ids        
+        return crossing_ids
+    
+    def serialize(self) -> dict[str, Any]:
+        """Serialize this grid's state for checkpointing.
+        
+        Returns a dict containing puzzle_id, all entry states, and all cell states.
+        """
+        # Serialize entry state by calling each entry's serialize method
+        entries_state: dict[str, Any] = {}
+        for entry_id, entry in self.entries.items():
+            entries_state[entry_id] = entry.serialize()
+        
+        # Serialize grid cell state
+        cells_state: list[dict[str, Any]] = []
+        for entry in self.entries.values():
+            for cell in entry.cells:
+                cells_state.append({
+                    "row": cell.row,
+                    "col": cell.col,
+                    "letter": cell.letter,
+                    "sources": list(cell.sources),
+                    "revealed_by_fallback": cell.revealed_by_fallback,
+                })
+        
+        return {
+            "puzzle_id": self.puzzle_id,
+            "entries_state": entries_state,
+            "cells_state": cells_state,
+        }
+    
+    def deserialize(self, checkpoint_data: dict[str, Any]) -> None:
+        """Restore this grid's state from checkpoint data.
+        
+        Clears all cells and reconstructs entry and cell states from checkpoint.
+        """
+        entries_state: dict[str, dict[str, Any]] = checkpoint_data.get("entries_state", {})
+        cells_state: list[dict[str, Any]] = checkpoint_data.get("cells_state", [])
+        
+        # First clear all grid cells
+        for entry in self.entries.values():
+            for cell in entry.cells:
+                cell.letter = None
+                cell.sources.clear()
+                cell.revealed_by_fallback = False
+        
+        # Restore cell states
+        cell_map: dict[tuple[int, int], dict[str, Any]] = {}
+        for cell_data in cells_state:
+            key = (cell_data["row"], cell_data["col"])
+            cell_map[key] = cell_data
+        
+        for entry in self.entries.values():
+            for cell in entry.cells:
+                key = (cell.row, cell.col)
+                if key in cell_map:
+                    cell_data = cell_map[key]
+                    cell.letter = cell_data.get("letter")
+                    cell.sources = set(cell_data.get("sources", []))
+                    cell.revealed_by_fallback = cell_data.get("revealed_by_fallback", False)
+        
+        # Restore entry states using Entry's deserialize method
+        for entry_id, entry_data in entries_state.items():
+            entry = self.entries.get(entry_id)
+            if not entry:
+                continue
+            
+            entry.deserialize(entry_data)        
