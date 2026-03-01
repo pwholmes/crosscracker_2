@@ -333,7 +333,7 @@ class Solver:
         entry.placement.candidate.penalty += FALLBACK_PENALTY
 
         # Reset the entry's placement record
-        self.grid.entries[entry_id].placement = None
+        entry.placement = None
 
         # For each crossing entry not explicitly placed, regenerate its candidates.
         # No need to "unverify" them, as entry.verified is a dynamically generated value.
