@@ -8,6 +8,17 @@ const playBtn = document.getElementById("play");
 const pauseBtn = document.getElementById("pause");
 const stepBtn = document.getElementById("step");
 const resetBtn = document.getElementById("reset");
+const saveCheckpointBtn = document.getElementById("save-checkpoint");
+const loadCheckpointBtn = document.getElementById("load-checkpoint");
+
+// Modal elements
+const saveModal = document.getElementById("save-modal");
+const loadModal = document.getElementById("load-modal");
+const checkpointNameInput = document.getElementById("checkpoint-name");
+const checkpointList = document.getElementById("checkpoint-list");
+const saveModalCancel = document.getElementById("save-modal-cancel");
+const saveModalConfirm = document.getElementById("save-modal-confirm");
+const loadModalCancel = document.getElementById("load-modal-cancel");
 
 
 const modeToggle = document.getElementById('mode-toggle');
@@ -56,6 +67,8 @@ function disableControls(disabled) {
   pauseBtn.disabled = disabled;
   stepBtn.disabled = disabled;
   resetBtn.disabled = disabled;
+  saveCheckpointBtn.disabled = disabled;
+  loadCheckpointBtn.disabled = disabled;
 }
 
 function setPlayingState(playing) {
@@ -64,20 +77,26 @@ function setPlayingState(playing) {
     stepBtn.disabled = true;
     resetBtn.disabled = true;
     pauseBtn.disabled = false;
+    saveCheckpointBtn.disabled = false; // Keep save enabled during play
+    loadCheckpointBtn.disabled = true;  // Disable load during play
   } else {
     playBtn.disabled = false;
     stepBtn.disabled = false;
     resetBtn.disabled = false;
     pauseBtn.disabled = true;
+    saveCheckpointBtn.disabled = false; // Keep save enabled when paused
+    loadCheckpointBtn.disabled = false; // Enable load when paused
   }
 }
 
 function setCompletedState() {
-  // When puzzle is solved or failed, disable Play/Step/Pause but keep Reset enabled
+  // When puzzle is solved or failed, disable Play/Step/Pause but keep Reset and Save enabled
   playBtn.disabled = true;
   stepBtn.disabled = true;
   pauseBtn.disabled = true;
   resetBtn.disabled = false;
+  saveCheckpointBtn.disabled = false; // Keep save enabled when completed
+  loadCheckpointBtn.disabled = false; // Keep load enabled when completed
 }
 
 function renderTallyFromState(metrics) {
@@ -341,6 +360,9 @@ function processMessage(data) {
       document.getElementById('tally').style.display = 'none';
       // Find and hide the Across and Down headings
       setClueHeadingsVisible(false);
+      // Disable save button when no puzzle loaded, but keep load enabled
+      saveCheckpointBtn.disabled = true;
+      loadCheckpointBtn.disabled = false;
       //disableControls(true);
     } else {
       // Puzzle loaded - show sections and "Loaded" message
@@ -358,6 +380,9 @@ function processMessage(data) {
       // when there is no in-progress initialization/step progress being reported.
       if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted && !initProgressStarted) {
         setPlayingState(false);
+        // Enable save and load buttons when controls are enabled and puzzle is loaded
+        saveCheckpointBtn.disabled = false;
+        loadCheckpointBtn.disabled = false;
       }
       // Hide progress bar when puzzle is fully loaded
       initProgressDiv.style.display = 'none';
@@ -385,6 +410,10 @@ function processMessage(data) {
       }
       statusMessage.className = '';
       initProgressStarted = true;
+      // Disable all buttons during progress
+      disableControls(true);
+      saveCheckpointBtn.disabled = true;
+      loadCheckpointBtn.disabled = true;
     }
     progressText.textContent = `${current} / ${total} entries`;
     progressBarFill.style.width = `${percentage}%`;
@@ -445,6 +474,13 @@ function processMessage(data) {
     progressText.textContent = '0 / 0 entries';
     progressBarFill.style.width = '0%';
     initProgressStarted = false;
+    // Re-enable buttons after progress completes
+    setPlayingState(false);
+    saveCheckpointBtn.disabled = false;
+    // Only enable load button if not playing
+    if (!isPuzzlePlaying) {
+      loadCheckpointBtn.disabled = false;
+    }
   }
 }
 
@@ -906,6 +942,8 @@ async function loadSelectedPuzzle() {
   statusMessage.textContent = 'Getting hints...';
   statusMessage.className = '';
   disableControls(true);
+  saveCheckpointBtn.disabled = true;
+  loadCheckpointBtn.disabled = true;
   logEl.textContent = '';
   
   // Reset progress bar (but don't show it yet - wait for first progress update)
@@ -967,6 +1005,7 @@ pauseBtn.addEventListener('click', () => {
 });
 
 stepBtn.addEventListener('click', () => {
+  setPlayingState(true); // Disable all buttons consistently (including Load)
   if (isReplayMode) {
     replayStep();
   } else {
@@ -990,6 +1029,154 @@ resetBtn.addEventListener('click', () => {
     postAction('/reset');
   }
 });
+
+// Save Checkpoint handlers
+saveCheckpointBtn.addEventListener('click', () => {
+  checkpointNameInput.value = '';
+  saveModal.style.display = 'flex';
+  checkpointNameInput.focus();
+});
+
+saveModalCancel.addEventListener('click', () => {
+  saveModal.style.display = 'none';
+});
+
+saveModalConfirm.addEventListener('click', async () => {
+  const name = checkpointNameInput.value.trim();
+  saveModal.style.display = 'none';
+  
+  try {
+    const res = await fetch(API_BASE + '/api/checkpoints/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    
+    if (data.error) {
+      statusMessage.textContent = 'Save failed: ' + data.error;
+      statusMessage.className = '';
+    } else {
+      statusMessage.textContent = 'Checkpoint saved ✓';
+      statusMessage.className = '';
+      setTimeout(() => {
+        if (statusMessage.textContent === 'Checkpoint saved ✓') {
+          statusMessage.textContent = 'Ready';
+        }
+      }, 2000);
+    }
+  } catch (err) {
+    log('[error] Failed to save checkpoint: ' + err);
+    statusMessage.textContent = 'Save failed';
+    statusMessage.className = '';
+  }
+});
+
+// Load Checkpoint handlers
+let selectedCheckpointId = null;
+
+loadCheckpointBtn.addEventListener('click', async () => {
+  try {
+    const res = await fetch(API_BASE + '/api/checkpoints');
+    if (!res.ok) throw new Error(res.statusText);
+    const checkpoints = await res.json();
+    
+    if (checkpoints.length === 0) {
+      statusMessage.textContent = 'No checkpoints available';
+      statusMessage.className = '';
+      return;
+    }
+    
+    // Populate checkpoint list
+    checkpointList.innerHTML = '';
+    selectedCheckpointId = null;
+    
+    checkpoints.forEach((checkpoint) => {
+      const item = document.createElement('div');
+      item.className = 'checkpoint-item';
+      item.dataset.checkpointId = checkpoint.id;
+      
+      const name = checkpoint.name || 'Unnamed checkpoint';
+      const puzzle = checkpoint.puzzle_id || 'unknown';
+      const timestamp = checkpoint.timestamp ? new Date(checkpoint.timestamp).toLocaleString() : '';
+      const metrics = checkpoint.metrics || {};
+      const steps = metrics.steps || 0;
+      const fallbacks = metrics.fallbacks || 0;
+      const backtracks = metrics.backtracks || 0;
+      
+      item.innerHTML = `
+        <div class="checkpoint-name">${name}</div>
+        <div class="checkpoint-details">
+          Puzzle: ${puzzle}<br>
+          Progress: ${steps} steps, ${fallbacks} fallbacks, ${backtracks} backtracks<br>
+          Saved: ${timestamp}
+        </div>
+      `;
+      
+      item.addEventListener('click', () => {
+        // Deselect all
+        checkpointList.querySelectorAll('.checkpoint-item').forEach(el => {
+          el.classList.remove('selected');
+        });
+        // Select this one
+        item.classList.add('selected');
+        selectedCheckpointId = checkpoint.id;
+        
+        // Immediately load the checkpoint
+        loadSelectedCheckpoint();
+      });
+      
+      checkpointList.appendChild(item);
+    });
+    
+    loadModal.style.display = 'flex';
+  } catch (err) {
+    log('[error] Failed to load checkpoints: ' + err);
+    statusMessage.textContent = 'Failed to load checkpoints';
+    statusMessage.className = '';
+  }
+});
+
+loadModalCancel.addEventListener('click', () => {
+  loadModal.style.display = 'none';
+});
+
+async function loadSelectedCheckpoint() {
+  if (!selectedCheckpointId) return;
+  
+  loadModal.style.display = 'none';
+  statusMessage.textContent = 'Loading checkpoint...';
+  statusMessage.className = '';
+  
+  try {
+    const res = await fetch(API_BASE + `/api/checkpoints/${selectedCheckpointId}/load`, {
+      method: 'POST',
+    });
+    
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    
+    if (data.error) {
+      statusMessage.textContent = 'Load failed: ' + data.error;
+      statusMessage.className = '';
+    } else {
+      // State will be broadcast via WebSocket
+      statusMessage.textContent = 'Checkpoint loaded ✓';
+      statusMessage.className = '';
+      setTimeout(() => {
+        if (statusMessage.textContent === 'Checkpoint loaded ✓') {
+          statusMessage.textContent = 'Ready';
+        }
+      }, 2000);
+    }
+  } catch (err) {
+    log('[error] Failed to load checkpoint: ' + err);
+    statusMessage.textContent = 'Load failed';
+    statusMessage.className = '';
+  }
+}
 
 itemSelect.addEventListener('change', async () => {
   if (currentMode === 'puzzles') {

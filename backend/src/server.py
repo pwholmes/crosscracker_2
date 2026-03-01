@@ -41,6 +41,8 @@ _metrics_lock = Lock()
 BASE_DIR = Path(__file__).resolve().parents[2]
 RECORDINGS_DIR = BASE_DIR / "backend" / "recordings"
 RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
+CHECKPOINTS_DIR = BASE_DIR / "backend" / "checkpoints"
+CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
 PLAY_INTERVAL_SECONDS = 0
 
 # Logger
@@ -310,6 +312,7 @@ async def _emit_solver_step() -> dict[str, Any]:
     
     Returns the event dict. The caller should check the event type for terminal conditions.
     """
+    global steps_executed, fallbacks_used, backtracks_used
     if solver is None:
         raise RuntimeError("Solver not initialized")
     # Broadcast 'Solving...' status before step
@@ -321,14 +324,27 @@ async def _emit_solver_step() -> dict[str, Any]:
     # Progress callback for step candidate retrieval
     async def progress_callback(current: int, total: int):
         await broadcast_progress(current, total, operation="step")
-    # Placement event broadcast callback
+    # Placement event broadcast callback - broadcast event for immediate feedback
     async def broadcast_event_callback(ev: dict[str, Any]):
-        await broadcast_step_events(ev)
+        # Broadcast just the event, not the full state (metrics will be sent after)
+        await manager.broadcast({"type": "event", "event": ev})
+        if "verified" in ev:
+            for entry_id in ev["verified"]:
+                await manager.broadcast({"type": "event", "event": {"event": "candidate_verified", "entry_id": entry_id}})
     # Execute step with progress bar, broadcasting placement event first
     if hasattr(solver, "async_step_with_progress"):
         ev = await solver.async_step_with_progress(progress_callback, broadcast_event_callback)
+        # Update metrics to match _step_and_update_metrics behavior
+        with _metrics_lock:
+            steps_executed += 1
+            if ev.get("event") == "placed_fallback":
+                fallbacks_used += 1
+            elif ev.get("event") == "backtrack":
+                backtracks_used += 1
         # Send progress_done message to hide progress bar
         await manager.broadcast({"type": "progress_done", "operation": "step"})
+        # Broadcast updated state with new metrics
+        await broadcast_step_events(ev)
     else:
         ev = await asyncio.to_thread(_step_and_update_metrics)
         await broadcast_step_events(ev)
@@ -548,6 +564,182 @@ def get_puzzle(puzzle_id: str) -> dict[str, Any]:
         logger.error(f"Failed to get puzzle {puzzle_id}: {e}")
         import traceback
         traceback.print_exc()
+        return {"error": str(e)}
+
+
+@app.post("/api/checkpoints/save")
+async def save_checkpoint(request: Request) -> dict[str, Any]:
+    """Save the current puzzle state as a checkpoint."""
+    global solver, current_puzzle_id
+    
+    if solver is None or grid is None or current_puzzle_id is None:
+        return {"error": "No puzzle loaded"}
+    
+    try:
+        # Get optional name from request body
+        raw_body: Any = await request.json() if request.headers.get("content-type") == "application/json" else {}
+        body: dict[str, Any] = {}
+        if isinstance(raw_body, dict):
+            raw_body_dict = cast(dict[Any, Any], raw_body)
+            for key, value in raw_body_dict.items():
+                if isinstance(key, str):
+                    body[key] = value
+        checkpoint_name = body.get("name", "")
+        
+        # Serialize solver state
+        checkpoint_data = solver.serialize_checkpoint()
+        
+        # Add metadata
+        checkpoint_id = str(uuid.uuid4())
+        checkpoint_data["id"] = checkpoint_id
+        checkpoint_data["timestamp"] = datetime.now().isoformat()
+        checkpoint_data["name"] = checkpoint_name
+        checkpoint_data["metrics"] = {
+            "steps": steps_executed,
+            "fallbacks": fallbacks_used,
+            "backtracks": backtracks_used,
+        }
+        
+        # Generate filename with ordinal
+        safe_puzzle_id = str(current_puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_')
+        ordinal = 1
+        while True:
+            filename = f"{safe_puzzle_id} - {ordinal}.json"
+            filepath = CHECKPOINTS_DIR / filename
+            if not filepath.exists():
+                break
+            ordinal += 1
+        
+        # Save to file
+        with open(filepath, 'w') as f:
+            json.dump(checkpoint_data, f, indent=2)
+        
+        logger.info(f"Checkpoint saved: {filename} (id: {checkpoint_id})")
+        return {"status": "saved", "id": checkpoint_id, "filename": filename}
+    
+    except Exception as e:
+        logger.error(f"Failed to save checkpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
+@app.get("/api/checkpoints")
+def list_checkpoints() -> list[dict[str, Any]]:
+    """List all saved checkpoints."""
+    try:
+        checkpoints: list[dict[str, Any]] = []
+        for json_file in sorted(CHECKPOINTS_DIR.glob("*.json")):
+            try:
+                with open(json_file, 'r') as f:
+                    checkpoint = json.load(f)
+                
+                checkpoints.append({
+                    "id": checkpoint.get("id", json_file.stem),
+                    "name": checkpoint.get("name", ""),
+                    "puzzle_id": checkpoint.get("puzzle_id", "unknown"),
+                    "timestamp": checkpoint.get("timestamp", ""),
+                    "metrics": checkpoint.get("metrics", {}),
+                    "filename": json_file.name,
+                })
+            except Exception as e:
+                logger.error(f"Failed to load checkpoint {json_file}: {e}")
+        
+        return checkpoints
+    except Exception as e:
+        logger.error(f"Failed to list checkpoints: {e}")
+        return []
+
+
+@app.post("/api/checkpoints/{checkpoint_id}/load")
+async def load_checkpoint(checkpoint_id: str) -> dict[str, Any]:
+    """Load a specific checkpoint and restore its state."""
+    global solver, grid, current_puzzle_id, steps_executed, fallbacks_used, backtracks_used
+    
+    try:
+        # Find the checkpoint file
+        checkpoint_file = None
+        for json_file in CHECKPOINTS_DIR.glob("*.json"):
+            try:
+                with open(json_file, 'r') as f:
+                    data = json.load(f)
+                if data.get("id") == checkpoint_id:
+                    checkpoint_file = json_file
+                    break
+            except Exception:
+                continue
+        
+        if checkpoint_file is None:
+            return {"error": "Checkpoint not found"}
+        
+        # Load checkpoint data
+        with open(checkpoint_file, 'r') as f:
+            checkpoint = json.load(f)
+        
+        checkpoint_puzzle_id = checkpoint.get("puzzle_id")
+        
+        # Stop any ongoing solving
+        play_event.clear()
+        
+        async with solver_lock:
+            # Load the puzzle if different from current
+            if current_puzzle_id != checkpoint_puzzle_id:
+                grid, hook = puzzles.load_puzzle(puzzle_id=checkpoint_puzzle_id)
+                grid.puzzle_id = checkpoint_puzzle_id
+                current_puzzle_id = checkpoint_puzzle_id
+                LLM.set_generate_candidates_hook(hook)
+
+            if grid is None:
+                return {"error": "No puzzle loaded"}
+            
+            # Create new solver WITHOUT candidate initialization
+            solver = Solver(grid, defer_candidate_init=True, record=True)
+            
+            # Restore state from checkpoint
+            solver.restore_from_checkpoint(checkpoint)
+            
+            # Restore metrics
+            with _metrics_lock:
+                metrics = checkpoint.get("metrics", {})
+                steps_executed = metrics.get("steps", 0)
+                fallbacks_used = metrics.get("fallbacks", 0)
+                backtracks_used = metrics.get("backtracks", 0)
+        
+        # Broadcast the restored state
+        await manager.broadcast(serialize_state())
+        
+        logger.info(f"Checkpoint loaded: {checkpoint_file.name}")
+        return {"status": "loaded", "checkpoint_id": checkpoint_id}
+    
+    except KeyError as e:
+        logger.error(f"Puzzle not found for checkpoint: {e}")
+        return {"error": f"Puzzle not found: {str(e)}"}
+    except Exception as e:
+        logger.error(f"Failed to load checkpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
+@app.delete("/api/checkpoints/{checkpoint_id}")
+async def delete_checkpoint(checkpoint_id: str) -> dict[str, Any]:
+    """Delete a specific checkpoint."""
+    try:
+        # Find and delete the checkpoint file
+        for json_file in CHECKPOINTS_DIR.glob("*.json"):
+            try:
+                with open(json_file, 'r') as f:
+                    data = json.load(f)
+                if data.get("id") == checkpoint_id:
+                    json_file.unlink()
+                    logger.info(f"Checkpoint deleted: {json_file.name}")
+                    return {"status": "deleted"}
+            except Exception:
+                continue
+        
+        return {"error": "Checkpoint not found"}
+    except Exception as e:
+        logger.error(f"Failed to delete checkpoint: {e}")
         return {"error": str(e)}
 
 
