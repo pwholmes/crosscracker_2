@@ -127,8 +127,9 @@ class BasicStrategy:
             if entry.completed:
                 continue
 
-            candidates: list[Candidate] = entry.get_candidates()
+            candidates: list[Candidate] = entry.get_candidates(matching_only=False)
             if not candidates:
+                #logger.debug(f"Entry {entry.entry_id} has no candidates, skipping")
                 continue
 
             crossing_entry_ids = grid.get_crossing_entry_ids(entry.entry_id)
@@ -151,12 +152,17 @@ class BasicStrategy:
 
             for crossing_entry_id in crossing_entry_ids:
                 crossing_entry = grid.entries[crossing_entry_id]
-                if crossing_entry.placement is None or crossing_entry.used_fallback:
+                if crossing_entry.placement is None:
+                    #logger.debug(f"Entry {entry.entry_id} not placed, so can't be blamed; skipping")
+                    continue
+                if crossing_entry.used_fallback:
+                    #logger.debug(f"Entry {entry.entry_id} was a fallback and MUST be correct, so can't be blamed; skipping")
                     continue
 
                 # What letter is the crossing entry contributing at the shared cell?
                 cross_position, crossing_letter = entry.get_crossing_letter(crossing_entry)
                 if cross_position is None or crossing_letter is None:
+                    #logger.debug(f"Crossing entry {crossing_entry.entry_id} has no conflict with entry {entry.entry_id}, so can't be blamed; skipping")
                     continue
 
                 # How many of this entry's candidates conflict with that letter?
@@ -165,6 +171,7 @@ class BasicStrategy:
                     if candidate.answer[cross_position] != crossing_letter
                 )
                 conflict_ratio = conflicting / len(candidates)
+                #logger.debug(f"Crossing entry {crossing_entry.entry_id} has {len(candidates)} conflicting candidates")
                 blame[crossing_entry_id] = blame.get(crossing_entry_id, 0.0) + conflict_ratio * scarcity_weight
 
         # If nothing could be blamed, we can't select a backtrack target.
@@ -249,7 +256,7 @@ class BasicStrategy:
 
         entries = grid.entries.values()
         for entry in entries:
-            if entry.placement is None:
+            if entry.placement is not None:
                 continue
             crossing_entry_ids = grid.get_crossing_entry_ids(entry.entry_id)
             unfilled_count = 0
