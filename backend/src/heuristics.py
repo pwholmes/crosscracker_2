@@ -246,6 +246,32 @@ class BasicStrategy:
 
     @staticmethod
     def select_best_fallback_target(grid: Grid) -> Entry | None:
+        """Select the best unplaced entry to assign a fallback answer to.
+        
+        Fallback targets are entries that should receive a default/heuristic-based
+        answer when the normal candidate generation fails or produces no viable options.
+        This function selects which unplaced entry would be most beneficial to fill,
+        helping break deadlocks in the solve process.
+        
+        The selection heuristic prioritizes entries that:
+        - Have many unfilled crossing entries (high unfilled_count)
+        - Have few filled crossing entries (low filled_count)
+        
+        This strategy targets "blocking" entries: entries whose placement would free up
+        the most stuck crossing entries, maximizing the chance that fallback placement
+        will unblock forward progress.
+        
+        Algorithm:
+        1. Iterate through all unplaced entries
+        2. For each unplaced entry, count its filled vs unfilled crossing entries
+        3. Skip entries with no unfilled crossings (they don't block anything)
+        4. Score each entry based on the ratio of unfilled to filled crossing entries
+        5. Return the entry with the highest score
+        
+        :param grid: The crossword Grid to analyze
+        :return: The Entry that should receive a fallback answer, or None if no
+                 unplaced entries exist or all unplaced entries have no unfilled crossings
+        """
         # These weights should sum to 1
         W_UNFILLED_RATIO = 0.5
         #W_CONFIDENCE = 0.3
