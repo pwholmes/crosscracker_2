@@ -144,7 +144,6 @@ class Solver:
                 entry_id=entry.entry_id,
                 candidate=candidate,
                 pattern=entry.pattern,
-                search_level=0,
                 selection_score=selection_score,
                 is_fallback=False
             )
@@ -157,7 +156,7 @@ class Solver:
                 f"[STEP PLACE] entry={placement.entry_id} "
                 f"answer='{placement.candidate.answer}' "
                 f"pattern={placement.pattern} "
-                f"search_level={placement.search_level} "
+                f"search_level={placement.candidate.search_level} "
                 f"confidence={placement.candidate.confidence:.1f} "
                 f"selection score={placement.selection_score:.1f} "
             )
@@ -169,7 +168,7 @@ class Solver:
                         "entry_id": placement.entry_id,
                         "answer": placement.candidate.answer,
                         "pattern": placement.pattern,
-                        "search_level": placement.search_level,
+                        "search_level": placement.candidate.search_level,
                         "confidence": placement.candidate.confidence,
                         "selection score": placement.selection_score,
                     },
@@ -216,7 +215,7 @@ class Solver:
                     f"BACKTRACK: entry_id={placement.entry_id} "
                     f"answer={placement.candidate.answer} "
                     f"pattern={placement.pattern} "
-                    f"search_level={placement.search_level} "
+                    f"search_level={placement.candidate.search_level} "
                     f"confidence={placement.candidate.confidence:.1f} "
                     f"selection score={placement.selection_score:.1f} "
                 )
@@ -228,7 +227,7 @@ class Solver:
                             "entry_id": placement.entry_id,
                             "answer": placement.candidate.answer,
                             "pattern": placement.pattern,
-                            "search_level": placement.search_level,
+                            "search_level": placement.candidate.search_level,
                             "confidence": placement.candidate.confidence,
                             "selection_score": placement.selection_score,
                         },
@@ -282,14 +281,19 @@ class Solver:
                 removed_entry_ids.append(conflicting_entry_id)
 
         # Create a new "candidate" for the fallback answer.
-        candidate = Candidate(entry.entry_id, answer, search_level=0)
+        candidate = Candidate(
+            entry_id=entry.entry_id, 
+            answer=answer,
+            search_level=0,
+            llm_confidence=100.0,
+            logprob_confidence=100.0
+        )
 
-        # Now the way is clear for the placement of the fallback entry.
+        # Create a placement for the fallback.
         placement = Placement(
             entry_id=entry.entry_id,
             candidate=candidate,
             pattern=entry.pattern,
-            search_level=0,
             selection_score=100,
             is_fallback=True
         )
@@ -305,7 +309,7 @@ class Solver:
                 "entry_id": placement.entry_id,
                 "answer": placement.candidate.answer,
                 "pattern": placement.pattern,
-                "search_level": placement.search_level,
+                "search_level": placement.candidate.search_level,
                 "confidence": placement.candidate.confidence,
                 "selection_score": placement.selection_score
             },

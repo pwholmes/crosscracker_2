@@ -77,7 +77,6 @@ class Candidate:
 class Placement:
     entry_id: str
     candidate: Candidate
-    search_level: int
     pattern: str
     selection_score: float
     is_fallback: bool = False
@@ -87,7 +86,6 @@ class Placement:
         return {
             "entry_id": self.entry_id,
             "candidate": self.candidate.serialize(),
-            "search_level": self.search_level,
             "pattern": self.pattern,
             "selection_score": self.selection_score,
             "is_fallback": self.is_fallback,
@@ -100,7 +98,6 @@ class Placement:
         return Placement(
             entry_id=data["entry_id"],
             candidate=candidate,
-            search_level=data.get("search_level", 0),
             pattern=data["pattern"],
             selection_score=data["selection_score"],
             is_fallback=data.get("is_fallback", False),

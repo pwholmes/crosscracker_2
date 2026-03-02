@@ -49,17 +49,17 @@ def test_verify_entries_checks_crossings_only():
     grid.entries["1D"].place(Placement(
         entry_id="1D", 
         candidate=Candidate(entry_id="1D", answer="AC"),
-        search_level=0, pattern="AC", selection_score=0.0, is_fallback=False
+        pattern="AC", selection_score=0.0, is_fallback=False
     ))
     grid.entries["2D"].place(Placement(
         entry_id="2D",
         candidate=Candidate(entry_id="2D", answer="BD"),
-        search_level=0, pattern="BD", selection_score=0.0, is_fallback=False
+        pattern="BD", selection_score=0.0, is_fallback=False
     ))
     grid.entries["3A"].place(Placement(
         entry_id="3A",
         candidate=Candidate(entry_id="3A", answer="EF"),
-        search_level=0, pattern="EF", selection_score=0.0, is_fallback=False
+        pattern="EF", selection_score=0.0, is_fallback=False
     ))
 
     crossing_ids = grid.get_crossing_entry_ids("1A")
