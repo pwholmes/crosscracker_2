@@ -214,16 +214,16 @@ class Entry:
                     logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}: Storing new candidate {new_candidate}")
                     self._candidates[new_candidate.answer] = new_candidate
 
-        # If we didn't find any candidates and we're at less than the maximum search
-        # level, call this function recursively with the flag to bump the search level.
-        if len(self._candidates) == 0:
-            if self.search_level < LLM.MAX_SEARCH_LEVEL:
-                logger.debug("[ENTRY GET CANDIDATES]: Recursively calling get_candidates() to bump search level.")
-                return self.get_candidates(True, matching_only)
-
+        # Filter candidates by pattern matching if requested
         candidates = list(self._candidates.values())
         if matching_only:
             candidates = [c for c in candidates if self.can_place_answer(c.answer)]
+
+        # If no matching candidates exist and we can still widen search, do so recursively
+        if len(candidates) == 0 and self.search_level < LLM.MAX_SEARCH_LEVEL:
+            logger.debug(f"[ENTRY GET CANDIDATES]: No matching candidates for entry {self.entry_id}, pattern '{self.pattern}', recursively widening search.")
+            return self.get_candidates(True, matching_only)
+
         return candidates
 
     
