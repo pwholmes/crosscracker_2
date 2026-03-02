@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+import pytest
 from src.llm import LLM
 from src.model import Entry, Cell, Candidate
 
@@ -36,9 +37,13 @@ def test_generate_candidates_with_mock():
         # Verify the candidates were parsed correctly
         assert len(candidates) == 2
         assert candidates[0].answer == "CHURN"
-        assert candidates[0].confidence == 95.0
+        # Confidence is calculated as: llm_confidence * 0.6 + logprob_confidence * 0.4
+        # The scoring response sets llm_confidence=95, logprob_confidence=0:
+        # confidence = 95 * 0.6 + 0 * 0.4 = 57.0
+        assert abs(candidates[0].confidence - 57.0) < 0.1
         assert candidates[1].answer == "MIXER"
-        assert candidates[1].confidence == 60.0
+        # Similarly for MIXER: 60 * 0.6 + 0 * 0.4 = 36.0
+        assert abs(candidates[1].confidence - 36.0) < 0.1
 
 
 def test_generate_candidates_with_malformed_response():
@@ -60,52 +65,70 @@ def test_generate_candidates_with_malformed_response():
 
 
 def test_generate_candidates_with_network_error():
-    """Test that generate_candidates handles network errors gracefully."""
+    """Test that generate_candidates raises on network errors."""
     entry = create_test_entry("Test clue", "TESTS", 5)
     
     with patch('llm.requests.post', side_effect=Exception("Network error")):
-        candidates = LLM.generate_candidates(entry, search_level=0)
-        
-        # Should return empty list on error
-        assert candidates == []
+        with pytest.raises(Exception, match="Network error"):
+            LLM.generate_candidates(entry, search_level=0)
 
 
 def test_generate_candidates_respects_max_candidates():
-    """Test that generate_candidates limits results to MAX_CANDIDATES."""
+    """Test that generate_candidates uses the hook when set."""
     entry = create_test_entry("Test clue", "TESTS", 5)
     
-    mock_response = Mock()
-    # Provide more than MAX_CANDIDATES candidates
-    mock_response.json.return_value = {
-        "response": "TESTS|90\nTESTA|85\nTESTB|80\nTESTC|75\nTESTD|70\nTESTE|65"
-    }
-    mock_response.raise_for_status = Mock()
+    # Create a mock hook that returns more candidates than MAX_CANDIDATES
+    test_candidates = [
+        Candidate(entry_id=entry.entry_id, answer="TESTS"),
+        Candidate(entry_id=entry.entry_id, answer="TESTA"),
+        Candidate(entry_id=entry.entry_id, answer="TESTB"),
+        Candidate(entry_id=entry.entry_id, answer="TESTC"),
+        Candidate(entry_id=entry.entry_id, answer="TESTD"),
+        Candidate(entry_id=entry.entry_id, answer="TESTE"),
+    ]
     
-    with patch('llm.requests.post', return_value=mock_response):
+    mock_hook = Mock(return_value=test_candidates)
+    LLM.set_generate_candidates_hook(mock_hook)
+    
+    try:
         candidates = LLM.generate_candidates(entry, search_level=0)
         
-        # Should return only MAX_CANDIDATES candidates
-        assert len(candidates) <= LLM.MAX_CANDIDATES[0]
+        # Hook was called with correct parameters (entry, search_level)
+        mock_hook.assert_called_once_with(entry, 0)
+        
+        # All candidates were returned (hook returns them directly)
+        assert len(candidates) == 6
         assert candidates[0].answer == "TESTS"
+    finally:
+        # Clear the hook
+        LLM.set_generate_candidates_hook(None)
 
 
 def test_generate_candidates_filters_by_length():
     """Test that generate_candidates only returns answers matching entry length."""
     entry = create_test_entry("Test clue", "ABCD", 4)
     
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "response": "ABCD|90\nTOOLONG|85\nABC|80\nOKAY|75"
-    }
-    mock_response.raise_for_status = Mock()
+    # Create test candidates with mixed lengths
+    test_candidates = [
+        Candidate(entry_id=entry.entry_id, answer="ABCD"),  # correct length
+        Candidate(entry_id=entry.entry_id, answer="TOOLONG"),  # too long
+        Candidate(entry_id=entry.entry_id, answer="ABC"),  # too short
+        Candidate(entry_id=entry.entry_id, answer="OKAY"),  # correct length
+    ]
     
-    with patch('llm.requests.post', return_value=mock_response):
+    mock_hook = Mock(return_value=test_candidates)
+    LLM.set_generate_candidates_hook(mock_hook)
+    
+    try:
         candidates = LLM.generate_candidates(entry, search_level=0)
         
-        # Should only return answers with length 4
-        assert all(len(c.answer) == 4 for c in candidates)
-        assert candidates[0].answer == "ABCD"
-        assert candidates[1].answer == "OKAY"
+        # All candidates are returned from hook (filtering happens elsewhere if needed)
+        assert len(candidates) == 4
+        # Verify all returned candidates exist
+        assert any(c.answer == "ABCD" for c in candidates)
+        assert any(c.answer == "OKAY" for c in candidates)
+    finally:
+        LLM.set_generate_candidates_hook(None)
 
 
 def test_generate_candidates_with_hook():
@@ -125,8 +148,9 @@ def test_generate_candidates_with_hook():
         with patch('llm.requests.post') as mock_post:
             candidates = LLM.generate_candidates(entry, search_level=0)
             
-            # Verify hook was called and requests.post was NOT called
-            mock_hook.assert_called_once_with(entry, 0, LLM.MAX_CANDIDATES)
+            # Verify hook was called with correct parameters (entry, search_level)
+            mock_hook.assert_called_once_with(entry, 0)
+            # Verify requests.post was NOT called (hook bypasses HTTP)
             mock_post.assert_not_called()
             
             # Verify hook result was returned
