@@ -265,6 +265,50 @@ class Entry:
         return None, None
 
 
+    def place(self, placement: Placement) -> bool:
+        """Place a candidate answer into this entry's cells.
+        
+        Sets this entry's placement and adds the answer to the grid cells.
+        Returns False if there are conflicts with existing letters, True otherwise.
+        """
+        answer = placement.candidate.answer
+        logger.debug(f"[ENTRY]: Placing answer: {self.entry_id} = {answer}")
+        
+        # Make sure there are no conflicts with existing letters
+        for cell, ch in zip(self.cells, answer):
+            if cell.letter is not None and cell.letter != ch:
+                logger.error(f"[ENTRY ERROR] Unable to place candidate; candidate letter {ch} does not match existing letter {cell.letter}")
+                return False
+        
+        # Add new letters to cells, noting if they are placed because this entry is a fallback
+        for cell, ch in zip(self.cells, answer):
+            was_empty = cell.letter is None
+            cell.letter = ch
+            cell.sources.add(self.entry_id)
+            if placement.is_fallback and was_empty:
+                cell.revealed_by_fallback = True
+
+        # Set the placement
+        self.placement = placement
+        return True
+
+
+    def remove(self) -> None:
+        """Remove this entry's answer from its cells and clear placement.
+        
+        Only removes letters not also placed by a crossing entry.
+        """
+        for cell in self.cells:
+            if self.entry_id in cell.sources:
+                cell.sources.remove(self.entry_id)
+                if not cell.sources:
+                    cell.letter = None
+                    cell.revealed_by_fallback = False
+
+        # Clear the placement
+        self.placement = None
+
+
     def serialize(self) -> dict[str, Any]:
         """Serialize this entry's state for checkpointing.
         
@@ -318,6 +362,9 @@ class Entry:
 
 
 class Grid:
+    puzzle_id: str | None
+    entries: dict[str,Entry]
+
     def __init__(self, entries: dict[str, Entry]):
         self.puzzle_id: str | None = None  # Set by server when puzzle is loaded
         self.entries = entries  # all Entries keyed by entry_id
@@ -332,37 +379,6 @@ class Grid:
         
         self.width = max_col + 1
         self.height = max_row + 1
-
-
-    def place_entry(self, entry: Entry, answer: str, is_fallback: bool) -> bool:
-        logger.debug(f"[GRID]: Placing answer: {entry.entry_id} = {answer}")
-        
-        # Make sure there are no conflicts with existing letters
-        for cell, ch in zip(entry.cells, answer):
-            if cell.letter is not None and cell.letter != ch:
-                logger.error(f"[GRID ERROR] Unable to place candidate; candidate letter {ch} does not match existing letter {cell.letter}")
-                return False
-        
-        # Add new letters to grid, noting if they are placed because this entry is a fallback
-        for cell, ch in zip(entry.cells, answer):
-            was_empty = cell.letter is None
-            cell.letter = ch
-            cell.sources.add(entry.entry_id)
-            if is_fallback and was_empty:
-                cell.revealed_by_fallback = True
-
-        return True
-
-
-    def remove_entry(self, entry: Entry):
-        # Remove from grid all letters not also placed by a crossing entry
-        for cell in entry.cells:
-            if entry.entry_id in cell.sources:
-                cell.sources.remove(entry.entry_id)
-                if not cell.sources:
-                    cell.letter = None
-                    cell.revealed_by_fallback = False
-
 
     def pattern_for_entry(self, entry_id: str) -> str:
         return self.entries[entry_id].pattern

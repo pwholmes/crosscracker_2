@@ -148,10 +148,9 @@ class Solver:
                 selection_score=selection_score,
                 is_fallback=False
             )
-            if not self.grid.place_entry(entry, candidate.answer, False):
+            if not entry.place(placement):
                 logger.error(f"[STEP ERROR] Unable to place candidate {candidate.answer} for entry {entry.entry_id}")
                 return self._finalize_event({"event": "fatal error"}, [])
-            self.grid.entries[entry.entry_id].placement = placement
 
             # Log the placement and return an event for the UI.
             logger.debug(
@@ -294,8 +293,7 @@ class Solver:
             selection_score=100,
             is_fallback=True
         )
-        self.grid.place_entry(entry, candidate.answer, True)
-        entry.placement = placement                
+        entry.place(placement)
 
         # Mark it as a fallback
         entry.used_fallback = True
@@ -326,14 +324,11 @@ class Solver:
         crossing_entry_ids = self.grid.get_crossing_entry_ids(entry_id)
         logger.debug(f"BACKTRACK: {len(crossing_entry_ids)} crossing entries detected for {entry_id}")
 
-        # Remove the answer from the grid
-        self.grid.remove_entry(entry)
-
         # Apply a penalty to the candidate so it is less likely (but not impossible!) to use again.
         entry.placement.candidate.penalty += FALLBACK_PENALTY
 
-        # Reset the entry's placement record
-        entry.placement = None
+        # Remove the answer from the grid (also clears placement)
+        entry.remove()
 
         # For each crossing entry not explicitly placed, regenerate its candidates.
         # No need to "unverify" them, as entry.verified is a dynamically generated value.

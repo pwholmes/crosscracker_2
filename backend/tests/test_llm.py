@@ -85,7 +85,7 @@ def test_generate_candidates_respects_max_candidates():
         candidates = LLM.generate_candidates(entry, search_level=0)
         
         # Should return only MAX_CANDIDATES candidates
-        assert len(candidates) <= LLM.MAX_CANDIDATES
+        assert len(candidates) <= LLM.MAX_CANDIDATES[0]
         assert candidates[0].answer == "TESTS"
 
 
@@ -114,8 +114,8 @@ def test_generate_candidates_with_hook():
     
     # Create a mock hook
     mock_hook = Mock(return_value=[
-        Candidate(entry_id=entry.entry_id, answer="HOOKA", confidence=100.0),
-        Candidate(entry_id=entry.entry_id, answer="HOOKB", confidence=90.0),
+        Candidate(entry_id=entry.entry_id, answer="HOOKA", search_level=0, llm_confidence=100.0, logprob_confidence=100.0),
+        Candidate(entry_id=entry.entry_id, answer="HOOKB", search_level=0, llm_confidence=90.0, logprob_confidence=90.0),
     ])
     
     # Set the hook
