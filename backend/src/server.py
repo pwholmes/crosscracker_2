@@ -202,25 +202,6 @@ def serialize_state() -> dict[str, Any]:
     }
 
 
-def _step_and_update_metrics() -> dict[str, Any]:
-    """Run one solver step and update authoritative metrics.
-    
-    Events are automatically recorded by the Solver's record_event() method,
-    called via _finalize_event() during step execution.
-    """
-    global steps_executed, fallbacks_used, backtracks_used
-    if solver is None:
-        raise RuntimeError("Solver not initialized")
-    ev = solver.step()
-    with _metrics_lock:
-        steps_executed += 1
-        if ev.get("event") == "placed_fallback":
-            fallbacks_used += 1
-        elif ev.get("event") == "backtrack":
-            backtracks_used += 1
-    return ev
-
-
 def _save_recording() -> None:
     """Save the current solver recording."""
     # This function is now only called when the user requests to save the recording.
@@ -288,17 +269,21 @@ def _save_recording() -> None:
         logger.error(f"Failed to save recording: {e}")
 
 
-async def broadcast_step_events(ev: dict[str, Any]) -> None:
-    """Broadcast step event and any verification events."""
+async def broadcast_step_event(ev: dict[str, Any]) -> None:
+    """Broadcast the primary step event payload exactly once."""
     await manager.broadcast({"type": "event", "event": ev})
-    if "verification_failed" in ev:
-        await manager.broadcast({
-            "type": "status",
-            "message": f"Verification failed for: {', '.join(ev['verification_failed'])}"
-        })
     if "verified" in ev:
         for entry_id in ev["verified"]:
             await manager.broadcast({"type": "event", "event": {"event": "candidate_verified", "entry_id": entry_id}})
+
+
+async def broadcast_step_post_state(ev: dict[str, Any]) -> None:
+    """Broadcast post-step status/state updates."""
+    if "verification_failed" in ev:
+        await manager.broadcast({
+            "type": "error",
+            "message": f"Verification failed for: {', '.join(ev['verification_failed'])}"
+        })
     await manager.broadcast(serialize_state())
 
 
@@ -315,46 +300,26 @@ async def _emit_solver_step() -> dict[str, Any]:
     global steps_executed, fallbacks_used, backtracks_used
     if solver is None:
         raise RuntimeError("Solver not initialized")
-    # Broadcast 'Solving...' status before step
-    await manager.broadcast({
-        "type": "status",
-        "message": "Solving...",
-        "state": "solving"
-    })
     # Progress callback for step candidate retrieval
     async def progress_callback(current: int, total: int):
         await broadcast_progress(current, total, operation="step")
     # Placement event broadcast callback - broadcast event for immediate feedback
     async def broadcast_event_callback(ev: dict[str, Any]):
-        # Broadcast just the event, not the full state (metrics will be sent after)
-        await manager.broadcast({"type": "event", "event": ev})
-        if "verified" in ev:
-            for entry_id in ev["verified"]:
-                await manager.broadcast({"type": "event", "event": {"event": "candidate_verified", "entry_id": entry_id}})
+        # Broadcast just the event payload for immediate feedback.
+        await broadcast_step_event(ev)
     # Execute step with progress bar, broadcasting placement event first
-    if hasattr(solver, "async_step_with_progress"):
-        ev = await solver.async_step_with_progress(progress_callback, broadcast_event_callback)
-        # Update metrics to match _step_and_update_metrics behavior
-        with _metrics_lock:
-            steps_executed += 1
-            if ev.get("event") == "placed_fallback":
-                fallbacks_used += 1
-            elif ev.get("event") == "backtrack":
-                backtracks_used += 1
-        # Send progress_done message to hide progress bar
-        await manager.broadcast({"type": "progress_done", "operation": "step"})
-        # Broadcast updated state with new metrics
-        await broadcast_step_events(ev)
-    else:
-        ev = await asyncio.to_thread(_step_and_update_metrics)
-        await broadcast_step_events(ev)
-    # If not solved/failed, broadcast 'Awaiting user input'
-    if ev.get("event") not in ("solved", "failed"):
-        await manager.broadcast({
-            "type": "status",
-            "message": "Ready",
-            "state": "awaiting_input"
-        })
+    ev = await solver.async_step_with_progress(progress_callback, broadcast_event_callback)
+    # Update metrics to match _step_and_update_metrics behavior
+    with _metrics_lock:
+        steps_executed += 1
+        if ev.get("event") == "placed_fallback":
+            fallbacks_used += 1
+        elif ev.get("event") == "backtrack":
+            backtracks_used += 1
+    # Send progress_done message to hide progress bar
+    await manager.broadcast({"type": "progress_done", "operation": "step"})
+    # Broadcast updated status/state after the already-broadcast event payload.
+    await broadcast_step_post_state(ev)
     return ev
 
 async def start_player() -> None:
@@ -394,24 +359,12 @@ async def websocket_endpoint(ws: WebSocket):
 @app.post("/play")
 async def play() -> dict[str, str]:
     play_event.set()
-    # Broadcast 'Solving...' status when play is triggered
-    await manager.broadcast({
-        "type": "status",
-        "message": "Solving...",
-        "state": "solving"
-    })
     return {"status": "playing"}
 
 
 @app.post("/pause")
 async def pause() -> dict[str, str]:
     play_event.clear()
-    # Broadcast 'Awaiting user input' status when paused
-    await manager.broadcast({
-        "type": "status",
-        "message": "Ready",
-        "state": "awaiting_input"
-    })
     return {"status": "paused"}
 
 
@@ -758,11 +711,6 @@ async def load_puzzle(puzzle_id: str):
         grid.puzzle_id = puzzle_id  # Store puzzle_id on the grid for recording
         LLM.set_generate_candidates_hook(hook)
 
-        await manager.broadcast({
-            "type": "status",
-            "message": "Getting hints...",
-            "state": "",
-        })
         try:
             await asyncio.to_thread(populate_hints, list(grid.entries.values()))
             logger.debug("Hints loaded")
@@ -771,12 +719,6 @@ async def load_puzzle(puzzle_id: str):
                 "Vector DB hint population failed; continuing without hints: %s",
                 exc,
             )
-        finally:
-            await manager.broadcast({
-                "type": "status",
-                "message": "Initializing Puzzle...",
-                "state": "initializing",
-            })
         
         # Create solver with recording enabled
         solver = Solver(grid, defer_candidate_init=True, record=True)
