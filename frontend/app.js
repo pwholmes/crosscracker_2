@@ -1059,10 +1059,11 @@ pauseBtn.addEventListener('click', () => {
 });
 
 stepBtn.addEventListener('click', () => {
-  setState(AppState.STEPPING, null, 'ui:step');
   if (isReplayMode) {
+    setState(AppState.REPLAY_IDLE, null, 'ui:step(replay)');
     replayStep();
   } else {
+    setState(AppState.STEPPING, null, 'ui:step');
     postAction('/step');
   }
 });
