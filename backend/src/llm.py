@@ -24,14 +24,17 @@ def normalize_candidate(answer: str) -> str:
 
 class LLM:
     # Configuration for candidate generation behavior
-    DEFAULT_CONFIDENCE = 40.0
+    DEFAULT_CONFIDENCE = 30.0
     MAX_SEARCH_LEVEL: int = 2
     MAX_CANDIDATES: list[int] = [7, 12, 15]
-    TUNING_PARAMS: list[dict[str,str]] = [
-        {"temperature": "0.25", "top_p": "0.8", "top_k": "10"},
-        {"temperature": "0.75", "top_p": "0.9", "top_k": "40"},
-        {"temperature": "1.20", "top_p": "0.99", "top_k": "100"}
+    CANDIDATE_GENERATION_TUNING_PARAMS: list[dict[str,float|int]] = [
+        {"temperature": 0.25, "top_p": 0.8, "top_k": 10},
+        {"temperature": 0.75, "top_p": 0.9, "top_k": 40},
+        {"temperature": 1.20, "top_p": 0.99, "top_k": 100}
     ]
+    OLLAMA_TIMEOUT_SECONDS = 120
+    OLLAMA_KEEP_ALIVE = "30m"
+    TOP_LOGPROBS = 5
 
     # Load environment variables from .env
     load_dotenv()
@@ -121,7 +124,7 @@ class LLM:
         :param max_candidates: Maximum number of candidates to generate
         :return: List of normalized candidate answers (strings)
         """
-        prompt: str = LLM.create_prompt(entry, search_level)
+        prompt: str = LLM._create_prompt(entry, search_level)
         
         try:
             logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern}")
@@ -136,9 +139,11 @@ class LLM:
                     "prompt": prompt,
                     "stream": False,
                     "logprobs": True,
-                    "top_logprobs": 5
+                    "top_logprobs": LLM.TOP_LOGPROBS,
+                    "keep_alive": LLM.OLLAMA_KEEP_ALIVE,
+                    "options": LLM.CANDIDATE_GENERATION_TUNING_PARAMS[search_level]
                 },
-                timeout=30
+                timeout=LLM.OLLAMA_TIMEOUT_SECONDS
             )
             response.raise_for_status()
             result = response.json()
@@ -193,6 +198,76 @@ class LLM:
         except Exception as e:
             logger.error(f"[LLM GENERATE FATAL ERROR] Ollama generation query failed: {e}")
             raise
+
+
+    @staticmethod
+    def _create_prompt(entry: Entry, search_level: int, max_candidates: int = 0) -> str:
+        """
+        Fashion an appropriate prompt for the LLM to deduce a list of candidate answers.
+        We will provide explicit instructions, the clue, the constraints (e.g., the length of the 
+        answer, any known letters, etc.), and the set of example clues and answers we got from the 
+        vector database.  It's important that we tell the LLM that those clues and answers are
+        just contextual hints, and not an exhaustive list of possible answers.
+
+        A good example of this is the clue "In on, as a trend", which has as its correct 
+        answer the admittedly awkward two-word answer "hip to".  The query of the vector database 
+        produced several close-ish answers, but nothing exact, and all of them were just one word:
+        "hip" was in there twice and "hep" and "hipper" once each.  We have to make sure the LLM
+        uses these answers as a guide and doesn't simply try to pick one of them.  With a little
+        luck it will be smart enough to deduce the correct answer.
+        
+        :param entry: The crossword clue for which candidate answers are being generated.  See
+            generate_candidates() for a fuller description.
+        :param search_level: Measures how "creative" we want the LLM to be with its answers.  See
+            generate_candidates() for a fuller description.
+            NOTE: For now, the max_search_level is 0 and this parameter is ignored.  We'll
+            elaborate on more creative prompt generation later.
+        :return: The prompt we will pass to the LLM.
+        """
+        clue: str = entry.clue
+        length: int = entry.length
+        pattern: str = entry.pattern
+        hints: list[tuple[str,str]] | None = entry.hints
+
+        matcher: str = f'[^{re.escape(".")}]'
+        valid_pattern: bool = (re.search(matcher, entry.pattern) is not None)
+        if max_candidates == 0:
+            max_candidates = LLM.MAX_CANDIDATES[search_level]
+
+        prompt =  "TASK: Given a crossword clue and contextual hints, deduce CANDIDATE crossword answers.\n"
+        prompt += "\nRULES:\n"
+        prompt += "- A CANDIDATE is a potential answer deduced for the TARGET CLUE.\n"
+        prompt += "- Many correct crossword answers are multi-word phrases.\n"
+        prompt += "- Actively consider multi-word answers when deducing CANDIDATES.\n"
+        prompt += "- Normalize each CANDIDATE by removing all spaces and punctuation and converting to upper case.\n"
+        prompt += f"- A normalized CANDIDATE must be {length} characters.\n"
+        prompt += "- DO NOT truncate or alter a CANDIDATE to fit the LENGTH, even if it seems like a good semantic fit.\n"
+        prompt += "- DO alter a CANDIDATE's plurality or verb tense to match the TARGET CLUE.\n"
+        if valid_pattern:
+            prompt += f"The PATTERN of known letters is: {pattern}"
+            prompt += (f"- A normalized CANDIDATE should match this PATTERN, where a period . is an unknown character.\n")
+            prompt += "- When a PATTERN has only one or two unknown letters, focus on finding CANDIDATES that match the PATTERN exactly.\n"
+        prompt += "- HINTS are past crossword clue-answer pairs semantically similar to the TARGET CLUE.\n"
+        prompt += "- HINTS are unranked, and may be only loosely related to the TARGET CLUE.\n"
+        prompt += "- HINTS do not provide an exhastive list of CANDIDATES, but they should be given additional weight.\n"
+        #prompt += "- CANDIDATES may be inferred from general crossword knowledge and common idiomatic usage, even if not present in the HINTS.\n"
+        #prompt += "- HINTS should be used to infer patterns or meanings.\n"
+        if (search_level > 0):
+            prompt += "- Generate creative and diverse CANDIDATES, even if unusual or speculative.\n"
+        prompt += "OUTPUT FORMAT:\n"
+        prompt += f"- Provide a list of up to {max_candidates} CANDIDATES.\n"
+        prompt += "- Each CANDIDATE must be on its own line.\n"
+        prompt += "- IMPORTANT: DO NOT provide any other text, ratings or scores.\n"
+        if hints is not None and len(hints) > 0:
+            prompt += "\nHINTS:\n"
+            for hint_clue, hint_answer in hints:
+                prompt += f"- REFERENCE CLUE: '{hint_clue}', REFERENCE ANSWER: '{hint_answer}'\n"
+        if valid_pattern:
+            prompt += (f"\nPATTERN: {pattern}\n")
+        prompt += "\nTARGET CLUE: " + clue + "\n"
+        prompt += "\nLENGTH: " + str(length) + "\n"
+
+        return prompt
 
 
     @staticmethod
@@ -308,7 +383,7 @@ class LLM:
         prompt += "- 90-100: Definitive answer; very confident match.\n"
         prompt += "- 80-89: Strong match with subtle interpretation.\n"
         prompt += "- 50-79: Plausible but less certain.\n"
-        prompt += "- Below 50: Speculative or uncertain.\n"
+        prompt += "- 0-50: Speculative or uncertain.\n"
         
         if hints:
             prompt += "\nHINTS (for context):\n"
@@ -332,9 +407,10 @@ class LLM:
                 json = {
                     "model": LLM.MODEL_NAME,
                     "prompt": prompt,
-                    "stream": False
+                    "stream": False,
+                    "keep_alive": LLM.OLLAMA_KEEP_ALIVE
                 },
-                timeout=30
+                timeout=LLM.OLLAMA_TIMEOUT_SECONDS
             )
             response.raise_for_status()
             result = response.json()
@@ -368,6 +444,7 @@ class LLM:
             logger.error(f"[LLM SCORE FATAL ERROR] {e}")
             raise
 
+
     @staticmethod
     def verify_answer(
             entry: Entry,
@@ -398,9 +475,10 @@ class LLM:
                 json = {
                     "model": LLM.MODEL_NAME,
                     "prompt": prompt,
-                    "stream": False
+                    "stream": False,
+                    "keep_alive": LLM.OLLAMA_KEEP_ALIVE
                 },
-                timeout=30  # Increased timeout to 30 seconds
+                timeout=LLM.OLLAMA_TIMEOUT_SECONDS
             )
             response.raise_for_status()
             result = response.json()
@@ -411,76 +489,6 @@ class LLM:
         except Exception as e:
             logger.error(f"Ollama query failed: {e}")
             return False
-
-
-    @staticmethod
-    def create_prompt(entry: Entry, search_level: int, max_candidates: int = 0) -> str:
-        """
-        Fashion an appropriate prompt for the LLM to deduce a list of candidate answers.
-        We will provide explicit instructions, the clue, the constraints (e.g., the length of the 
-        answer, any known letters, etc.), and the set of example clues and answers we got from the 
-        vector database.  It's important that we tell the LLM that those clues and answers are
-        just contextual hints, and not an exhaustive list of possible answers.
-
-        A good example of this is the clue "In on, as a trend", which has as its correct 
-        answer the admittedly awkward two-word answer "hip to".  The query of the vector database 
-        produced several close-ish answers, but nothing exact, and all of them were just one word:
-        "hip" was in there twice and "hep" and "hipper" once each.  We have to make sure the LLM
-        uses these answers as a guide and doesn't simply try to pick one of them.  With a little
-        luck it will be smart enough to deduce the correct answer.
-        
-        :param entry: The crossword clue for which candidate answers are being generated.  See
-            generate_candidates() for a fuller description.
-        :param search_level: Measures how "creative" we want the LLM to be with its answers.  See
-            generate_candidates() for a fuller description.
-            NOTE: For now, the max_search_level is 0 and this parameter is ignored.  We'll
-            elaborate on more creative prompt generation later.
-        :return: The prompt we will pass to the LLM.
-        """
-        clue: str = entry.clue
-        length: int = entry.length
-        pattern: str = entry.pattern
-        hints: list[tuple[str,str]] | None = entry.hints
-
-        matcher: str = f'[^{re.escape(".")}]'
-        valid_pattern: bool = (re.search(matcher, entry.pattern) is not None)
-        if max_candidates == 0:
-            max_candidates = LLM.MAX_CANDIDATES[search_level]
-
-        prompt =  "TASK: Given a crossword clue and contextual hints, deduce CANDIDATE crossword answers.\n"
-        prompt += "\nRULES:\n"
-        prompt += "- A CANDIDATE is a potential answer deduced for the TARGET CLUE.\n"
-        prompt += "- Many correct crossword answers are multi-word phrases.\n"
-        prompt += "- Actively consider multi-word answers when deducing CANDIDATES.\n"
-        prompt += "- Normalize each CANDIDATE by removing all spaces and punctuation and converting to upper case.\n"
-        prompt += f"- A normalized CANDIDATE must be {length} characters.\n"
-        prompt += "- DO NOT truncate or alter a CANDIDATE to fit the LENGTH, even if it seems like a good semantic fit.\n"
-        prompt += "- DO alter a CANDIDATE's plurality or verb tense to match the TARGET CLUE.\n"
-        if valid_pattern:
-            prompt += f"The PATTERN of known letters is: {pattern}"
-            prompt += (f"- A normalized CANDIDATE should match this PATTERN, where a period . is an unknown character.\n")
-            prompt += "- When a PATTERN has only one or two unknown letters, focus on finding CANDIDATES that match the PATTERN exactly.\n"
-        prompt += "- HINTS are past crossword clue-answer pairs semantically similar to the TARGET CLUE.\n"
-        prompt += "- HINTS are unranked, and may be only loosely related to the TARGET CLUE.\n"
-        prompt += "- HINTS do not provide an exhastive list of CANDIDATES, but they should be given additional weight.\n"
-        #prompt += "- CANDIDATES may be inferred from general crossword knowledge and common idiomatic usage, even if not present in the HINTS.\n"
-        #prompt += "- HINTS should be used to infer patterns or meanings.\n"
-        if (search_level > 0):
-            prompt += "- Generate creative and diverse CANDIDATES, even if unusual or speculative.\n"
-        prompt += "OUTPUT FORMAT:\n"
-        prompt += f"- Provide a list of up to {max_candidates} CANDIDATES.\n"
-        prompt += "- Each CANDIDATE must be on its own line.\n"
-        prompt += "- IMPORTANT: DO NOT provide any other text, ratings or scores.\n"
-        if hints is not None and len(hints) > 0:
-            prompt += "\nHINTS:\n"
-            for hint_clue, hint_answer in hints:
-                prompt += f"- REFERENCE CLUE: '{hint_clue}', REFERENCE ANSWER: '{hint_answer}'\n"
-        if valid_pattern:
-            prompt += (f"\nPATTERN: {pattern}\n")
-        prompt += "\nTARGET CLUE: " + clue + "\n"
-        prompt += "\nLENGTH: " + str(length) + "\n"
-
-        return prompt
 
 
 if __name__ == "__main__":
