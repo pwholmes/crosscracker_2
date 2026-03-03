@@ -16,6 +16,12 @@ body {
   text-align: center;
 }
 
+#replay-speed-control {
+  display: none;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
 .mode-toggle-container {
   display: inline-flex;
   align-items: center;
