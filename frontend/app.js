@@ -33,7 +33,6 @@ const backtrackCountEl = document.getElementById('backtrack-count');
 const initProgressDiv = document.getElementById('init-progress');
 const progressText = document.getElementById('progress-text');
 const progressBarFill = document.getElementById('progress-bar-fill');
-let initProgressStarted = false;
 
 // Replay controls
 const replaySpeedControl = document.getElementById('replay-speed-control');
@@ -47,8 +46,6 @@ let currentMode = 'puzzles'; // 'puzzles' or 'recordings'
 let isReplayMode = false;
 let currentRecording = null;
 let replayIndex = 0;
-let isReplayPlaying = false;
-let isPuzzlePlaying = false; // Track puzzle mode auto-play state
 let replaySpeed = 1.0;
 let replayTimer = null;
 
@@ -62,41 +59,123 @@ let replayFallbackEntries = new Set(); // track which entries were placed with f
 let replayBacktrackCount = 0; // count total backtrack events during replay
 let replayPlacedEntries = new Map(); // track currently placed entries: entry_id -> answer
 
-function disableControls(disabled) {
-  playBtn.disabled = disabled;
-  pauseBtn.disabled = disabled;
-  stepBtn.disabled = disabled;
-  resetBtn.disabled = disabled;
-  saveCheckpointBtn.disabled = disabled;
-  loadCheckpointBtn.disabled = disabled;
-}
-
-function setPlayingState(playing) {
-  if (playing) {
-    playBtn.disabled = true;
-    stepBtn.disabled = true;
-    resetBtn.disabled = true;
-    pauseBtn.disabled = false;
-    saveCheckpointBtn.disabled = false; // Keep save enabled during play
-    loadCheckpointBtn.disabled = true;  // Disable load during play
-  } else {
-    playBtn.disabled = false;
-    stepBtn.disabled = false;
-    resetBtn.disabled = false;
-    pauseBtn.disabled = true;
-    saveCheckpointBtn.disabled = false; // Keep save enabled when paused
-    loadCheckpointBtn.disabled = false; // Enable load when paused
+// Application state machine
+const AppState = {
+  UNLOADED: {
+    name: 'unloaded',
+    buttons: { play: false, pause: false, step: false, reset: false, save: false, load: true },
+    status: 'Select a puzzle',
+    statusClass: '',
+    showClues: false,
+    showTally: false
+  },
+  LOADING: {
+    name: 'loading',
+    buttons: { play: false, pause: false, step: false, reset: false, save: false, load: false },
+    status: 'Getting hints...',
+    statusClass: 'loading',
+    showClues: false,
+    showTally: false
+  },
+  IDLE: {
+    name: 'idle',
+    buttons: { play: true, pause: false, step: true, reset: true, save: true, load: true },
+    status: 'Loaded',
+    statusClass: '',
+    showClues: true,
+    showTally: true
+  },
+  PLAYING: {
+    name: 'playing',
+    buttons: { play: false, pause: true, step: false, reset: false, save: false, load: false },
+    status: 'Solving...',
+    statusClass: '',
+    showClues: true,
+    showTally: true
+  },
+  STEPPING: {
+    name: 'stepping',
+    buttons: { play: false, pause: false, step: false, reset: false, save: false, load: false },
+    status: null, // Preserve current message during step
+    statusClass: null,
+    showClues: true,
+    showTally: true
+  },
+  COMPLETED_SOLVED: {
+    name: 'completed_solved',
+    buttons: { play: false, pause: false, step: false, reset: true, save: true, load: true },
+    status: 'Solved',
+    statusClass: 'status-solved',
+    showClues: true,
+    showTally: true
+  },
+  COMPLETED_FAILED: {
+    name: 'completed_failed',
+    buttons: { play: false, pause: false, step: false, reset: true, save: true, load: true },
+    status: 'Failed',
+    statusClass: 'status-failed',
+    showClues: true,
+    showTally: true
+  },
+  REPLAY_IDLE: {
+    name: 'replay_idle',
+    buttons: { play: true, pause: false, step: true, reset: true, save: false, load: false },
+    status: null, // Preserve current replay message
+    statusClass: '',
+    showClues: true,
+    showTally: true
+  },
+  REPLAY_PLAYING: {
+    name: 'replay_playing',
+    buttons: { play: false, pause: true, step: false, reset: false, save: false, load: false },
+    status: 'Replaying...',
+    statusClass: '',
+    showClues: true,
+    showTally: true
+  },
+  INITIALIZING: {
+    name: 'initializing',
+    buttons: { play: false, pause: false, step: false, reset: false, save: false, load: false },
+    status: 'Initializing entries...',
+    statusClass: '',
+    showClues: false,
+    showTally: false
   }
-}
+};
 
-function setCompletedState() {
-  // When puzzle is solved or failed, disable Play/Step/Pause but keep Reset and Save enabled
-  playBtn.disabled = true;
-  stepBtn.disabled = true;
-  pauseBtn.disabled = true;
-  resetBtn.disabled = false;
-  saveCheckpointBtn.disabled = false; // Keep save enabled when completed
-  loadCheckpointBtn.disabled = false; // Keep load enabled when completed
+let currentState = AppState.UNLOADED;
+
+function setState(newState, customMessage = null, source = null) {
+  if (currentState !== newState) {
+    const transitionMsg = source
+      ? `[state] ${currentState.name} -> ${newState.name} (${source})`
+      : `[state] ${currentState.name} -> ${newState.name}`;
+    console.log(transitionMsg);
+    log(transitionMsg);
+  }
+  currentState = newState;
+  
+  // Update buttons
+  playBtn.disabled = !newState.buttons.play;
+  pauseBtn.disabled = !newState.buttons.pause;
+  stepBtn.disabled = !newState.buttons.step;
+  resetBtn.disabled = !newState.buttons.reset;
+  saveCheckpointBtn.disabled = !newState.buttons.save;
+  loadCheckpointBtn.disabled = !newState.buttons.load;
+  
+  // Update visibility
+  setClueHeadingsVisible(newState.showClues);
+  document.getElementById('tally').style.display = newState.showTally ? 'block' : 'none';
+  
+  // Update status message
+  if (customMessage !== null) {
+    statusMessage.textContent = customMessage;
+    statusMessage.className = newState.statusClass || '';
+  } else if (newState.status !== null) {
+    statusMessage.textContent = newState.status;
+    statusMessage.className = newState.statusClass || '';
+  }
+  // (if newState.status === null and customMessage === null, preserve current message)
 }
 
 function renderTallyFromState(metrics) {
@@ -266,7 +345,6 @@ async function switchMode(mode) {
     replaySpeedControl.style.display = 'none';
     isReplayMode = false;
     if (replayTimer) clearTimeout(replayTimer);
-    isReplayPlaying = false;
     await refreshItemList();
   } else if (mode === 'recordings') {
     itemSelectLabel.textContent = 'Recording:';
@@ -280,11 +358,9 @@ async function switchMode(mode) {
   entriesAcrossList.innerHTML = '';
   entriesDownList.innerHTML = '';
   document.getElementById('tally').style.display = 'none';
-  statusMessage.textContent = mode === 'puzzles' ? 'Select a puzzle' : 'Select a recording';
-  statusMessage.className = '';
   logEl.textContent = '';
   setClueHeadingsVisible(false);
-  disableControls(true);
+  setState(AppState.UNLOADED, mode === 'puzzles' ? 'Select a puzzle' : 'Select a recording');
 }
 
 async function refreshItemList() {
@@ -339,7 +415,10 @@ async function refreshItemList() {
 // ============ CENTRALIZED MESSAGE PROCESSOR ============
 
 function processMessage(data) {
-  log("Message received: " + JSON.stringify(data))
+  // Don't log the full state message since it contains the entire puzzle grid (too verbose)
+  if (data.type !== 'state') {
+    log("Message received: " + JSON.stringify(data))
+  }
   if (data.type === 'state') {
     gridState = data.grid;
     renderGrid(data.grid);
@@ -354,40 +433,33 @@ function processMessage(data) {
     
     // Handle puzzle loaded vs not loaded
     if (!currentPuzzleId) {
-      // No puzzle loaded - show "Select a puzzle" and hide sections
-      statusMessage.textContent = 'Select a puzzle';
-      statusMessage.className = '';
-      document.getElementById('tally').style.display = 'none';
-      // Find and hide the Across and Down headings
-      setClueHeadingsVisible(false);
-      // Disable save button when no puzzle loaded, but keep load enabled
-      saveCheckpointBtn.disabled = true;
-      loadCheckpointBtn.disabled = false;
-      //disableControls(true);
+      // No puzzle loaded
+      setState(AppState.UNLOADED, null, 'ws:state(no puzzle)');
     } else {
-      // Puzzle loaded - show sections and "Loaded" message
-      // Set status to Loaded when state is received (unless already solving/solved/failed)
-      if (!statusMessage.textContent.match(/Solving|Solved|Failed|Replaying/)) {
-        statusMessage.textContent = 'Loaded';
-        statusMessage.className = '';
-      }
-      // Show tally and headings
-      document.getElementById('tally').style.display = 'block';
-      setClueHeadingsVisible(true);
-      // Enable controls now that puzzle is loaded (unless currently playing or completed)
+      // Puzzle loaded - show sections
+      
+      // Determine appropriate state based on what's happening
       const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
-      // Only reset controls when we're not actively playing/replaying and
-      // when there is no in-progress initialization/step progress being reported.
-      if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted && !initProgressStarted) {
-        setPlayingState(false);
-        // Enable save and load buttons when controls are enabled and puzzle is loaded
-        saveCheckpointBtn.disabled = false;
-        loadCheckpointBtn.disabled = false;
+      if (isCompleted) {
+        // Keep completed state (will be set by event handler)
+      } else if (currentState === AppState.PLAYING || currentState === AppState.STEPPING || 
+                 currentState === AppState.LOADING) {
+        // Keep current active state
+      } else if (currentState === AppState.INITIALIZING) {
+        // Initialization complete, transition to idle
+        setState(AppState.IDLE, null, 'ws:state(init->idle)');
+      } else if (currentState === AppState.REPLAY_PLAYING || currentState === AppState.REPLAY_IDLE) {
+        // Keep replay state
+      } else {
+        // Default to idle for loaded puzzle
+        setState(AppState.IDLE, null, 'ws:state(loaded)');
       }
+      
       // Hide progress bar when puzzle is fully loaded
       initProgressDiv.style.display = 'none';
     }
   } else if (data.type === 'status') {
+    // Status messages don't change state, just provide info
     if (typeof data.message === 'string') {
       statusMessage.textContent = data.message;
     }
@@ -401,19 +473,14 @@ function processMessage(data) {
     const current = data.current || 0;
     const total = data.total || 1;
     const percentage = data.percentage || 0;
-    if (!initProgressStarted) {
-      // Set progress bar label based on operation
-      if (data.operation === 'step') {
-        statusMessage.textContent = 'Step progress...';
-      } else {
-        statusMessage.textContent = 'Initializing entries...';
+    if (data.operation === 'step') {
+      // During Play, backend emits per-step progress; keep PLAYING button state.
+      if (currentState !== AppState.PLAYING && currentState !== AppState.STEPPING) {
+        setState(AppState.STEPPING, 'Step progress...', 'ws:init_progress(step)');
       }
-      statusMessage.className = '';
-      initProgressStarted = true;
-      // Disable all buttons during progress
-      disableControls(true);
-      saveCheckpointBtn.disabled = true;
-      loadCheckpointBtn.disabled = true;
+    } else if (currentState !== AppState.INITIALIZING) {
+      // Non-step progress (load/reset) uses initializing state.
+      setState(AppState.INITIALIZING, null, `ws:init_progress(${data.operation || 'unknown'})`);
     }
     progressText.textContent = `${current} / ${total} entries`;
     progressBarFill.style.width = `${percentage}%`;
@@ -426,10 +493,7 @@ function processMessage(data) {
     }
     // Update status based on event
     if (ev.event === 'solved') {
-      statusMessage.textContent = 'Solved';
-      statusMessage.className = 'status-solved';
-      isPuzzlePlaying = false;
-      setCompletedState();
+      setState(AppState.COMPLETED_SOLVED, null, 'ws:event(solved)');
       // Only prompt to save recording in puzzle mode
       if (!isReplayMode) {
         setTimeout(() => {
@@ -442,17 +506,15 @@ function processMessage(data) {
         }, 100);
       }
     } else if (ev.event === 'failed') {
-      statusMessage.textContent = 'Failed';
-      statusMessage.className = 'status-failed';
-      isPuzzlePlaying = false;
-      setCompletedState();
+      setState(AppState.COMPLETED_FAILED, null, 'ws:event(failed)');
     } else if (ev.event === 'placed' || ev.event === 'placed_fallback' || ev.event === 'backtrack') {
-      if (!isReplayMode) {
-        statusMessage.textContent = 'Solving...';
-      } else {
-        statusMessage.textContent = 'Replaying...';
+      // Update status message based on mode (don't change state - preserve PLAYING/STEPPING)
+      if (currentState !== AppState.REPLAY_PLAYING && currentState !== AppState.REPLAY_IDLE) {
+        if (currentState === AppState.STEPPING) {
+          statusMessage.textContent = 'Solving...';
+        }
+        // If PLAYING, status is already "Solving..."
       }
-      statusMessage.className = '';
     }
     // highlight placed/verified entries for a moment
     if (ev.event === 'placed' || ev.event === 'placed_fallback') {
@@ -473,13 +535,16 @@ function processMessage(data) {
     initProgressDiv.style.display = 'none';
     progressText.textContent = '0 / 0 entries';
     progressBarFill.style.width = '0%';
-    initProgressStarted = false;
-    // Re-enable buttons after progress completes
-    setPlayingState(false);
-    saveCheckpointBtn.disabled = false;
-    // Only enable load button if not playing
-    if (!isPuzzlePlaying) {
-      loadCheckpointBtn.disabled = false;
+    
+    // Return to appropriate state after progress completes
+    if (currentState === AppState.PLAYING) {
+      // Stay in playing state
+      setState(AppState.PLAYING, null, 'ws:progress_done');
+    } else if (currentState === AppState.REPLAY_PLAYING || currentState === AppState.REPLAY_IDLE) {
+      // Stay in replay state
+    } else {
+      // Default to idle
+      setState(AppState.IDLE, null, 'ws:progress_done');
     }
   }
 }
@@ -496,15 +561,14 @@ function updateReplayProgress() {
 function replayPlay() {
   if (!currentRecording || !isReplayMode) return;
 
-  isReplayPlaying = true;
-  setPlayingState(true);
+  // State is already set to REPLAY_PLAYING by button handler
   
   const playStep = () => {
-    if (!isReplayPlaying || !currentRecording) return;
+    if (currentState !== AppState.REPLAY_PLAYING || !currentRecording) return;
     
     const event = currentRecording.events?.[replayIndex];
     if (!event) {
-      isReplayPlaying = false;
+      setState(AppState.REPLAY_IDLE);
       return;
     }
     
@@ -541,14 +605,12 @@ function replayPlay() {
     updateReplayProgress();
     
     if (replayIndex >= (currentRecording.event_count || 0)) {
-      isReplayPlaying = false;
-      // Check if the last event was solved/failed - if so, keep buttons disabled
+      // Completed replay
       const lastEvent = currentRecording.events?.[replayIndex - 1];
       if (lastEvent?.event === 'solved' || lastEvent?.event === 'failed') {
-        // setCompletedState() was already called by processMessage above
-        // Don't call setPlayingState(false) as it would re-enable buttons
+        // State already transitioned to COMPLETED_* by processMessage
       } else {
-        setPlayingState(false);
+        setState(AppState.REPLAY_IDLE);
       }
       return;
     }
@@ -561,20 +623,17 @@ function replayPlay() {
 }
 
 function replayPause() {
-  isReplayPlaying = false;
   if (replayTimer) clearTimeout(replayTimer);
-  // Don't re-enable buttons if puzzle is already completed
-  const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
-  if (!isCompleted) {
-    setPlayingState(false);
-  }
+  // State is already set to REPLAY_IDLE by button handler
 }
 
 function replayStep() {
   if (!currentRecording || !isReplayMode) return;
   
   // Pause if currently playing
-  replayPause();
+  if (currentState === AppState.REPLAY_PLAYING) {
+    if (replayTimer) clearTimeout(replayTimer);
+  }
   
   const event = currentRecording.events?.[replayIndex];
   if (!event) return;
@@ -609,17 +668,16 @@ function replayStep() {
   replayIndex++;
   updateReplayProgress();
   
-  // Note: if event was solved/failed, setCompletedState() was already called by processMessage
-  // and buttons are already in the correct disabled state
+  // Note: if event was solved/failed, setState() was already called by processMessage
+  // and buttons are already in the correct state
 }
 
 function replayReset() {
-  replayPause();
+  if (replayTimer) clearTimeout(replayTimer);
   replayIndex = 0;
   updateReplayProgress();
   logEl.textContent = '';
-  statusMessage.textContent = 'Recording loaded';
-  statusMessage.className = '';
+  setState(AppState.REPLAY_IDLE, 'Recording loaded');
   replayGridState = cloneJson(replayBaseGridState);
   replayFallbackEntries.clear();
   replayPlacedEntries.clear();
@@ -667,9 +725,7 @@ async function loadSelectedRecording() {
     replayIndex = 0;
     updateReplayProgress();
     
-    statusMessage.textContent = 'Recording loaded';
-    statusMessage.className = '';
-    
+    setState(AppState.REPLAY_IDLE, 'Recording loaded');
     
     // Load puzzle data to get entry-to-cells mapping for replay
     try {
@@ -677,7 +733,7 @@ async function loadSelectedRecording() {
       if (puzzleRes.ok) {
         const puzzleData = await puzzleRes.json();
         if (puzzleData.error_type === 'puzzle_not_found') {
-          statusMessage.textContent = `Error: The puzzle for this recording (ID: ${currentRecording.puzzle_id}) is not available.`;
+          setState(AppState.REPLAY_IDLE, `Error: The puzzle for this recording (ID: ${currentRecording.puzzle_id}) is not available.`);
           statusMessage.className = 'error';
           log(`[error] ${puzzleData.error}`);
           entriesAcrossList.innerHTML = '';
@@ -742,7 +798,7 @@ async function loadSelectedRecording() {
       setClueHeadingsVisible(false);
     }
     
-    setPlayingState(false);
+    setState(AppState.REPLAY_IDLE);
     replaySpeedControl.style.display = 'block';
     log(`[recording] Loaded: ${currentRecording.puzzle} (${currentRecording.event_count} events)`);
 
@@ -753,8 +809,7 @@ async function loadSelectedRecording() {
     }
   } catch (err) {
     log('[error] Could not load recording: ' + err);
-    statusMessage.textContent = 'Error loading recording';
-    statusMessage.className = '';
+    setState(AppState.UNLOADED, 'Error loading recording');
   }
 }
 
@@ -938,19 +993,15 @@ async function loadSelectedPuzzle() {
   const cluesList = document.querySelectorAll('.clue-column ul');
   cluesList.forEach(ul => ul.innerHTML = '');
   
-  // Disable controls and show loading message
-  statusMessage.textContent = 'Getting hints...';
-  statusMessage.className = '';
-  disableControls(true);
-  saveCheckpointBtn.disabled = true;
-  loadCheckpointBtn.disabled = true;
   logEl.textContent = '';
+  
+  // Set loading state
+  setState(AppState.LOADING);
   
   // Reset progress bar (but don't show it yet - wait for first progress update)
   progressText.textContent = '0 / 0 entries';
   progressBarFill.style.width = '0%';
   initProgressDiv.style.display = 'none';
-  initProgressStarted = false;
   
   await postAction(`/puzzles/${encodeURIComponent(puzzleId)}/load`);
   
@@ -962,50 +1013,56 @@ async function loadSelectedPuzzle() {
 }
 
 async function postAction(path) {
-  disableControls(true);
   try {
     const res = await fetch(API_BASE + path, {method: 'POST'});
     if (!res.ok) throw new Error(res.statusText);
     const data = await res.json();
     log(`[http] ${path} -> ${JSON.stringify(data)}`);
+
+    if (path === '/reset') {
+      initProgressDiv.style.display = 'none';
+      progressText.textContent = '0 / 0 entries';
+      progressBarFill.style.width = '0%';
+      setState(AppState.IDLE, null, 'http:/reset');
+    }
+
     return data;
   } catch (err) {
     log('[http] error: ' + err);
   } finally {
-    // Don't re-enable controls if we're actively playing or if puzzle is completed
-    const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
-    if (!isPuzzlePlaying && !isReplayPlaying && !isCompleted) {
-      setPlayingState(false);
+    // Restore button state based on actual application state
+    // Note: State transitions happen via WebSocket messages, so we just need to
+    // ensure we're in the right state after an action completes
+    if (path === '/step' && currentState === AppState.STEPPING) {
+      // After a step completes, return to idle (unless Play is still running)
+      setState(AppState.IDLE, null, 'http:/step done');
     }
+    // Other states are managed by WebSocket message handlers
   }
 }
 
 playBtn.addEventListener('click', () => {
   if (isReplayMode) {
     replayPlay();
+    setState(AppState.REPLAY_PLAYING, null, 'ui:play(replay)');
   } else {
-    isPuzzlePlaying = true;
+    setState(AppState.PLAYING, null, 'ui:play');
     postAction('/play');
   }
-  setPlayingState(true);
 });
 
 pauseBtn.addEventListener('click', () => {
   if (isReplayMode) {
     replayPause();
+    setState(AppState.REPLAY_IDLE, null, 'ui:pause(replay)');
   } else {
-    isPuzzlePlaying = false;
+    setState(AppState.IDLE, null, 'ui:pause');
     postAction('/pause');
-  }
-  // Don't re-enable buttons if puzzle is already completed
-  const isCompleted = statusMessage.textContent === 'Solved' || statusMessage.textContent === 'Failed';
-  if (!isCompleted) {
-    setPlayingState(false);
   }
 });
 
 stepBtn.addEventListener('click', () => {
-  setPlayingState(true); // Disable all buttons consistently (including Load)
+  setState(AppState.STEPPING, null, 'ui:step');
   if (isReplayMode) {
     replayStep();
   } else {
@@ -1020,10 +1077,9 @@ resetBtn.addEventListener('click', () => {
     // Clear UI immediately for responsive feel
     renderGrid(null);
     renderEntries(null);
-    statusMessage.textContent = 'Resetting...';
-    statusMessage.className = '';
     logEl.textContent = '';
     renderTallyFromState({steps: 0, fallbacks: 0, backtracks: 0});
+    setState(AppState.LOADING, 'Resetting...', 'ui:reset');
     
     // Then call server to reinitialize
     postAction('/reset');
@@ -1192,6 +1248,6 @@ refreshItemList();
 
 renderTallyFromState({steps: 0, fallbacks: 0, backtracks: 0});
 
-// Disable controls until something is loaded
-disableControls(true);
+// Set initial state
+setState(AppState.UNLOADED, 'Select a puzzle');
 
