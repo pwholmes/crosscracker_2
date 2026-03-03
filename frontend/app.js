@@ -1040,8 +1040,8 @@ async function postAction(path) {
 
 playBtn.addEventListener('click', () => {
   if (isReplayMode) {
-    replayPlay();
     setState(AppState.REPLAY_PLAYING, null, 'ui:play(replay)');
+    replayPlay();
   } else {
     setState(AppState.PLAYING, null, 'ui:play');
     postAction('/play');
@@ -1116,7 +1116,7 @@ saveModalConfirm.addEventListener('click', async () => {
       statusMessage.className = '';
       setTimeout(() => {
         if (statusMessage.textContent === 'Checkpoint saved ✓') {
-          statusMessage.textContent = 'Ready';
+          setState(currentState, null, 'ui:checkpoint-save-toast-clear');
         }
       }, 2000);
     }
@@ -1220,7 +1220,7 @@ async function loadSelectedCheckpoint() {
       statusMessage.className = '';
       setTimeout(() => {
         if (statusMessage.textContent === 'Checkpoint loaded ✓') {
-          statusMessage.textContent = 'Ready';
+          setState(currentState, null, 'ui:checkpoint-load-toast-clear');
         }
       }, 2000);
     }
