@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from model import Cell, Entry, Candidate
 
 # Module-level hook variable (not class-level) so it can be accessed by staticmethods
-_generate_candidates_hook: Callable[[Entry, int], list[Candidate]] | None = None
+_generate_candidates_hook: Callable[[Entry, str, int], list[Candidate]] | None = None
 
 #logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("src.llm")
@@ -50,7 +50,7 @@ class LLM:
 
     @staticmethod
     def set_generate_candidates_hook(
-            hook: Callable[[Entry, int], list[Any]] | None
+            hook: Callable[[Entry, str, int], list[Any]] | None
     ) -> None:
         """
         Install or clear a custom candidate generation hook.
@@ -70,6 +70,7 @@ class LLM:
     @staticmethod
     def generate_candidates(
             entry: Entry,
+            pattern: str,
             search_level: int
     ) -> list[Candidate]:
         """
@@ -96,10 +97,10 @@ class LLM:
         :return: A list of candidate answers.
         """
         if _generate_candidates_hook is not None:
-            return _generate_candidates_hook(entry, search_level)
+            return _generate_candidates_hook(entry, pattern, search_level)
 
         # LLM CALL #1: Generate candidate answers
-        candidates = LLM._generate_candidate_answers(entry, search_level)
+        candidates = LLM._generate_candidate_answers(entry, pattern, search_level)
         if not candidates:
             return []
         
@@ -114,6 +115,7 @@ class LLM:
     @staticmethod
     def _generate_candidate_answers(
             entry: Entry,
+            pattern: str,
             search_level: int
     ) -> dict[str, Candidate]:
         """
@@ -124,7 +126,7 @@ class LLM:
         :param max_candidates: Maximum number of candidates to generate
         :return: List of normalized candidate answers (strings)
         """
-        prompt: str = LLM._create_prompt(entry, search_level)
+        prompt: str = LLM._create_prompt(entry, pattern, search_level)
         
         try:
             logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern}")
@@ -201,7 +203,7 @@ class LLM:
 
 
     @staticmethod
-    def _create_prompt(entry: Entry, search_level: int, max_candidates: int = 0) -> str:
+    def _create_prompt(entry: Entry, pattern: str, search_level: int, max_candidates: int = 0) -> str:
         """
         Fashion an appropriate prompt for the LLM to deduce a list of candidate answers.
         We will provide explicit instructions, the clue, the constraints (e.g., the length of the 
@@ -226,11 +228,10 @@ class LLM:
         """
         clue: str = entry.clue
         length: int = entry.length
-        pattern: str = entry.pattern
         hints: list[tuple[str,str]] | None = entry.hints
 
         matcher: str = f'[^{re.escape(".")}]'
-        valid_pattern: bool = (re.search(matcher, entry.pattern) is not None)
+        valid_pattern: bool = (re.search(matcher, pattern) is not None)
         if max_candidates == 0:
             max_candidates = LLM.MAX_CANDIDATES[search_level]
 
@@ -501,7 +502,7 @@ if __name__ == "__main__":
     entry = Entry("1A", clue, answer, grid, (0, 0), length)
 
     print(f"Clue: {entry.clue}")
-    candidates = LLM.generate_candidates(entry, search_level=0)
+    candidates = LLM.generate_candidates(entry, pattern=entry.pattern, search_level=0)
     print("Candidates:")
     for cand in candidates:
         print(f"- {cand.answer} ({cand.confidence})")

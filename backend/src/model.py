@@ -188,30 +188,34 @@ class Entry:
         return self.completed and self.placement is None
 
 
-    def get_candidates(self, widen_search: bool = False, matching_only: bool = True) -> list[Candidate]:
+    def get_candidates(self, pattern:str|None = None, widen_search: bool = False, matching_only: bool = True) -> list[Candidate]:
         """Get the pool of candidates for this entry, generating new candidates as
         necessary based on:
-          - Whether we have generated candidates for the current pattern before.
+          - Whether we have generated candidates for the pattern before.
           - If the widen_search parameter is True we will generate new candidates if the
           current search level is less than the maximum.
-        If matching_only is True, only candidates matching the current pattern are returned."""
+        If matching_only is True, only candidates matching the pattern are returned."""
         from llm import LLM
 
-        # If the current pattern has not been used to generate candidates, do so now.
-        search_level = self._pattern_levels.get(self.pattern, -1)
+        # If a pattern is specified, use it
+        if not pattern:
+            pattern = self.pattern
+
+        # If the pattern has not been used to generate candidates, do so now.
+        search_level = self._pattern_levels.get(pattern, -1)
         if search_level == -1 or (widen_search and search_level < LLM.MAX_SEARCH_LEVEL):
             search_level += 1
             # Call the LLM to generate candidates
-            new_candidates = LLM.generate_candidates(self, search_level)
+            new_candidates = LLM.generate_candidates(self, pattern, search_level)
             # Store candidates and the pattern/search level used to generate them
-            self._pattern_levels[self.pattern] = search_level
+            self._pattern_levels[pattern] = search_level
             for new_candidate in new_candidates:
                 existing_candidate = self._candidates.get(new_candidate.answer)
                 if existing_candidate:
-                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}: Merging candidate {new_candidate.answer}")
+                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{pattern}', search level {search_level}: Merging candidate {new_candidate.answer}")
                     existing_candidate.merge(new_candidate)
                 else:
-                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{self.pattern}', search level {search_level}: Storing new candidate {new_candidate}")
+                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{pattern}', search level {search_level}: Storing new candidate {new_candidate}")
                     self._candidates[new_candidate.answer] = new_candidate
 
         # Filter candidates by pattern matching if requested
@@ -222,7 +226,7 @@ class Entry:
         # If no matching candidates exist and we can still widen search, do so recursively
         if len(candidates) == 0 and self.search_level < LLM.MAX_SEARCH_LEVEL:
             logger.debug(f"[ENTRY GET CANDIDATES]: No matching candidates for entry {self.entry_id}, pattern '{self.pattern}', recursively widening search.")
-            return self.get_candidates(True, matching_only)
+            return self.get_candidates(pattern, True, matching_only)
 
         return candidates
 
