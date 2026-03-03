@@ -1,5 +1,13 @@
 {
+  "id": "36eb8bd5-fb2b-4465-a2b7-509c53c68b1c",
   "puzzle_id": "crosshare-daybreak-15",
+  "name": "Crosshare Daybreak #15 (9x9) one bad entry",
+  "timestamp": "2026-03-01T17:56:11.049426",
+  "metrics": {
+    "steps": 22,
+    "fallbacks": 0,
+    "backtracks": 1
+  },
   "entries_state": {
     "1A": {
       "candidates": [
@@ -3435,13 +3443,5 @@
       ],
       "revealed_by_fallback": false
     }
-  ],
-  "id": "36eb8bd5-fb2b-4465-a2b7-509c53c68b1c",
-  "timestamp": "2026-03-01T17:56:11.049426",
-  "name": "",
-  "metrics": {
-    "steps": 22,
-    "fallbacks": 0,
-    "backtracks": 1
-  }
+  ]
 }

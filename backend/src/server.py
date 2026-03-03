@@ -544,14 +544,26 @@ async def save_checkpoint(request: Request) -> dict[str, Any]:
         
         # Add metadata
         checkpoint_id = str(uuid.uuid4())
-        checkpoint_data["id"] = checkpoint_id
-        checkpoint_data["timestamp"] = datetime.now().isoformat()
-        checkpoint_data["name"] = checkpoint_name
-        checkpoint_data["metrics"] = {
+        checkpoint_timestamp = datetime.now().isoformat()
+        checkpoint_metrics = {
             "steps": steps_executed,
             "fallbacks": fallbacks_used,
             "backtracks": backtracks_used,
         }
+
+        # Write metadata first for readability in checkpoint files, then state payload.
+        # This preserves compatibility because checkpoint loading accesses fields by key.
+        ordered_checkpoint_data: dict[str, Any] = {
+            "id": checkpoint_id,
+            "puzzle_id": checkpoint_data.get("puzzle_id"),
+            "name": checkpoint_name,
+            "timestamp": checkpoint_timestamp,
+            "metrics": checkpoint_metrics,
+        }
+        for key, value in checkpoint_data.items():
+            if key == "puzzle_id":
+                continue
+            ordered_checkpoint_data[key] = value
         
         # Generate filename with ordinal
         safe_puzzle_id = str(current_puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_')
@@ -565,7 +577,7 @@ async def save_checkpoint(request: Request) -> dict[str, Any]:
         
         # Save to file
         with open(filepath, 'w') as f:
-            json.dump(checkpoint_data, f, indent=2)
+            json.dump(ordered_checkpoint_data, f, indent=2)
         
         logger.info(f"Checkpoint saved: {filename} (id: {checkpoint_id})")
         return {"status": "saved", "id": checkpoint_id, "filename": filename}

@@ -1,5 +1,13 @@
 {
+  "id": "229fa8d6-fb1d-4b91-9f55-d0158a39f6dc",
   "puzzle_id": "nyt-2025-09-22-15x15",
+  "name": "NYT 2025-09-22 (15x15) initial state #2",
+  "timestamp": "2026-03-02T18:32:03.728596",
+  "metrics": {
+    "steps": 0,
+    "fallbacks": 0,
+    "backtracks": 0
+  },
   "entries_state": {
     "1A": {
       "candidates": [
@@ -5396,13 +5404,5 @@
       "sources": [],
       "revealed_by_fallback": false
     }
-  ],
-  "id": "229fa8d6-fb1d-4b91-9f55-d0158a39f6dc",
-  "timestamp": "2026-03-02T18:32:03.728596",
-  "name": "",
-  "metrics": {
-    "steps": 0,
-    "fallbacks": 0,
-    "backtracks": 0
-  }
+  ]
 }
