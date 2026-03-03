@@ -74,7 +74,7 @@ class BasicStrategy:
         entries will have a new pattern (except for crossing enries that had
         already been placed).
         """
-        candidates = entry.get_candidates(widen_search)
+        candidates = entry.get_candidates(entry.pattern, widen_search)
 
         best_candidate = None
         best_effective_confidence = float("-inf")
@@ -127,25 +127,36 @@ class BasicStrategy:
             if entry.completed:
                 continue
 
-            candidates: list[Candidate] = entry.get_candidates(matching_only=False)
-            if not candidates:
-                #logger.debug(f"Entry {entry.entry_id} has no candidates, skipping")
-                continue
-
             crossing_entry_ids = grid.get_crossing_entry_ids(entry.entry_id)
 
-            #if not candidates:
-                # No candidates at all for the stuck entry.  This could be because
-                # we're too dumb to think of an answer for the clue, but it could also
-                # be because a crossing entry prevented us from  Blame all placed 
-                # crossing entries, weighted by inverse confidence so shakier
-                # entries get more blame.
-            #    for crossing_entry_id in crossing_entry_ids:
-            #        crossing_entry = grid.entries[crossing_entry_id]
-            #        if crossing_entry.placement is None or crossing_entry.used_fallback:
-            #            continue
-            #        blame[crossing_entry_id] = blame.get(crossing_entry_id, 0.0) + (1.0 - crossing_entry.placement.confidence)
-            #    continue
+            candidates: list[Candidate] = entry.get_candidates(matching_only=False)
+            if not candidates:
+                logger.debug(f"Entry {entry.entry_id} has zero candidates - high priority for backtracking analysis")
+                            
+                # Try regenerating candidates for the stuck entry using a pattern
+                # with each (potentially invalid) non-fallback crossing entry 
+                # removed in turn.
+                for crossing_entry_id in crossing_entry_ids:
+                    crossing_entry = grid.entries[crossing_entry_id]
+                    if crossing_entry.placement is None or crossing_entry.used_fallback:
+                        continue
+
+                    cross_position, crossing_letter = entry.get_crossing_letter(crossing_entry)
+                    if cross_position is None or crossing_letter is None:
+                        continue
+
+                    # Remove this crossing entry from the pattern
+                    pattern_list = list(entry.pattern)
+                    pattern_list[cross_position] ='.'
+                    pattern = ''.join(pattern_list)
+
+                    if entry.get_candidates(pattern=pattern, matching_only=True):
+                        logger.debug(f"Removing crossing entry {crossing_entry_id} helped {entry.entry_id} generate new candidates!")
+
+                candidates = entry.get_candidates(matching_only=False)
+                if not candidates:
+                    logger.debug(f"No viable candidates could be generated for entry {entry.entry_id} even when removing crossing entries; skipping for backtrack analysis and leaving for potential fallback")
+                    continue
 
             # more weight when fewer candidates exist
             scarcity_weight = 1.0 + (1.0 / len(candidates))
