@@ -114,9 +114,9 @@ input:checked + .toggle-slider:before {
 #status-message.status-failed {
   color: red;
 }
-#status-message.loading {
-  color: orange;
-  font-style: italic;
+#status-message.status-error {
+  color: #d32f2f;
+  font-weight: bold;
 }
 #init-progress {
   margin: 0;

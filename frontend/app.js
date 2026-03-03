@@ -73,7 +73,7 @@ const AppState = {
     name: 'loading',
     buttons: { play: false, pause: false, step: false, reset: false, save: false, load: false },
     status: 'Getting hints...',
-    statusClass: 'loading',
+    statusClass: '',
     showClues: false,
     showTally: false
   },
@@ -136,7 +136,7 @@ const AppState = {
   INITIALIZING: {
     name: 'initializing',
     buttons: { play: false, pause: false, step: false, reset: false, save: false, load: false },
-    status: 'Initializing entries...',
+    status: 'Initializing...',
     statusClass: '',
     showClues: false,
     showTally: false
@@ -459,14 +459,11 @@ function processMessage(data) {
       initProgressDiv.style.display = 'none';
     }
   } else if (data.type === 'status') {
-    // Status messages don't change state, just provide info
+  } else if (data.type === 'error') {
+    // Error messages from backend - display prominently in status bar
     if (typeof data.message === 'string') {
       statusMessage.textContent = data.message;
-    }
-    if (data.state === 'loading_hints' || data.state === 'initializing') {
-      statusMessage.className = 'loading';
-    } else {
-      statusMessage.className = '';
+      statusMessage.className = 'status-error';
     }
   } else if (data.type === 'init_progress') {
     // Update progress bar
