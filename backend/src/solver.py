@@ -9,9 +9,6 @@ from heuristics import BasicStrategy
 
 logger = logging.getLogger("src.solver")
 
-FALLBACK_PENALTY = 25
-VERIFICATION_FAILURE_PENALTY = 25
-
 class Solver:
     """A solver that can be driven step-by-step.
 
@@ -132,7 +129,7 @@ class Solver:
             verified_entry_ids, failed_entry_ids = self.verify_answers(crossing_entries)
             if failed_entry_ids:
                 # Reject this candidate and continue trying others
-                candidate.penalty += VERIFICATION_FAILURE_PENALTY
+                candidate.verification_failures += 1
                 logger.debug(f"[STEP VERIFY]: REJECTED {entry.entry_id}='{candidate.answer}', "
                              f"verification failed for crossing entries: {list(failed_entry_ids)}"
                 )
@@ -175,7 +172,6 @@ class Solver:
                 },
                 verified_entry_ids,
             )
-        
 
 
     def _handle_stall(self) -> dict[str, Any]:
@@ -329,7 +325,7 @@ class Solver:
         logger.debug(f"BACKTRACK: {len(crossing_entry_ids)} crossing entries detected for {entry_id}")
 
         # Apply a penalty to the candidate so it is less likely (but not impossible!) to use again.
-        entry.placement.candidate.penalty += FALLBACK_PENALTY
+        entry.placement.candidate.verification_failures += 1
 
         # Remove the answer from the grid (also clears placement)
         entry.remove()
