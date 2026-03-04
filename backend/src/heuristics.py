@@ -36,7 +36,7 @@ class BasicStrategy:
             filled_count = entry.length - blank_count
             completeness = filled_count / entry.length
 
-            confidence_score = BasicStrategy.SELECTION_CONFIDENCE_WEIGHT * (cand.confidence - cand.penalty)
+            confidence_score = BasicStrategy.SELECTION_CONFIDENCE_WEIGHT * cand.confidence
             # This length score favors longer answers
             length_score = BasicStrategy.SELECTION_LENGTH_WEIGHT * min(entry.length,10)/10 * 100
             # This length score favors shorter answers
@@ -77,7 +77,7 @@ class BasicStrategy:
         candidates = entry.get_candidates(entry.pattern, widen_search)
 
         best_candidate = None
-        best_effective_confidence = float("-inf")
+        best_confidence = float("-inf")
 
         for candidate in candidates:
             if candidate.answer in attempted_candidates:
@@ -91,11 +91,9 @@ class BasicStrategy:
                 continue
 
             # Calculate effective confidence (confidence minus penalty)
-            effective_confidence = candidate.confidence - candidate.penalty
-
-            if effective_confidence > best_effective_confidence:
+            if candidate.confidence > best_confidence:
                 best_candidate = candidate
-                best_effective_confidence = effective_confidence
+                best_confidence = candidate.confidence
 
         return best_candidate
 
