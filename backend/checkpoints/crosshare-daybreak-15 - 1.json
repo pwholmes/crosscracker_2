@@ -1,8 +1,8 @@
 {
-  "id": "36eb8bd5-fb2b-4465-a2b7-509c53c68b1c",
+  "id": "d55d8a85-e438-442f-8f9b-4bcf1547581b",
   "puzzle_id": "crosshare-daybreak-15",
   "name": "Crosshare Daybreak #15 (9x9) one bad entry",
-  "timestamp": "2026-03-01T17:56:11.049426",
+  "timestamp": "2026-03-03T20:52:51.222599",
   "metrics": {
     "steps": 22,
     "fallbacks": 0,
@@ -16,21 +16,24 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 63.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "HAUL",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 16.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AVER",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -44,9 +47,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 63.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "...E",
         "selection_score": 58.07,
         "is_fallback": false
@@ -61,28 +64,32 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ABR",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BRU",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CRA",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -97,9 +104,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "BR.",
         "selection_score": 64.33333333333333,
         "is_fallback": false
@@ -114,56 +121,64 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MULE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 8.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "TOES",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 73.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "HOOF",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LEGS",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 2.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "FEET",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 4.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SOLE",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 20.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NOSE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -177,9 +192,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "...L",
         "selection_score": 61.75,
         "is_fallback": false
@@ -194,7 +209,8 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -207,9 +223,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "....",
         "selection_score": 53.0,
         "is_fallback": false
@@ -224,56 +240,64 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 83.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ANTIPASTI",
           "search_level": 0,
           "llm_confidence": 98.0,
           "logprob_confidence": 37.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "APPETIZER",
           "search_level": 0,
           "llm_confidence": 30.0,
           "logprob_confidence": 2.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ITALIANME",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MINIQUICH",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ANTIPASTA",
           "search_level": 0,
           "llm_confidence": 75.0,
           "logprob_confidence": 1.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ITALICISO",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ITALICISA",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -288,9 +312,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 83.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": ".....A..O",
         "selection_score": 69.11777777777777,
         "is_fallback": false
@@ -305,84 +329,96 @@
           "search_level": 0,
           "llm_confidence": 98.0,
           "logprob_confidence": 39.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BEAST",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 8.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SEATS",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SEENT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BESET",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 3.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BRIST",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ABATE",
           "search_level": 0,
           "llm_confidence": 49.0,
           "logprob_confidence": 0.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ABRAD",
           "search_level": 0,
           "llm_confidence": 44.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BALED",
           "search_level": 0,
           "llm_confidence": 29.0,
           "logprob_confidence": 0.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BALMS",
           "search_level": 0,
           "llm_confidence": 24.0,
           "logprob_confidence": 0.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BLAST",
           "search_level": 0,
           "llm_confidence": 17.0,
           "logprob_confidence": 10.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BRATS",
           "search_level": 0,
           "llm_confidence": 11.0,
           "logprob_confidence": 14.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -397,9 +433,9 @@
           "search_level": 0,
           "llm_confidence": 98.0,
           "logprob_confidence": 39.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": ".A.T.",
         "selection_score": 62.65,
         "is_fallback": false
@@ -414,84 +450,96 @@
           "search_level": 0,
           "llm_confidence": 98.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AAA",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 4.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "INR",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 27.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ERY",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SDE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "INA",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 3.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "IGS",
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "OIL",
           "search_level": 0,
           "llm_confidence": 44.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "EGG",
           "search_level": 0,
           "llm_confidence": 23.0,
           "logprob_confidence": 18.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ATM",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "EVT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "EAT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -506,9 +554,9 @@
           "search_level": 0,
           "llm_confidence": 98.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "E.G",
         "selection_score": 64.03333333333333,
         "is_fallback": false
@@ -523,35 +571,40 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NES",
           "search_level": 0,
           "llm_confidence": 79.0,
           "logprob_confidence": 21.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SEA",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DES",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 11.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SET",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 9.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -566,9 +619,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": ".EN",
         "selection_score": 74.33333333333333,
         "is_fallback": false
@@ -583,77 +636,88 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 85.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "TAI",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 2.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DAI",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 19.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LAI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 6.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "KAI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 38.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RAI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 22.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SUI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 10.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MAT",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 2.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MAL",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 2.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MAD",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 2.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MAN",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 9.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -668,9 +732,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 85.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "M.I",
         "selection_score": 72.89333333333333,
         "is_fallback": false
@@ -685,42 +749,48 @@
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 85.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SAA",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 7.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ASA",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 28.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "USA",
           "search_level": 0,
           "llm_confidence": 30.0,
           "logprob_confidence": 12.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ESA",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 8.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AAA",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 31.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -733,9 +803,9 @@
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 85.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "...",
         "selection_score": 32.163333333333334,
         "is_fallback": false
@@ -750,70 +820,80 @@
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 73.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CCS",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 68.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ATT",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 75.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "Bcc",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ccs",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "bcc",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "att",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CCE",
           "search_level": 0,
           "llm_confidence": 45.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CES",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BCO",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -828,9 +908,9 @@
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 73.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "B.C",
         "selection_score": 70.91333333333333,
         "is_fallback": false
@@ -845,21 +925,24 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 13.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SALESDAY",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SALETENT",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -873,9 +956,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 13.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "......L.",
         "selection_score": 56.735,
         "is_fallback": false
@@ -890,28 +973,32 @@
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 1.7,
-          "penalty": 100.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ACQUIRES",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 13.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "PAPILLON",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "REQUIRES",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 0.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -932,35 +1019,40 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 0.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "HEXAG",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 2.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DECAT",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 22.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "OCTAT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ISOTA",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 8.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -975,9 +1067,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 0.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "...TA",
         "selection_score": 49.089999999999996,
         "is_fallback": false
@@ -992,133 +1084,152 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 68.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAH",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 2.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "TEUT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NAMI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "KING",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MOBI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 3.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AVID",
           "search_level": 0,
           "llm_confidence": 49.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CAPT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 4.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHUB",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAT",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAR",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAS",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 11.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AMIA",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ATEH",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AAHB",
           "search_level": 0,
           "llm_confidence": 90.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAU",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 10.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAO",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 11.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAV",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "AHAW",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 3.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1138,112 +1249,128 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 93.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ZENA",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 1.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "XEON",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NEON",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 12.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LENA",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LUCY",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MEAD",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NEXA",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 2.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "XAEN",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 6.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "XEAN",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NEAX",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 10.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "NIXE",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "XENE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 3.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "XENO",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 31.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "XENI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 12.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "EXEN",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1259,9 +1386,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 93.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "XEN.",
         "selection_score": 63.59,
         "is_fallback": false
@@ -1276,140 +1403,160 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BLUEJEANS",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 2.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ASHESTOAS",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 56.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "HEREISTHE",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DAVIDLIVE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ASTRONAUT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "TREASUREH",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LETTERSOF",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "REMAINDER",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BLUELIGHT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DANCEWITH",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 7.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DANCEFORM",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BLUE JEAN",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CATPEOPLE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DUSTMYBUN",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LETSAMBLE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BOYALBUMS",
           "search_level": 0,
           "llm_confidence": 25.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LONESTARS",
           "search_level": 0,
           "llm_confidence": 5.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DANCETHRU",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BOYALbums",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1434,49 +1581,56 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 67.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MANAG",
           "search_level": 0,
           "llm_confidence": 92.0,
           "logprob_confidence": 4.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RANKE",
           "search_level": 0,
           "llm_confidence": 5.0,
           "logprob_confidence": 12.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ELITS",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 10.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "STRAU",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "STRAT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 15.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CLASS",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1490,9 +1644,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 67.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "..I..",
         "selection_score": 48.769999999999996,
         "is_fallback": false
@@ -1507,14 +1661,16 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 73.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CAM",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1528,9 +1684,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 73.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": ".R.",
         "selection_score": 60.056666666666665,
         "is_fallback": false
@@ -1545,35 +1701,40 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 25.1,
-          "penalty": 25.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SIMULATE",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SEEMLIKE",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 17.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "IMITATES",
           "search_level": 0,
           "llm_confidence": 89.0,
           "logprob_confidence": 1.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MIMICSES",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1592,140 +1753,160 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 4.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RAT RACE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "STRUGGLE",
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 12.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "FIERCELY",
           "search_level": 0,
           "llm_confidence": 60.0,
           "logprob_confidence": 13.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CATFIGHT",
           "search_level": 0,
           "llm_confidence": 90.0,
           "logprob_confidence": 5.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SCRUMFOR",
           "search_level": 0,
           "llm_confidence": 60.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DOGEATDO",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "COMPETES",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 3.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CHALLENG",
           "search_level": 0,
           "llm_confidence": 60.0,
           "logprob_confidence": 3.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CATAGORY",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ATHLETIC",
           "search_level": 0,
           "llm_confidence": 30.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "ADVERSAR",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 1.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "MATRICES",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RATSWARM",
           "search_level": 0,
           "llm_confidence": 92.0,
           "logprob_confidence": 1.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RATACADE",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 7.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RATSNEAK",
           "search_level": 0,
           "llm_confidence": 49.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RATACISM",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 42.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RATICIDE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "RATTANES",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "GETINTHE",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 7.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1749,56 +1930,64 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 56.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "INFER",
           "search_level": 0,
           "llm_confidence": 90.0,
           "logprob_confidence": 14.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SYLLO",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 18.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SYNTH",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 3.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "APODI",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "APRIO",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 29.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DEDUC",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 2.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DRAWA",
           "search_level": 0,
           "llm_confidence": 30.0,
           "logprob_confidence": 16.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1812,9 +2001,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 56.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "L....",
         "selection_score": 57.61,
         "is_fallback": false
@@ -1829,49 +2018,56 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 1.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "INK",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 2.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "PIN",
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 59.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "PEN",
           "search_level": 0,
           "llm_confidence": 79.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "PIT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 33.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "PET",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 19.4,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "PIE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 4.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1886,9 +2082,9 @@
           "search_level": 0,
           "llm_confidence": 79.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "PE.",
         "selection_score": 51.25333333333333,
         "is_fallback": false
@@ -1903,77 +2099,88 @@
           "search_level": 0,
           "llm_confidence": 90.0,
           "logprob_confidence": 72.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BCE",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "BCS",
           "search_level": 0,
           "llm_confidence": 25.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "FOR",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 74.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "VIG",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "INT",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CON",
           "search_level": 0,
           "llm_confidence": 60.0,
           "logprob_confidence": 66.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DEX",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 33.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CHA",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "FST",
           "search_level": 0,
           "llm_confidence": 30.0,
           "logprob_confidence": 0.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "STA",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 8.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -1992,133 +2199,152 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 84.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DRIP",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 2.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LEAK",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 4.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "TRIM",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.7,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SINK",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "OILY",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.2,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "WORE",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LAID",
           "search_level": 0,
           "llm_confidence": 90.0,
           "logprob_confidence": 1.1,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "CRAM",
           "search_level": 0,
           "llm_confidence": 60.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SLIP",
           "search_level": 0,
           "llm_confidence": 80.0,
           "logprob_confidence": 36.5,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LITP",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 1.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LIPE",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 2.8,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SLED",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SEED",
           "search_level": 0,
           "llm_confidence": 30.0,
           "logprob_confidence": 2.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LEAP",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 3.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LEFT",
           "search_level": 0,
           "llm_confidence": 10.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LIT.",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "LED.",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SWEP",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 0.3,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -2138,21 +2364,24 @@
           "search_level": 0,
           "llm_confidence": 95.0,
           "logprob_confidence": 0.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "DIG",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "FIG",
           "search_level": 0,
           "llm_confidence": 20.0,
           "logprob_confidence": 1.6,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -2171,21 +2400,24 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "REL",
           "search_level": 0,
           "llm_confidence": 50.0,
           "logprob_confidence": 46.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "UNB",
           "search_level": 0,
           "llm_confidence": 0.0,
           "logprob_confidence": 5.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -2199,9 +2431,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "S..",
         "selection_score": 62.666666666666664,
         "is_fallback": false
@@ -2216,14 +2448,16 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
         {
           "answer": "SEL",
           "search_level": 0,
           "llm_confidence": 40.0,
           "logprob_confidence": 38.9,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         }
       ],
       "pattern_levels": {
@@ -2237,9 +2471,9 @@
           "search_level": 0,
           "llm_confidence": 100.0,
           "logprob_confidence": 100.0,
-          "penalty": 0.0
+          "backtracks": 0,
+          "verification_failures": 0
         },
-        "search_level": 0,
         "pattern": "A..",
         "selection_score": 62.666666666666664,
         "is_fallback": false
@@ -2263,8 +2497,8 @@
       "col": 1,
       "letter": "X",
       "sources": [
-        "1A",
-        "2D"
+        "2D",
+        "1A"
       ],
       "revealed_by_fallback": false
     },
@@ -2292,8 +2526,8 @@
       "col": 5,
       "letter": "B",
       "sources": [
-        "5A",
-        "5D"
+        "5D",
+        "5A"
       ],
       "revealed_by_fallback": false
     },
@@ -2329,8 +2563,8 @@
       "col": 1,
       "letter": "E",
       "sources": [
-        "8A",
-        "2D"
+        "2D",
+        "8A"
       ],
       "revealed_by_fallback": false
     },
@@ -2472,8 +2706,8 @@
       "col": 8,
       "letter": "O",
       "sources": [
-        "11A",
-        "10D"
+        "10D",
+        "11A"
       ],
       "revealed_by_fallback": false
     },
@@ -2520,8 +2754,8 @@
       "col": 4,
       "letter": "E",
       "sources": [
-        "13A",
-        "12D"
+        "12D",
+        "13A"
       ],
       "revealed_by_fallback": false
     },
@@ -2548,8 +2782,8 @@
       "col": 8,
       "letter": "G",
       "sources": [
-        "14A",
-        "10D"
+        "10D",
+        "14A"
       ],
       "revealed_by_fallback": false
     },
@@ -2605,8 +2839,8 @@
       "col": 8,
       "letter": "I",
       "sources": [
-        "16A",
-        "10D"
+        "10D",
+        "16A"
       ],
       "revealed_by_fallback": false
     },
@@ -2660,8 +2894,8 @@
       "col": 8,
       "letter": "C",
       "sources": [
-        "19A",
-        "10D"
+        "10D",
+        "19A"
       ],
       "revealed_by_fallback": false
     },
@@ -2831,8 +3065,8 @@
       "col": 4,
       "letter": "T",
       "sources": [
-        "22D",
-        "25A"
+        "25A",
+        "22D"
       ],
       "revealed_by_fallback": false
     },
@@ -2841,8 +3075,8 @@
       "col": 5,
       "letter": "A",
       "sources": [
-        "25A",
-        "23D"
+        "23D",
+        "25A"
       ],
       "revealed_by_fallback": false
     },
@@ -2887,8 +3121,8 @@
       "col": 1,
       "letter": "X",
       "sources": [
-        "1A",
-        "2D"
+        "2D",
+        "1A"
       ],
       "revealed_by_fallback": false
     },
@@ -2897,8 +3131,8 @@
       "col": 1,
       "letter": "E",
       "sources": [
-        "8A",
-        "2D"
+        "2D",
+        "8A"
       ],
       "revealed_by_fallback": false
     },
@@ -3056,8 +3290,8 @@
       "col": 5,
       "letter": "B",
       "sources": [
-        "5A",
-        "5D"
+        "5D",
+        "5A"
       ],
       "revealed_by_fallback": false
     },
@@ -3236,8 +3470,8 @@
       "col": 8,
       "letter": "O",
       "sources": [
-        "11A",
-        "10D"
+        "10D",
+        "11A"
       ],
       "revealed_by_fallback": false
     },
@@ -3246,8 +3480,8 @@
       "col": 8,
       "letter": "G",
       "sources": [
-        "14A",
-        "10D"
+        "10D",
+        "14A"
       ],
       "revealed_by_fallback": false
     },
@@ -3256,8 +3490,8 @@
       "col": 8,
       "letter": "I",
       "sources": [
-        "16A",
-        "10D"
+        "10D",
+        "16A"
       ],
       "revealed_by_fallback": false
     },
@@ -3266,8 +3500,8 @@
       "col": 8,
       "letter": "C",
       "sources": [
-        "19A",
-        "10D"
+        "10D",
+        "19A"
       ],
       "revealed_by_fallback": false
     },
@@ -3286,8 +3520,8 @@
       "col": 4,
       "letter": "E",
       "sources": [
-        "13A",
-        "12D"
+        "12D",
+        "13A"
       ],
       "revealed_by_fallback": false
     },
@@ -3409,8 +3643,8 @@
       "col": 4,
       "letter": "T",
       "sources": [
-        "22D",
-        "25A"
+        "25A",
+        "22D"
       ],
       "revealed_by_fallback": false
     },
@@ -3438,8 +3672,8 @@
       "col": 5,
       "letter": "A",
       "sources": [
-        "25A",
-        "23D"
+        "23D",
+        "25A"
       ],
       "revealed_by_fallback": false
     }
