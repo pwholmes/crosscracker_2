@@ -461,11 +461,11 @@ class LLM:
         clue = entry.clue
         length = entry.length
         
-        prompt: str = "Is the given ANSWER a plausible solution for the given crossword CLUE?\n"
+        prompt: str = "Is the given ANSWER plausible for the given crossword CLUE?\n"
         prompt += "IMPORTANT: An ANSWER may consist of multiple words.\n"
-        prompt += "Added spaces are legal.\n"
+        prompt += "You may add spaces to the ANSWER to make it into a phrase that satisfies the CLUE.\n\n"
         prompt += (f"CLUE: {clue}\n")
-        prompt += (f"LENGTH: {length}\n")
+        #prompt += (f"LENGTH: {length}\n")
         prompt += (f"ANSWER: {answer}\n\n")
         #prompt += "Unless it is a proper noun or abbreviation, it must consist of valid words, spelled correctly.\n"
         prompt += "Respond ONLY with the word Yes or No and no other text.\n"
