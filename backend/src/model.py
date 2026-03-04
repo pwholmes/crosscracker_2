@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import ClassVar, Final, Any, Optional
 import logging
 
 logger = logging.getLogger("src.model")
@@ -20,26 +20,34 @@ class Candidate:
     Represents a possible answer for a crossword entry, including scoring and placement context.
     Combines the previous Candidate and ScoredCandidate classes.
     """
-    LLM_CONFIDENCE_WEIGHT = 0.6
-    LOGPROB_CONFIDENCE_WEIGHT = 1 - LLM_CONFIDENCE_WEIGHT
+    LLM_CONFIDENCE_WEIGHT: ClassVar[Final[float]] = 0.6
+    LOGPROB_CONFIDENCE_WEIGHT: ClassVar[Final[float]] = 1 - LLM_CONFIDENCE_WEIGHT
+    BACKTRACK_PENALTY: ClassVar[Final[int]]  = 25
+    VERIFICATION_PENALTY: ClassVar[Final[int]] = 25
+    MINIMUM_CONFIDENCE: ClassVar[Final[int]] = 20
     entry_id: str
     answer: str
     search_level: int = 0
     llm_confidence: float = 0.0
     logprob_confidence: float = 0.0
-    penalty: float = 0.0
+    backtracks : int = 0
+    verification_failures: int = 0
 
     def merge(self, candidate: Candidate) -> Candidate:
         self.search_level = max(self.search_level, candidate.search_level)
         self.llm_confidence = max(self.llm_confidence, candidate.llm_confidence)
         self.logprob_confidence = max(self.logprob_confidence, candidate.logprob_confidence)
-        self.penalty = self.penalty + candidate.penalty
         return self
     
     @property
-    def confidence(self) -> float:
-        return self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
+    def confidence(self, raw: bool = False) -> float:
+        confidence = self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
             self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
+        if not raw:
+            confidence = max(Candidate.MINIMUM_CONFIDENCE, confidence - self.backtracks * Candidate.BACKTRACK_PENALTY)
+            confidence = max(Candidate.MINIMUM_CONFIDENCE, confidence - self.verification_failures * Candidate.VERIFICATION_PENALTY)
+        return confidence
+
 
     def __hash__(self) -> int:
         # Hash based on entry_id and answer, which uniquely identify a candidate
@@ -57,7 +65,8 @@ class Candidate:
             "search_level": self.search_level,
             "llm_confidence": self.llm_confidence,
             "logprob_confidence": self.logprob_confidence,
-            "penalty": self.penalty,
+            "backtracks": self.backtracks,
+            "verification_failures": self.verification_failures
         }
     
     @staticmethod
@@ -69,7 +78,8 @@ class Candidate:
             search_level=data.get("search_level", 0),
             llm_confidence=data.get("llm_confidence", 0.0),
             logprob_confidence=data.get("logprob_confidence", 0.0),
-            penalty=data.get("penalty", 0.0),
+            backtracks=data.get("backtracks", 0),
+            verification_failures=data.get("verification_failures", 0),
         )
 
 
