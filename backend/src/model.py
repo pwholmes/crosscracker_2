@@ -23,7 +23,7 @@ class Candidate:
     LLM_CONFIDENCE_WEIGHT: ClassVar[Final[float]] = 0.6
     LOGPROB_CONFIDENCE_WEIGHT: ClassVar[Final[float]] = 1 - LLM_CONFIDENCE_WEIGHT
     BACKTRACK_PENALTY: ClassVar[Final[int]]  = 25
-    VERIFICATION_PENALTY: ClassVar[Final[int]] = 25
+    VERIFICATION_PENALTY: ClassVar[Final[int]] = 5
     MINIMUM_CONFIDENCE: ClassVar[Final[int]] = 20
     entry_id: str
     answer: str
@@ -40,13 +40,19 @@ class Candidate:
         return self
     
     @property
-    def confidence(self, raw: bool = False) -> float:
-        confidence = self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
+    def confidence(self) -> float:
+        base_confidence = self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
             self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
-        if not raw:
-            confidence = max(Candidate.MINIMUM_CONFIDENCE, confidence - self.backtracks * Candidate.BACKTRACK_PENALTY)
-            confidence = max(Candidate.MINIMUM_CONFIDENCE, confidence - self.verification_failures * Candidate.VERIFICATION_PENALTY)
-        return confidence
+        
+        penalized = base_confidence - \
+            self.backtracks * Candidate.BACKTRACK_PENALTY - \
+            self.verification_failures * Candidate.VERIFICATION_PENALTY
+        
+        # Only apply minimum floor if base confidence was above threshold
+        if base_confidence >= Candidate.MINIMUM_CONFIDENCE:
+            return max(Candidate.MINIMUM_CONFIDENCE, penalized)
+        else:
+            return penalized
 
 
     def __hash__(self) -> int:
@@ -121,7 +127,6 @@ class Entry:
     cells: list[Cell]
     hints: list[tuple[str,str]] | None = None
     placement: Optional[Placement] = None
-    backtracks: int = 0
     used_fallback: bool = False
     _candidates: dict[str,Candidate]
     """The pool of all candidates that have been generated for this entry, regardless 
@@ -197,6 +202,27 @@ class Entry:
         that is, it was completed entirely via crossing entries"""
         return self.completed and self.placement is None
 
+    @property
+    def total_backtracks(self) -> int:
+        total = 0
+        for candidate in self._candidates.values():
+            total += candidate.backtracks
+        return total
+
+    @property
+    def filled_count(self) -> int:
+        """Returns the number of filled letters (non-'.') in the current pattern."""
+        return sum(1 for ch in self.pattern if ch != ".")
+
+    @property
+    def candidate_threshold(self) -> int:
+        """Returns the number of viable candidates this entry should have to avoid 
+         another call to the LLM to generate more """
+        # I know, it's more complicated than it needs to be, but I wanted to make it
+        # a "tuneable" formula.  Right now it's just "2 candidates if the entry is
+        # completely empty, otherwise 1"
+        return max(1, 2 - self.filled_count)
+
 
     def get_candidates(self, pattern:str|None = None, widen_search: bool = False, matching_only: bool = True) -> list[Candidate]:
         """Get the pool of candidates for this entry, generating new candidates as
@@ -211,22 +237,25 @@ class Entry:
         if not pattern:
             pattern = self.pattern
 
-        # If the pattern has not been used to generate candidates, do so now.
-        search_level = self._pattern_levels.get(pattern, -1)
-        if search_level == -1 or (widen_search and search_level < LLM.MAX_SEARCH_LEVEL):
-            search_level += 1
-            # Call the LLM to generate candidates
-            new_candidates = LLM.generate_candidates(self, pattern, search_level)
-            # Store candidates and the pattern/search level used to generate them
-            self._pattern_levels[pattern] = search_level
-            for new_candidate in new_candidates:
-                existing_candidate = self._candidates.get(new_candidate.answer)
-                if existing_candidate:
-                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{pattern}', search level {search_level}: Merging candidate {new_candidate.answer}")
-                    existing_candidate.merge(new_candidate)
-                else:
-                    logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{pattern}', search level {search_level}: Storing new candidate {new_candidate}")
-                    self._candidates[new_candidate.answer] = new_candidate
+        # If we already have "enough" viable candidates for this entry, don't bother 
+        # calling the LLM to generate new ones.
+        if self.num_candidates(True) < self.candidate_threshold:
+            # If the pattern has not been used to generate candidates, do so now.
+            search_level = self._pattern_levels.get(pattern, -1)
+            if search_level == -1 or (widen_search and search_level < LLM.MAX_SEARCH_LEVEL):
+                search_level += 1
+                # Call the LLM to generate candidates
+                new_candidates = LLM.generate_candidates(self, pattern, search_level)
+                # Store candidates and the pattern/search level used to generate them
+                self._pattern_levels[pattern] = search_level
+                for new_candidate in new_candidates:
+                    existing_candidate = self._candidates.get(new_candidate.answer)
+                    if existing_candidate:
+                        logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{pattern}', search level {search_level}: Merging candidate {new_candidate.answer}")
+                        existing_candidate.merge(new_candidate)
+                    else:
+                        logger.debug(f"[ENTRY] Entry {self.entry_id}, pattern '{pattern}', search level {search_level}: Storing new candidate {new_candidate}")
+                        self._candidates[new_candidate.answer] = new_candidate
 
         # Filter candidates by pattern matching if requested
         candidates = list(self._candidates.values())
@@ -259,6 +288,10 @@ class Entry:
             return sum(self.can_place_answer(c.answer) for c in self._candidates.values())
         else:
             return len(self._candidates)
+
+
+    def get_candidate(self, answer: str) -> Candidate | None:
+        return self._candidates.get(answer)
 
 
     def get_crossing_letter(self, crossing_entry: Entry) -> tuple[int | None, str | None]:
@@ -339,7 +372,6 @@ class Entry:
             "candidates": candidates_list,
             "pattern_levels": dict(self._pattern_levels),
             "placement": placement_data,
-            "backtracks": self.backtracks,
             "used_fallback": self.used_fallback,
         }
     
@@ -352,6 +384,10 @@ class Entry:
         candidates = entry_data.get("candidates", [])
         for cand_data in candidates:
             candidate = Candidate.deserialize(self.entry_id, cand_data)
+            # CRITICAL: Reject any candidate that contains "." - this represents a pattern, not an answer
+            if "." in candidate.answer or  ' ' in candidate.answer:
+                logger.error(f"[ENTRY ERROR] Entry {self.entry_id}: Deserialized candidate with embedded '.' or ' ': '{candidate.answer}' - REJECTING. Checkpoint may be corrupted!")
+                continue
             self._candidates[candidate.answer] = candidate
         
         # Restore pattern levels
@@ -365,7 +401,6 @@ class Entry:
             self.placement = None
         
         # Restore other state
-        self.backtracks = entry_data.get("backtracks", 0)
         self.used_fallback = entry_data.get("used_fallback", False)
 
     def __str__(self):
