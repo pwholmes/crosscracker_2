@@ -29,8 +29,8 @@ class LLM:
     MAX_CANDIDATES: list[int] = [7, 12, 15]
     CANDIDATE_GENERATION_TUNING_PARAMS: list[dict[str,float|int]] = [
         {"temperature": 0.25, "top_p": 0.8, "top_k": 10},
-        {"temperature": 0.75, "top_p": 0.9, "top_k": 40},
-        {"temperature": 1.20, "top_p": 0.99, "top_k": 100}
+        {"temperature": 0.70, "top_p": 0.9, "top_k": 30},
+        {"temperature": 1.00, "top_p": 0.95, "top_k": 60}
     ]
     OLLAMA_TIMEOUT_SECONDS = 120
     OLLAMA_KEEP_ALIVE = "30m"
@@ -129,7 +129,7 @@ class LLM:
         prompt: str = LLM._create_prompt(entry, pattern, search_level)
         
         try:
-            logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern}")
+            logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern} | Search level {search_level}")
             if entry.hints:
                 hints_str = ", ".join(f"'{clue}'->{answer}" for clue, answer in entry.hints)
                 logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
@@ -164,6 +164,8 @@ class LLM:
                     continue
                 if len(answer) != entry.length:
                     continue
+                if not answer.isalpha():
+                    continue
                 #if not matches_pattern(answer, entry.pattern):
                 #    continue
                 candidates[answer] = Candidate(
@@ -176,6 +178,8 @@ class LLM:
                 for _, answer in entry.hints:
                     if len(answer) != entry.length:
                         continue
+                    if not answer.isalpha():
+                        continue
                     #if not matches_pattern(answer, entry.pattern):
                     #    continue
                     candidates[answer] = Candidate(
@@ -183,9 +187,11 @@ class LLM:
                         answer=answer
                     )
 
-            # Add logprob words that match the criterua to the result set
+            # Add logprob words that match the criteria to the result set
             for answer, confidence in logprob_results:
                 if len(answer) != entry.length:
+                    continue
+                if not answer.isalpha():
                     continue
                 #if not matches_pattern(answer, entry.pattern):
                 #    continue
@@ -458,20 +464,25 @@ class LLM:
         filled in when we answer 1 Across, we want to make sure that the resulting word makes sense
         for 1 Down's clue.
         """
-        clue = entry.clue
-        length = entry.length
-        
-        prompt: str = "Is the given ANSWER plausible for the given crossword CLUE?\n"
-        prompt += "IMPORTANT: An ANSWER may consist of multiple words.\n"
-        prompt += "You may add spaces to the ANSWER to make it into a phrase that satisfies the CLUE.\n\n"
-        prompt += (f"CLUE: {clue}\n")
-        #prompt += (f"LENGTH: {length}\n")
-        prompt += (f"ANSWER: {answer}\n\n")
+        # First check whether the answer is already in our candidate pool.  If so, it's obviously
+        # a plausible answer.
+        for candidate in entry.get_candidates():
+            if answer == candidate.answer:
+                return True
+
+        #prompt: str = "Is the given ANSWER plausible for the given crossword CLUE?\n"
+        #prompt += "IMPORTANT: An ANSWER may consist of multiple words.\n"
+        #prompt += "You may add spaces to the ANSWER to make it into a phrase that satisfies the CLUE.\n\n"
+        #prompt += (f"CLUE: {entry.clue}\n")
+        #prompt += (f"LENGTH: {entry.length}\n")
+        #prompt += (f"ANSWER: {answer}\n\n")
         #prompt += "Unless it is a proper noun or abbreviation, it must consist of valid words, spelled correctly.\n"
-        prompt += "Respond ONLY with the word Yes or No and no other text.\n"
+        #prompt += "Respond ONLY with the word Yes or No and no other text.\n"
+        prompt: str = f"For the crossword puzzle clue '{entry.clue}', is {answer} a plausible answer?\n"
+        prompt += "Respond only with Yes or No"
 
         try:
-            logger.debug(f"[LLM VERIFY] Clue: '{clue}' | Answer: '{answer}' | Length: {length}")
+            logger.debug(f"[LLM VERIFY] Clue: '{entry.clue}' | Answer: '{answer}' | Length: {entry.length}")
             response = requests.post(
                 LLM.OLLAMA_URL,
                 json = {
