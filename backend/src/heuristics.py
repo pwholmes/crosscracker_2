@@ -10,7 +10,7 @@ class BasicStrategy:
     MIN_CANDIDATE_CONFIDENCE_THRESHOLD = 20
 
     @staticmethod
-    def select_best_unfilled_entry(grid: Grid, attempted_entries: set[tuple[str, str]]) -> tuple[Entry, Candidate, float] | None:
+    def select_best_unfilled_entry(grid: Grid, attempted_entries: set[tuple[str, str]], blacklist: set[Candidate] | None = None) -> tuple[Entry, Candidate, float] | None:
         """Select the best unfilled entry using a heuristic that balances:
         1. Candidate confidence (higher confidence preferred)
         2. Entry completeness (higher percentage of filled letters preferred)
@@ -27,7 +27,7 @@ class BasicStrategy:
 
             attempted_candidates = {answer for entry_id, answer in attempted_entries if entry_id == entry.entry_id}
 
-            cand = BasicStrategy.select_best_candidate(entry, attempted_candidates)
+            cand = BasicStrategy.select_best_candidate(entry, attempted_candidates, blacklist=blacklist)
             if cand is None:
                 continue
 
@@ -56,14 +56,15 @@ class BasicStrategy:
 
 
     @staticmethod
-    def select_best_candidate(entry: Entry, attempted_candidates: set[str], widen_search: bool = False) -> Candidate | None:
+    def select_best_candidate(entry: Entry, attempted_candidates: set[str], widen_search: bool = False, blacklist: set[Candidate] | None = None) -> Candidate | None:
         """
         Select the best candidate for an entry:
-        1. It must be one we haven't already tried in this pass through the puzzle
-        2. It must be the correct length
-        3. It must have a certain minimum confidence level
-        4. It must be placeable (i.e., no conflicts with crossing entries)
-        5. The highest-confidence candidate remaining is selected (after applying 
+        1. It must not be in the blacklist (entries that failed previously)
+        2. It must be one we haven't already tried in this pass through the puzzle
+        3. It must be the correct length
+        4. It must have a certain minimum confidence level
+        5. It must be placeable (i.e., no conflicts with crossing entries)
+        6. The highest-confidence candidate remaining is selected (after applying 
            a penalty to the confidence if the candidate has been previously 
            backtracked)
 
@@ -80,6 +81,8 @@ class BasicStrategy:
         best_confidence = float("-inf")
 
         for candidate in candidates:
+            if blacklist is not None and candidate in blacklist:
+                continue
             if candidate.answer in attempted_candidates:
                 continue
             attempted_candidates.add(candidate.answer)
