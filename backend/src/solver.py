@@ -81,10 +81,17 @@ class Solver:
         if not entry_id:
             return event
         
-        # Proactively generate candidates for affected crossing entries.
-        # This is what shows the progress bar.
-        crossing_ids = self.grid.get_crossing_entry_ids(entry_id)
-        affected_entries = [self.grid.entries[eid] for eid in crossing_ids if not self.grid.entries[eid].completed]
+        # Proactively generate candidates for ALL unfilled entries.
+        # This eliminates the pause on the next step since selection will use cached candidates.
+        # The progress bar shows during this generation phase.
+        affected_entries = [e for e in self.grid.entries.values() if not e.completed]
+        
+        # OLD APPROACH (commented out for reference):
+        # Only generated candidates for crossing entries, causing pauses on next step
+        # when select_best_unfilled_entry() evaluated ALL entries with new patterns
+        # crossing_ids = self.grid.get_crossing_entry_ids(entry_id)
+        # affected_entries = [self.grid.entries[eid] for eid in crossing_ids if not self.grid.entries[eid].completed]
+        
         total = len(affected_entries)
         for idx, entry in enumerate(affected_entries, 1):
             entry.get_candidates()
