@@ -25,7 +25,10 @@ class Solver:
     # Backtracks for an entry before forcing its fallback
     MAX_BACKTRACKS_BEFORE_FALLBACK: int = 3
 
+    _blacklist: set[Candidate]
+
     def __init__(self, grid: Grid, *, defer_candidate_init: bool = False, record: bool = False):
+        self._blacklist = set()
         self.grid = grid
         self._recording: list[dict[str, Any]] | None = [] if record else None
         # Initialize candidates for all entries at width 0 with empty pattern
@@ -59,22 +62,28 @@ class Solver:
             await asyncio.sleep(0)
 
     async def async_step_with_progress(self, progress_callback: Callable[[int, int], Any], broadcast_event_callback: Callable[[dict[str, Any]], Any] | None = None) -> dict[str, Any]:
-        """Perform a step, broadcast placement event, then retrieve candidates for crossing entries with progress reporting."""
-        # Perform the step and get the placed entry
+        """Perform a step, broadcast placement event, then retrieve candidates
+           for crossing entries with progress reporting."""
+        # Perform the step
         event = self.step()
-        # Broadcast the placement event immediately if callback is provided
+        
+        # Broadcast the event
         if broadcast_event_callback is not None:
             result = broadcast_event_callback(event)
             if asyncio.iscoroutine(result):
                 await result
-        placed_entry_id = None
+
+        # Get the ID of the affected entry (if any)
+        entry_id = None
         candidate_info = event.get("candidate")
         if candidate_info:
-            placed_entry_id = candidate_info.get("entry_id")
-        # If no entry was placed, nothing to update
-        if not placed_entry_id:
+            entry_id = candidate_info.get("entry_id")
+        if not entry_id:
             return event
-        crossing_ids = self.grid.get_crossing_entry_ids(placed_entry_id)
+        
+        # Proactively generate candidates for affected crossing entries.
+        # This is what shows the progress bar.
+        crossing_ids = self.grid.get_crossing_entry_ids(entry_id)
         affected_entries = [self.grid.entries[eid] for eid in crossing_ids if not self.grid.entries[eid].completed]
         total = len(affected_entries)
         for idx, entry in enumerate(affected_entries, 1):
@@ -83,6 +92,7 @@ class Solver:
             if asyncio.iscoroutine(result):
                 await result
             await asyncio.sleep(0)
+
         return event
 
     def solve(self) -> bool:
@@ -100,14 +110,14 @@ class Solver:
         if self._all_filled():
             return self._finalize_event({"event": "solved"}, [])
 
-        # Loop until we are able to place an entry.  We might pick an Entry that has no
-        # viable Candidate, or that would cause crossing entries to fail to verify,
-        # in which case we have to continue looping.  If we can't pick ANY viable Entry,
+        # Loop until we are able to place an entry.  We might pick an entry which has no
+        # viable candidate, or which would cause crossing entries to fail to verify,
+        # in which case we have to continue looping.  If we can't pick ANY viable entry,
         # we are "stalled", in which case we call the stall logic to backtrack.
         attempted_entries: set[tuple[str, str]] = set()
         while True:
             # Select the best unfilled entry
-            selection = BasicStrategy.select_best_unfilled_entry(self.grid, attempted_entries)
+            selection = BasicStrategy.select_best_unfilled_entry(self.grid, attempted_entries, self._blacklist)
             if selection is None:
                 logger.debug(f"[STEP SELECT ENTRY]: No viable entry found, invoking stall logic")
                 return self._handle_stall()
@@ -148,7 +158,10 @@ class Solver:
                 logger.error(f"[STEP ERROR] Unable to place candidate {candidate.answer} for entry {entry.entry_id}")
                 return self._finalize_event({"event": "fatal error"}, [])
 
-            # Log the placement and return an event for the UI.
+            # Clear blacklist on successful placement
+            self._blacklist.clear()
+
+            # Log the placement
             logger.debug(
                 f"[STEP PLACE] entry={placement.entry_id} "
                 f"answer='{placement.candidate.answer}' "
@@ -158,6 +171,7 @@ class Solver:
                 f"selection score={placement.selection_score:.1f} "
             )
 
+            # Return an appropriate event for broadcast to the UI
             return self._finalize_event(
                 {
                     "event": "placed",
@@ -191,16 +205,20 @@ class Solver:
             entry = self.grid.entries[entry_id]
             placement = entry.placement
             assert placement is not None, "Placement record for a placed entry cannot be None"
+            assert placement.candidate is not None, "Candidate  record for a placement cannot be None"
+            placement.candidate.backtracks += 1
             if self._remove_placed(entry_id):
+                # Add the candidate to the blacklist so we don't try it again
+                self._blacklist.add(placement.candidate)
+                
                 # Check if this entry has been backtracked too many times
-                entry.backtracks += 1
-                if entry.backtracks >= self.MAX_BACKTRACKS_BEFORE_FALLBACK:
+                if entry.total_backtracks >= self.MAX_BACKTRACKS_BEFORE_FALLBACK:
                     # Force fallback for this thrashing entry
                     entry = self.grid.entries.get(entry_id)
                     if entry is not None and entry.correct_answer:
                         logger.debug(
                             f"FORCING FALLBACK: entry_id={entry_id} "
-                            f"backtrack_count={entry.backtracks}"
+                            f"backtrack_count={entry.total_backtracks}"
                         )
                         fallback_event = self._apply_fallback(entry)
                         if fallback_event is not None:
@@ -325,7 +343,7 @@ class Solver:
         logger.debug(f"BACKTRACK: {len(crossing_entry_ids)} crossing entries detected for {entry_id}")
 
         # Apply a penalty to the candidate so it is less likely (but not impossible!) to use again.
-        entry.placement.candidate.verification_failures += 1
+        entry.placement.candidate.backtracks += 1
 
         # Remove the answer from the grid (also clears placement)
         entry.remove()
@@ -536,9 +554,30 @@ class Solver:
     
     def serialize_checkpoint(self) -> dict[str, Any]:
         """Serialize the complete solver state for checkpointing."""
-        return self.grid.serialize()
+        checkpoint = self.grid.serialize()
+        
+        # Serialize the blacklist as a list of (entry_id, answer) tuples
+        blacklist_data = [
+            {"entry_id": c.entry_id, "answer": c.answer}
+            for c in self._blacklist
+        ]
+        checkpoint["blacklist"] = blacklist_data
+        
+        return checkpoint
     
     def restore_from_checkpoint(self, checkpoint_data: dict[str, Any]) -> None:
         """Restore solver state from checkpoint data."""
         self.grid.deserialize(checkpoint_data)
+        
+        # Restore the blacklist from checkpoint data
+        self._blacklist.clear()
+        blacklist_data = checkpoint_data.get("blacklist", [])
+        for item in blacklist_data:
+            entry_id = item.get("entry_id")
+            answer = item.get("answer")
+            entry = self.grid.entries.get(entry_id)
+            if entry is not None:
+                candidate = entry.get_candidate(answer)
+                if candidate is not None:
+                    self._blacklist.add(candidate)
 
