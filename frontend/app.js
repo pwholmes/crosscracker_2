@@ -58,6 +58,7 @@ let entryToCells = {}; // mapping from entry_id to list of [row, col] for replay
 let replayFallbackEntries = new Set(); // track which entries were placed with fallback
 let replayBacktrackCount = 0; // count total backtrack events during replay
 let replayPlacedEntries = new Map(); // track currently placed entries: entry_id -> answer
+let entryConfidences = new Map(); // track confidence and selection score for placed entries: entry_id -> {confidence, selectionScore}
 
 // Application state machine
 const AppState = {
@@ -426,6 +427,22 @@ function processMessage(data) {
 	}
 	if (data.type === 'state') {
 		gridState = data.grid;
+		
+		// Populate confidence map from state data
+		if (data.entries) {
+			for (const [eid, info] of Object.entries(data.entries)) {
+				if (info.confidence !== undefined) {
+					entryConfidences.set(eid, {
+						confidence: info.confidence,
+						selectionScore: info.selection_score
+					});
+				} else {
+					// Remove confidence if entry no longer has placement
+					entryConfidences.delete(eid);
+				}
+			}
+		}
+		
 		renderGrid(data.grid);
 		renderEntries(data.entries);
 		renderTallyFromState(data.metrics);
@@ -489,6 +506,19 @@ function processMessage(data) {
 		log('[event] ' + formatEvent(ev));
 		if (DEBUG_LOG_JSON) {
 			log('[event.json] ' + JSON.stringify(ev));
+		}
+		// Track confidence for placed entries
+		if (ev.event === 'placed' || ev.event === 'placed_fallback') {
+			if (ev.candidate?.entry_id && ev.candidate?.confidence !== undefined) {
+				entryConfidences.set(ev.candidate.entry_id, {
+					confidence: ev.candidate.confidence,
+					selectionScore: ev.candidate['selection score']
+				});
+			}
+		} else if (ev.event === 'backtrack') {
+			if (ev.candidate?.entry_id) {
+				entryConfidences.delete(ev.candidate.entry_id);
+			}
 		}
 		// Update status based on event
 		if (ev.event === 'solved') {
@@ -680,6 +710,7 @@ function replayReset() {
 	replayFallbackEntries.clear();
 	replayPlacedEntries.clear();
 	replayBacktrackCount = 0;
+	entryConfidences.clear();
 	replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
 	if (replayGridState) {
 		processMessage({
@@ -722,6 +753,7 @@ async function loadSelectedRecording() {
 		isReplayMode = true;
 		replayIndex = 0;
 		updateReplayProgress();
+		entryConfidences.clear();
 
 		setState(AppState.REPLAY_IDLE, 'Recording loaded');
 
@@ -930,7 +962,42 @@ function renderEntries(entries) {
 		const li = document.createElement('li');
 		li.id = `entry-${eid}`;
 		const displayNum = eid.slice(0, -1); // strip A/D
-		li.textContent = `${displayNum}: ${info.pattern} — ${info.clue}`;
+		
+		// Build text content with confidence badge before pattern
+		const textBefore = document.createTextNode(`${displayNum}: `);
+		li.appendChild(textBefore);
+		
+		const entryData = entryConfidences.get(eid);
+		if (entryData !== undefined) {
+			const badge = document.createElement('span');
+			badge.className = 'confidence-badge';
+			if (entryData.confidence < 50) {
+				badge.classList.add('conf-low');
+			} else if (entryData.confidence < 80) {
+				badge.classList.add('conf-medium');
+			} else {
+				badge.classList.add('conf-high');
+			}
+			badge.textContent = '●';
+			const scoreText = entryData.selectionScore !== undefined 
+				? `, Score: ${entryData.selectionScore.toFixed(1)}` 
+				: '';
+			badge.title = `Confidence: ${entryData.confidence.toFixed(1)}${scoreText}`;
+			li.appendChild(badge);
+			li.appendChild(document.createTextNode(' '));
+		} else if (info.verified) {
+			// Show gray badge for verified entries (completed by crossing)
+			const badge = document.createElement('span');
+			badge.className = 'confidence-badge conf-verified';
+			badge.textContent = '●';
+			badge.title = 'Verified but not explicitly placed';
+			li.appendChild(badge);
+			li.appendChild(document.createTextNode(' '));
+		}
+		
+		const textAfter = document.createTextNode(`${info.pattern} — ${info.clue}`);
+		li.appendChild(textAfter);
+		
 		// Highlighting: fallback (orange) > incorrect (red) > correct (yellow)
 		if (info.used_fallback) {
 			li.classList.add('entry-incorrect');
@@ -948,7 +1015,42 @@ function renderEntries(entries) {
 		const li = document.createElement('li');
 		li.id = `entry-${eid}`;
 		const displayNum = eid.slice(0, -1); // strip A/D
-		li.textContent = `${displayNum}: ${info.pattern} — ${info.clue}`;
+		
+		// Build text content with confidence badge before pattern
+		const textBefore = document.createTextNode(`${displayNum}: `);
+		li.appendChild(textBefore);
+		
+		const entryData = entryConfidences.get(eid);
+		if (entryData !== undefined) {
+			const badge = document.createElement('span');
+			badge.className = 'confidence-badge';
+			if (entryData.confidence < 50) {
+				badge.classList.add('conf-low');
+			} else if (entryData.confidence < 80) {
+				badge.classList.add('conf-medium');
+			} else {
+				badge.classList.add('conf-high');
+			}
+			badge.textContent = '●';
+			const scoreText = entryData.selectionScore !== undefined 
+				? `, Score: ${entryData.selectionScore.toFixed(1)}` 
+				: '';
+			badge.title = `Confidence: ${entryData.confidence.toFixed(1)}${scoreText}`;
+			li.appendChild(badge);
+			li.appendChild(document.createTextNode(' '));
+		} else if (info.verified) {
+			// Show gray badge for verified entries (completed by crossing)
+			const badge = document.createElement('span');
+			badge.className = 'confidence-badge conf-verified';
+			badge.textContent = '●';
+			badge.title = 'Verified but not explicitly placed';
+			li.appendChild(badge);
+			li.appendChild(document.createTextNode(' '));
+		}
+		
+		const textAfter = document.createTextNode(`${info.pattern} — ${info.clue}`);
+		li.appendChild(textAfter);
+		
 		// Highlighting: fallback (orange) > incorrect (red) > correct (yellow)
 		if (info.used_fallback) {
 			li.classList.add('entry-incorrect');
@@ -984,6 +1086,7 @@ async function loadSelectedPuzzle() {
 
 	// Clear old puzzle display
 	gridContainer.innerHTML = '';
+	entryConfidences.clear();
 
 	// Hide clue sections
 	const clueColumns = document.querySelectorAll('.clue-column h3');
@@ -1071,6 +1174,7 @@ resetBtn.addEventListener('click', () => {
 		renderEntries(null);
 		logEl.textContent = '';
 		renderTallyFromState({ steps: 0, fallbacks: 0, backtracks: 0 });
+		entryConfidences.clear();
 		setState(AppState.LOADING, 'Resetting...', 'ui:reset');
 
 		// Then call server to reinitialize
