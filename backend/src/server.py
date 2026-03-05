@@ -172,16 +172,20 @@ def serialize_state() -> dict[str, Any]:
     for (r, c), info in starts.items():
         numbers[r][c] = info["number"]
 
-    entries: dict[str, dict[str, Any]] = {
-        eid: {
+    entries: dict[str, dict[str, Any]] = {}
+    for eid, e in grid.entries.items():
+        entry_data: dict[str, Any] = {
             "pattern": e.pattern,
             "clue": e.clue,
             "used_fallback": e.used_fallback,
             "verified": e.verified,
             "correct_answer": e.correct_answer,
         }
-        for eid, e in grid.entries.items()
-    }
+        # Include placement confidence and selection score if entry is placed
+        if e.placement is not None:
+            entry_data["confidence"] = e.placement.candidate.confidence
+            entry_data["selection_score"] = e.placement.selection_score
+        entries[eid] = entry_data
     return {
         "type": "state",
         "metrics": {
@@ -212,14 +216,8 @@ def _save_recording() -> None:
         return
     
     try:
-        recording_id = str(uuid.uuid4())
-        recording['id'] = recording_id
         recording['timestamp'] = datetime.now().isoformat()
         recording['event_count'] = len(recording.get('events', []))
-        # Assign recording_title if missing
-        if not recording.get('recording_title'):
-            puzzle_title = recording.get('puzzle_title') or 'Unknown Puzzle'
-            recording['recording_title'] = f"Recording for {puzzle_title} ({recording_id[:8]})"
 
         # Add grid state for replay
         if grid is not None:
@@ -260,11 +258,16 @@ def _save_recording() -> None:
                 break
             ordinal += 1
 
+        # Ensure metadata appears before events for readability
+        if 'events' in recording:
+            metadata = {k: v for k, v in recording.items() if k != 'events'}
+            recording = {**metadata, 'events': recording['events']}
+
         # Save to JSON file
         with open(filepath, 'w') as f:
             json.dump(recording, f, indent=2)
 
-        logger.info(f"Recording saved: {filename} (id: {recording_id}) for puzzle {puzzle_id}")
+        logger.info(f"Recording saved: {filename} for puzzle {puzzle_id}")
     except Exception as e:
         logger.error(f"Failed to save recording: {e}")
 
@@ -436,10 +439,8 @@ def list_recordings() -> list[dict[str, Any]]:
                     rec = json.load(f)
                 puzzle_id = rec.get('puzzle_id', 'unknown puzzle_id')
                 puzzle_title = rec.get('puzzle_title', 'unknown puzzle_title')
-                recording_id = rec.get('id', json_file.stem)
-                recording_title = rec.get('recording_title')
-                if not recording_title:
-                    recording_title = f"{puzzle_title}-{recording_id[:8]}"
+                recording_id = json_file.stem
+                recording_title = rec.get('recording_title') or f"{puzzle_title}-{recording_id}"
                 recordings.append({
                     'recording_id': recording_id,
                     'recording_title': recording_title,
@@ -462,14 +463,21 @@ def list_recordings() -> list[dict[str, Any]]:
 def get_recording(recording_id: str) -> dict[str, Any]:
     """Fetch a specific recording."""
     try:
-        # Search through all recording files to find one with matching ID
+        # Primary lookup by filename stem
+        filepath = RECORDINGS_DIR / f"{recording_id}.json"
+        if filepath.exists():
+            with open(filepath, 'r') as f:
+                rec = cast(dict[str, Any], json.load(f))
+            logger.debug(f"Retrieved recording {recording_id}")
+            return rec
+
+        # Backward-compat fallback for legacy recordings keyed by internal id
         for json_file in RECORDINGS_DIR.glob("*.json"):
             try:
                 with open(json_file, 'r') as f:
                     rec = cast(dict[str, Any], json.load(f))
-                # Check if this recording has the matching ID
                 if rec.get('id') == recording_id:
-                    logger.debug(f"Retrieved recording {recording_id}")
+                    logger.debug(f"Retrieved legacy recording {recording_id}")
                     return rec
             except Exception:
                 pass
