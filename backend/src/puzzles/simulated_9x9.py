@@ -79,12 +79,12 @@ def _make_hook(backtrack: bool) -> GenerateCandidatesHook:
 
         by_clue[entry.clue] = (init, refined)
 
-    def hook(entry: Entry, search_level: int) -> list[Candidate]:
+    def hook(entry: Entry, pattern: str, search_level: int) -> list[Candidate]:
         cands = by_clue.get(entry.clue)
         if cands is None:
             return []
 
-        empty_pattern = set(entry.pattern) == {"."}
+        empty_pattern = set(pattern) == {"."}
         use_init = search_level == 0 and empty_pattern
         chosen: List[CandidateItem] = cands[0] if use_init else cands[1]
         max_candidates = 7
