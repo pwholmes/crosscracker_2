@@ -45,12 +45,12 @@ class LLM:
     # Optional hook for overriding candidate generation (used by simulated/test puzzles).
     # When set, generate_candidates() dispatches to this hook instead of calling the LLM.
     # This enables deterministic, repeatable puzzle solves for testing and demos.
-    _generate_candidates_hook: Callable[[Entry, int, int], list[Any]] | None = None
+    _generate_candidates_hook: Callable[[Entry, str, int], list[Candidate]] | None = None
 
 
     @staticmethod
     def set_generate_candidates_hook(
-            hook: Callable[[Entry, str, int], list[Any]] | None
+            hook: Callable[[Entry, str, int], list[Candidate]] | None
     ) -> None:
         """
         Install or clear a custom candidate generation hook.
