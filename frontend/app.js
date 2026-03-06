@@ -58,6 +58,7 @@ let entryToCells = {}; // mapping from entry_id to list of [row, col] for replay
 let replayFallbackEntries = new Set(); // track which entries were placed with fallback
 let replayBacktrackCount = 0; // count total backtrack events during replay
 let replayPlacedEntries = new Map(); // track currently placed entries: entry_id -> answer
+let replayEntryMetrics = new Map(); // track replay entry confidence metadata: entry_id -> {confidence, selectionScore}
 let entryConfidences = new Map(); // track confidence and selection score for placed entries: entry_id -> {confidence, selectionScore}
 
 // Application state machine
@@ -255,7 +256,26 @@ function applyReplayEventToGrid(event, gridState, entryToCells, placedEntries) {
 	}
 }
 
-function computeReplayEntriesFromGrid(baseEntries, gridState, entryToCells, fallbackEntries) {
+function applyReplayEventToEntryMetrics(event, entryMetrics) {
+	if (!event || !entryMetrics) return;
+	const entryId = event.candidate?.entry_id;
+	if (!entryId) return;
+
+	if (event.event === 'placed' || event.event === 'placed_fallback') {
+		if (event.candidate?.confidence !== undefined) {
+			entryMetrics.set(entryId, {
+				confidence: event.candidate.confidence,
+				selectionScore: event.candidate['selection score']
+			});
+		} else {
+			entryMetrics.delete(entryId);
+		}
+	} else if (event.event === 'backtrack') {
+		entryMetrics.delete(entryId);
+	}
+}
+
+function computeReplayEntriesFromGrid(baseEntries, gridState, entryToCells, fallbackEntries, entryMetrics) {
 	const entries = cloneJson(baseEntries);
 	if (!entries || !gridState) return entries;
 
@@ -271,6 +291,14 @@ function computeReplayEntriesFromGrid(baseEntries, gridState, entryToCells, fall
 		}).join('');
 		entry.pattern = pattern;
 		entry.used_fallback = fallbackEntries.has(entryId);
+		const metrics = entryMetrics?.get(entryId);
+		if (metrics) {
+			entry.confidence = metrics.confidence;
+			entry.selection_score = metrics.selectionScore;
+		} else {
+			delete entry.confidence;
+			delete entry.selection_score;
+		}
 	});
 
 	return entries;
@@ -610,7 +638,8 @@ function replayPlay() {
 		}
 
 		applyReplayEventToGrid(event, replayGridState, entryToCells, replayPlacedEntries);
-		replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+		applyReplayEventToEntryMetrics(event, replayEntryMetrics);
+		replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries, replayEntryMetrics);
 
 		// Count fallbacks from current entries
 		const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
@@ -676,7 +705,8 @@ function replayStep() {
 	}
 
 	applyReplayEventToGrid(event, replayGridState, entryToCells, replayPlacedEntries);
-	replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+	applyReplayEventToEntryMetrics(event, replayEntryMetrics);
+	replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries, replayEntryMetrics);
 
 	const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
 
@@ -709,9 +739,10 @@ function replayReset() {
 	replayGridState = cloneJson(replayBaseGridState);
 	replayFallbackEntries.clear();
 	replayPlacedEntries.clear();
+	replayEntryMetrics.clear();
 	replayBacktrackCount = 0;
 	entryConfidences.clear();
-	replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+	replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries, replayEntryMetrics);
 	if (replayGridState) {
 		processMessage({
 			type: 'state',
@@ -754,6 +785,7 @@ async function loadSelectedRecording() {
 		replayIndex = 0;
 		updateReplayProgress();
 		entryConfidences.clear();
+		replayEntryMetrics.clear();
 
 		setState(AppState.REPLAY_IDLE, 'Recording loaded');
 
@@ -805,8 +837,9 @@ async function loadSelectedRecording() {
 				replayBaseEntries = cloneJson(entriesForDisplay);
 				replayFallbackEntries.clear();
 				replayPlacedEntries.clear();
+				replayEntryMetrics.clear();
 				replayBacktrackCount = 0;
-				replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries);
+				replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries, replayEntryMetrics);
 				// Dispatch initial state through unified message path
 				processMessage({
 					type: 'state',
