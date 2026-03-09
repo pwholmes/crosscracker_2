@@ -1,0 +1,3233 @@
+{
+  "id": "f31cb484-90cd-4fc4-ae08-32bffc36faed",
+  "puzzle_id": "crosshare-daybreak-15",
+  "name": "almost done",
+  "timestamp": "2026-03-08T20:35:32.735530",
+  "metrics": {
+    "steps": 23,
+    "fallbacks": 0,
+    "backtracks": 0
+  },
+  "entries_state": {
+    "1A": {
+      "candidates": [
+        {
+          "answer": "AXLE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 20.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "....": 0
+      },
+      "placement": null,
+      "used_fallback": false
+    },
+    "5A": {
+      "candidates": [
+        {
+          "answer": "BRR",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "5A",
+        "candidate": {
+          "answer": "BRR",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "BR.",
+        "selection_score": 72.83333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "8A": {
+      "candidates": [
+        {
+          "answer": "HEEL",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MULE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 14.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TOES",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TOEE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 1.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "....": 0
+      },
+      "placement": {
+        "entry_id": "8A",
+        "candidate": {
+          "answer": "HEEL",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".EE.",
+        "selection_score": 69.75,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "9A": {
+      "candidates": [
+        {
+          "answer": "REAL",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "....": 0
+      },
+      "placement": {
+        "entry_id": "9A",
+        "candidate": {
+          "answer": "REAL",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "....",
+        "selection_score": 53.0,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "11A": {
+      "candidates": [
+        {
+          "answer": "ANTIPASTI",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 86.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ANTIPASTO",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 38.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "APPETIZER",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 4.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        ".........": 0
+      },
+      "placement": {
+        "entry_id": "11A",
+        "candidate": {
+          "answer": "ANTIPASTO",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 38.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "........O",
+        "selection_score": 59.18888888888888,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "13A": {
+      "candidates": [
+        {
+          "answer": "BASTE",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 46.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BAKES",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 1.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ROAST",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 14.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        ".....": 0
+      },
+      "placement": {
+        "entry_id": "13A",
+        "candidate": {
+          "answer": "BASTE",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 46.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".AST.",
+        "selection_score": 70.69,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "14A": {
+      "candidates": [
+        {
+          "answer": "ERG",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 49.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SED",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 30.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "14A",
+        "candidate": {
+          "answer": "ERG",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 49.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "E.G",
+        "selection_score": 67.75333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "15A": {
+      "candidates": [
+        {
+          "answer": "DEN",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "NES",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 22.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DES",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 9.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "NET",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 26.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "NOD",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 4.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": null,
+      "used_fallback": false
+    },
+    "16A": {
+      "candidates": [
+        {
+          "answer": "MAI",
+          "search_level": 0,
+          "llm_confidence": 99.0,
+          "logprob_confidence": 88.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "LAI",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 5.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TAI",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 14.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DAI",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 14.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "KAI",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 40.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RAI",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 25.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SUI",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 10.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "16A",
+        "candidate": {
+          "answer": "MAI",
+          "search_level": 0,
+          "llm_confidence": 99.0,
+          "logprob_confidence": 88.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "M.I",
+        "selection_score": 73.06333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "17A": {
+      "candidates": [
+        {
+          "answer": "SSA",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 85.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "USA",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 12.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SAA",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 5.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ASA",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 28.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "AAA",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 17.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ESA",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 16.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SSN",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 2.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "17A",
+        "candidate": {
+          "answer": "SSA",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 85.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".SA",
+        "selection_score": 57.093333333333334,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "19A": {
+      "candidates": [
+        {
+          "answer": "BCC",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 33.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CCS",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 71.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ATT",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 74.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ADD",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 13.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "INC",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 8.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SUB",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 16.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "PUT",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 6.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "19A",
+        "candidate": {
+          "answer": "BCC",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 33.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "B.C",
+        "selection_score": 67.67333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "20A": {
+      "candidates": [
+        {
+          "answer": "FIRESALE",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 12.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FLEAFAIR",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 1.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FLEAMARK",
+          "search_level": 0,
+          "llm_confidence": 92.0,
+          "logprob_confidence": 16.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FESTIVAL",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 28.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BARNSALE",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 1.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BARNYARD",
+          "search_level": 0,
+          "llm_confidence": 98.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "GREATOUT",
+          "search_level": 0,
+          "llm_confidence": 85.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "VENDORFA",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "WHITEELE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MISCELAN",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CARNIVAL",
+          "search_level": 0,
+          "llm_confidence": 98.0,
+          "logprob_confidence": 22.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CAMPSALE",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 1.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FLEASALE",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 1.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "JUMPSALE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 2.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CAMPFIRE",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 1.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MELAFEST",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "VACATION",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 1.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CANVYING",
+          "search_level": 0,
+          "llm_confidence": 10.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CAMPAIGN",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 1.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CAMPFAIR",
+          "search_level": 0,
+          "llm_confidence": 30.0,
+          "logprob_confidence": 0.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FALLFEST",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 10.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SOLDSALE",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "WHITEALS",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BIGEVENT",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MONOPOLY",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SALESTOP",
+          "search_level": 0,
+          "llm_confidence": 40.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "PATIOSET",
+          "search_level": 0,
+          "llm_confidence": 30.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CAMPGING",
+          "search_level": 0,
+          "llm_confidence": 20.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SALESESS",
+          "search_level": 0,
+          "llm_confidence": 10.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RECLINER",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MARKDOWN",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 7.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DISCOUNT",
+          "search_level": 0,
+          "llm_confidence": 20.0,
+          "logprob_confidence": 12.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TENTSALE",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 15.0,
+          "backtracks": 0,
+          "verification_failures": 2
+        },
+        {
+          "answer": "POPUPDIS",
+          "search_level": 0,
+          "llm_confidence": 40.0,
+          "logprob_confidence": 0.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "........": 0,
+        "..N.....": 1,
+        "..N...L.": 2,
+        "..N..AL.": 2,
+        "..N.SAL.": 2,
+        "..NTSAL.": 1
+      },
+      "placement": null,
+      "used_fallback": false
+    },
+    "24A": {
+      "candidates": [
+        {
+          "answer": "PAPILLON",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "GETTINGI",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 12.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RECEIVES",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 10.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ACQUIRES",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 10.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "........": 0,
+        "..C.....": 0
+      },
+      "placement": {
+        "entry_id": "24A",
+        "candidate": {
+          "answer": "RECEIVES",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 10.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "..C...E.",
+        "selection_score": 60.07,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "25A": {
+      "candidates": [
+        {
+          "answer": "ISOGR",
+          "search_level": 0,
+          "llm_confidence": 99.0,
+          "logprob_confidence": 3.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "PENTA",
+          "search_level": 0,
+          "llm_confidence": 99.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "OCTAS",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 87.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DECAS",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 83.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "HEXAG",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 6.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "NONAS",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 71.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ISOTO",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 9.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        ".....": 0
+      },
+      "placement": {
+        "entry_id": "25A",
+        "candidate": {
+          "answer": "PENTA",
+          "search_level": 0,
+          "llm_confidence": 99.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".E.TA",
+        "selection_score": 65.85,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "1D": {
+      "candidates": [
+        {
+          "answer": "AHAB",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 82.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CAPT",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 8.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "AHAH",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 8.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "AHAS",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 14.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "....": 0
+      },
+      "placement": {
+        "entry_id": "1D",
+        "candidate": {
+          "answer": "AHAB",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 82.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".HAB",
+        "selection_score": 77.5,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "2D": {
+      "candidates": [
+        {
+          "answer": "XENA",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 91.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "....": 0
+      },
+      "placement": {
+        "entry_id": "2D",
+        "candidate": {
+          "answer": "XENA",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 91.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "..N.",
+        "selection_score": 60.94,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "3D": {
+      "candidates": [
+        {
+          "answer": "LETSDANCE",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 95.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DANCELIKE",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 4.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DANCEWITH",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 2.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        ".........": 0
+      },
+      "placement": {
+        "entry_id": "3D",
+        "candidate": {
+          "answer": "LETSDANCE",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 95.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "..T......",
+        "selection_score": 66.45888888888888,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "4D": {
+      "candidates": [
+        {
+          "answer": "ELITE",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 67.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MANAG",
+          "search_level": 0,
+          "llm_confidence": 70.0,
+          "logprob_confidence": 5.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "STRAT",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 51.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        ".....": 0
+      },
+      "placement": {
+        "entry_id": "4D",
+        "candidate": {
+          "answer": "ELITE",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 67.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".LI..",
+        "selection_score": 64.21000000000001,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "5D": {
+      "candidates": [
+        {
+          "answer": "CAM",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 82.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BRA",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 43.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "INT",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 8.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "UND",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 35.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "PET",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 7.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "5D",
+        "candidate": {
+          "answer": "BRA",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 43.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".RA",
+        "selection_score": 67.16333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "6D": {
+      "candidates": [
+        {
+          "answer": "RESEMBLE",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 50.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SIMULATE",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "APPEARTO",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 1.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SEEMASIF",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SEEMLIKE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 17.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "........": 0
+      },
+      "placement": {
+        "entry_id": "6D",
+        "candidate": {
+          "answer": "RESEMBLE",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 50.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".ES.....",
+        "selection_score": 64.84,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "7D": {
+      "candidates": [
+        {
+          "answer": "CONTESTS",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 38.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FIERCELY",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 13.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CRUISEAL",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 2.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CHALLENG",
+          "search_level": 0,
+          "llm_confidence": 98.0,
+          "logprob_confidence": 18.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "COMPETIT",
+          "search_level": 0,
+          "llm_confidence": 20.0,
+          "logprob_confidence": 5.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ATHLETES",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 4.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ADVERSAR",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 2.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "IONALISM",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SHOWDOWN",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 14.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "MATCHUPS",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 0.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CHAMPION",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 5.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SPORTING",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 8.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CATFIGHT",
+          "search_level": 0,
+          "llm_confidence": 20.0,
+          "logprob_confidence": 4.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RIVALENS",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ATHLETIC",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 12.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SPORTSCL",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "GAMESAND",
+          "search_level": 0,
+          "llm_confidence": 10.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "OBSTACLE",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 1.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RIVALSRY",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ROTATING",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "EXCLUDER",
+          "search_level": 0,
+          "llm_confidence": 30.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ECONOMIC",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 0.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "INDUSTRY",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 1.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "LABORDIS",
+          "search_level": 0,
+          "llm_confidence": 60.0,
+          "logprob_confidence": 0.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "HIGHSTAK",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 4.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SPORTSLE",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BUSINESS",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 5.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RATTLING",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 2.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RACKRATE",
+          "search_level": 0,
+          "llm_confidence": 10.0,
+          "logprob_confidence": 0.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "STRUGGLE",
+          "search_level": 0,
+          "llm_confidence": 98.0,
+          "logprob_confidence": 7.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TOUGHEST",
+          "search_level": 0,
+          "llm_confidence": 92.0,
+          "logprob_confidence": 0.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "COMPETEE",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "COMPETER",
+          "search_level": 0,
+          "llm_confidence": 5.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TITLEWIN",
+          "search_level": 0,
+          "llm_confidence": 5.0,
+          "logprob_confidence": 2.6,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TITLEHOL",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "VIRTUOSO",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TITLEFES",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "TITFORTA",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RATICING",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "RATTOING",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 1.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SPORTSFR",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "OCCUPANT",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "ENTREPRE",
+          "search_level": 0,
+          "llm_confidence": 40.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "GREATDEB",
+          "search_level": 0,
+          "llm_confidence": 10.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "........": 0,
+        ".A......": 2,
+        ".AT.....": 2,
+        ".AT.A...": 2,
+        "RAT.A...": 2,
+        "RATRA...": 2,
+        "RATRAC..": 2,
+        "RATRAC.S": 2
+      },
+      "placement": null,
+      "used_fallback": false
+    },
+    "10D": {
+      "candidates": [
+        {
+          "answer": "LOGIC",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 78.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "INFER",
+          "search_level": 0,
+          "llm_confidence": 98.0,
+          "logprob_confidence": 7.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "APRIO",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 70.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SYLLO",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 20.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SYNTH",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 31.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        ".....": 0
+      },
+      "placement": {
+        "entry_id": "10D",
+        "candidate": {
+          "answer": "LOGIC",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 78.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "L....",
+        "selection_score": 59.84,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "12D": {
+      "candidates": [
+        {
+          "answer": "ART",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 11.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "PEN",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 50.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "PIN",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 9.1,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0,
+        "P..": 0
+      },
+      "placement": {
+        "entry_id": "12D",
+        "candidate": {
+          "answer": "PEN",
+          "search_level": 0,
+          "llm_confidence": 80.0,
+          "logprob_confidence": 50.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "PE.",
+        "selection_score": 66.37333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "17D": {
+      "candidates": [
+        {
+          "answer": "CON",
+          "search_level": 0,
+          "llm_confidence": 95.0,
+          "logprob_confidence": 39.7,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "STR",
+          "search_level": 0,
+          "llm_confidence": 92.0,
+          "logprob_confidence": 44.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DEX",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BCE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "BCS",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 0.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": null,
+      "used_fallback": false
+    },
+    "18D": {
+      "candidates": [
+        {
+          "answer": "SEEP",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 56.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "CRAM",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 38.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "LAID",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 56.2,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "WORE",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 25.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "....": 0
+      },
+      "placement": {
+        "entry_id": "18D",
+        "candidate": {
+          "answer": "SEEP",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 56.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": "..EP",
+        "selection_score": 64.6,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "21D": {
+      "candidates": [
+        {
+          "answer": "TEN",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 51.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "DIG",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 80.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FIG",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 29.3,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "FRO",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 15.8,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "21D",
+        "candidate": {
+          "answer": "TEN",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 51.5,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".EN",
+        "selection_score": 67.98333333333333,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "22D": {
+      "candidates": [
+        {
+          "answer": "SIT",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 89.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "REL",
+          "search_level": 0,
+          "llm_confidence": 50.0,
+          "logprob_confidence": 18.4,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "22D",
+        "candidate": {
+          "answer": "SIT",
+          "search_level": 0,
+          "llm_confidence": 90.0,
+          "logprob_confidence": 89.9,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".I.",
+        "selection_score": 60.156666666666666,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    },
+    "23D": {
+      "candidates": [
+        {
+          "answer": "AVA",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        {
+          "answer": "SEL",
+          "search_level": 0,
+          "llm_confidence": 0.0,
+          "logprob_confidence": 27.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        }
+      ],
+      "pattern_levels": {
+        "...": 0
+      },
+      "placement": {
+        "entry_id": "23D",
+        "candidate": {
+          "answer": "AVA",
+          "search_level": 0,
+          "llm_confidence": 100.0,
+          "logprob_confidence": 100.0,
+          "backtracks": 0,
+          "verification_failures": 0
+        },
+        "pattern": ".V.",
+        "selection_score": 62.666666666666664,
+        "is_fallback": false
+      },
+      "used_fallback": false
+    }
+  },
+  "cells_state": [
+    {
+      "row": 0,
+      "col": 0,
+      "letter": "A",
+      "sources": [
+        "1D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 1,
+      "letter": "X",
+      "sources": [
+        "2D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 2,
+      "letter": "L",
+      "sources": [
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 3,
+      "letter": "E",
+      "sources": [
+        "4D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 5,
+      "letter": "B",
+      "sources": [
+        "5A",
+        "5D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 6,
+      "letter": "R",
+      "sources": [
+        "5A",
+        "6D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 7,
+      "letter": "R",
+      "sources": [
+        "5A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "letter": "H",
+      "sources": [
+        "8A",
+        "1D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 1,
+      "letter": "E",
+      "sources": [
+        "8A",
+        "2D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "letter": "E",
+      "sources": [
+        "8A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "letter": "L",
+      "sources": [
+        "8A",
+        "4D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 5,
+      "letter": "R",
+      "sources": [
+        "9A",
+        "5D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 6,
+      "letter": "E",
+      "sources": [
+        "6D",
+        "9A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 7,
+      "letter": "A",
+      "sources": [
+        "9A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 8,
+      "letter": "L",
+      "sources": [
+        "10D",
+        "9A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "letter": "A",
+      "sources": [
+        "1D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "letter": "N",
+      "sources": [
+        "2D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "letter": "T",
+      "sources": [
+        "3D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "letter": "I",
+      "sources": [
+        "4D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "letter": "P",
+      "sources": [
+        "12D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "letter": "A",
+      "sources": [
+        "5D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 6,
+      "letter": "S",
+      "sources": [
+        "6D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "letter": "T",
+      "sources": [
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 8,
+      "letter": "O",
+      "sources": [
+        "10D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 0,
+      "letter": "B",
+      "sources": [
+        "1D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "letter": "A",
+      "sources": [
+        "2D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "letter": "S",
+      "sources": [
+        "3D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "letter": "T",
+      "sources": [
+        "4D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "letter": "E",
+      "sources": [
+        "12D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 6,
+      "letter": "E",
+      "sources": [
+        "6D",
+        "14A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 7,
+      "letter": "R",
+      "sources": [
+        "14A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 8,
+      "letter": "G",
+      "sources": [
+        "10D",
+        "14A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "letter": "D",
+      "sources": [
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "letter": "E",
+      "sources": [
+        "4D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "letter": "N",
+      "sources": [
+        "12D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "letter": "M",
+      "sources": [
+        "6D",
+        "16A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "letter": "A",
+      "sources": [
+        "16A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 8,
+      "letter": "I",
+      "sources": [
+        "10D",
+        "16A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 0,
+      "letter": "S",
+      "sources": [
+        "17A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "letter": "S",
+      "sources": [
+        "17A",
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "letter": "A",
+      "sources": [
+        "17A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "letter": "B",
+      "sources": [
+        "6D",
+        "19A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 7,
+      "letter": "C",
+      "sources": [
+        "19A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 8,
+      "letter": "C",
+      "sources": [
+        "10D",
+        "19A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 0,
+      "letter": null,
+      "sources": [],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 1,
+      "letter": "E",
+      "sources": [
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 2,
+      "letter": "N",
+      "sources": [
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "letter": "T",
+      "sources": [
+        "21D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "letter": "S",
+      "sources": [
+        "22D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 5,
+      "letter": "A",
+      "sources": [
+        "23D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "letter": "L",
+      "sources": [
+        "6D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 7,
+      "letter": null,
+      "sources": [],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 0,
+      "letter": "R",
+      "sources": [
+        "24A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 1,
+      "letter": "E",
+      "sources": [
+        "24A",
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 2,
+      "letter": "C",
+      "sources": [
+        "24A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 3,
+      "letter": "E",
+      "sources": [
+        "24A",
+        "21D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 4,
+      "letter": "I",
+      "sources": [
+        "24A",
+        "22D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 5,
+      "letter": "V",
+      "sources": [
+        "24A",
+        "23D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 6,
+      "letter": "E",
+      "sources": [
+        "24A",
+        "6D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 7,
+      "letter": "S",
+      "sources": [
+        "24A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 1,
+      "letter": "P",
+      "sources": [
+        "25A",
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 2,
+      "letter": "E",
+      "sources": [
+        "25A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 3,
+      "letter": "N",
+      "sources": [
+        "21D",
+        "25A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 4,
+      "letter": "T",
+      "sources": [
+        "25A",
+        "22D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 5,
+      "letter": "A",
+      "sources": [
+        "23D",
+        "25A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 0,
+      "letter": "A",
+      "sources": [
+        "1D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "letter": "H",
+      "sources": [
+        "8A",
+        "1D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "letter": "A",
+      "sources": [
+        "1D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 0,
+      "letter": "B",
+      "sources": [
+        "1D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 1,
+      "letter": "X",
+      "sources": [
+        "2D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 1,
+      "letter": "E",
+      "sources": [
+        "8A",
+        "2D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "letter": "N",
+      "sources": [
+        "2D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "letter": "A",
+      "sources": [
+        "2D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 2,
+      "letter": "L",
+      "sources": [
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "letter": "E",
+      "sources": [
+        "8A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "letter": "T",
+      "sources": [
+        "3D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "letter": "S",
+      "sources": [
+        "3D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "letter": "D",
+      "sources": [
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "letter": "A",
+      "sources": [
+        "17A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 2,
+      "letter": "N",
+      "sources": [
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 2,
+      "letter": "C",
+      "sources": [
+        "24A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 2,
+      "letter": "E",
+      "sources": [
+        "25A",
+        "3D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 3,
+      "letter": "E",
+      "sources": [
+        "4D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "letter": "L",
+      "sources": [
+        "8A",
+        "4D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "letter": "I",
+      "sources": [
+        "4D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "letter": "T",
+      "sources": [
+        "4D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "letter": "E",
+      "sources": [
+        "4D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 5,
+      "letter": "B",
+      "sources": [
+        "5A",
+        "5D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 5,
+      "letter": "R",
+      "sources": [
+        "9A",
+        "5D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "letter": "A",
+      "sources": [
+        "5D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 6,
+      "letter": "R",
+      "sources": [
+        "5A",
+        "6D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 6,
+      "letter": "E",
+      "sources": [
+        "6D",
+        "9A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 6,
+      "letter": "S",
+      "sources": [
+        "6D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 6,
+      "letter": "E",
+      "sources": [
+        "6D",
+        "14A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "letter": "M",
+      "sources": [
+        "6D",
+        "16A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "letter": "B",
+      "sources": [
+        "6D",
+        "19A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "letter": "L",
+      "sources": [
+        "6D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 6,
+      "letter": "E",
+      "sources": [
+        "24A",
+        "6D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 0,
+      "col": 7,
+      "letter": "R",
+      "sources": [
+        "5A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 7,
+      "letter": "A",
+      "sources": [
+        "9A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "letter": "T",
+      "sources": [
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 7,
+      "letter": "R",
+      "sources": [
+        "14A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "letter": "A",
+      "sources": [
+        "16A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 7,
+      "letter": "C",
+      "sources": [
+        "19A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 7,
+      "letter": null,
+      "sources": [],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 7,
+      "letter": "S",
+      "sources": [
+        "24A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 1,
+      "col": 8,
+      "letter": "L",
+      "sources": [
+        "10D",
+        "9A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 8,
+      "letter": "O",
+      "sources": [
+        "10D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 8,
+      "letter": "G",
+      "sources": [
+        "10D",
+        "14A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 8,
+      "letter": "I",
+      "sources": [
+        "10D",
+        "16A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 8,
+      "letter": "C",
+      "sources": [
+        "10D",
+        "19A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "letter": "P",
+      "sources": [
+        "12D",
+        "11A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "letter": "E",
+      "sources": [
+        "12D",
+        "13A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "letter": "N",
+      "sources": [
+        "12D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 0,
+      "letter": "S",
+      "sources": [
+        "17A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 0,
+      "letter": null,
+      "sources": [],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 0,
+      "letter": "R",
+      "sources": [
+        "24A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "letter": "S",
+      "sources": [
+        "17A",
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 1,
+      "letter": "E",
+      "sources": [
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 1,
+      "letter": "E",
+      "sources": [
+        "24A",
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 1,
+      "letter": "P",
+      "sources": [
+        "25A",
+        "18D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "letter": "T",
+      "sources": [
+        "21D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 3,
+      "letter": "E",
+      "sources": [
+        "24A",
+        "21D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 3,
+      "letter": "N",
+      "sources": [
+        "21D",
+        "25A"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "letter": "S",
+      "sources": [
+        "22D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 4,
+      "letter": "I",
+      "sources": [
+        "24A",
+        "22D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 4,
+      "letter": "T",
+      "sources": [
+        "25A",
+        "22D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 6,
+      "col": 5,
+      "letter": "A",
+      "sources": [
+        "23D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 7,
+      "col": 5,
+      "letter": "V",
+      "sources": [
+        "24A",
+        "23D"
+      ],
+      "revealed_by_fallback": false
+    },
+    {
+      "row": 8,
+      "col": 5,
+      "letter": "A",
+      "sources": [
+        "23D",
+        "25A"
+      ],
+      "revealed_by_fallback": false
+    }
+  ],
+  "blacklist": []
+}
