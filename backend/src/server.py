@@ -650,21 +650,20 @@ async def load_checkpoint(checkpoint_id: str) -> dict[str, Any]:
             checkpoint = json.load(f)
         
         checkpoint_puzzle_id = checkpoint.get("puzzle_id")
+        if not checkpoint_puzzle_id:
+            return {"error": "Checkpoint missing puzzle_id"}
         
         # Stop any ongoing solving
         play_event.clear()
         
         async with solver_lock:
-            # Load the puzzle if different from current
-            if current_puzzle_id != checkpoint_puzzle_id:
-                grid, hook = puzzles.load_puzzle(puzzle_id=checkpoint_puzzle_id)
-                grid.puzzle_id = checkpoint_puzzle_id
-                current_puzzle_id = checkpoint_puzzle_id
-                LLM.set_generate_candidates_hook(hook)
+            # Always reload a fresh puzzle grid before restore so no prior runtime
+            # state (placements/candidates/flags) can leak into the loaded checkpoint.
+            grid, hook = puzzles.load_puzzle(puzzle_id=checkpoint_puzzle_id)
+            grid.puzzle_id = checkpoint_puzzle_id
+            current_puzzle_id = checkpoint_puzzle_id
+            LLM.set_generate_candidates_hook(hook)
 
-            if grid is None:
-                return {"error": "No puzzle loaded"}
-            
             # Create new solver WITHOUT candidate initialization
             solver = Solver(grid, defer_candidate_init=True, record=True)
             
