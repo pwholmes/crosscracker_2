@@ -125,7 +125,7 @@ class Entry:
     clue: str
     correct_answer: str
     cells: list[Cell]
-    hints: list[tuple[str,str]] | None = None
+    hints: list[tuple[str,str,float]] | None = None
     placement: Optional[Placement] = None
     used_fallback: bool = False
     _candidates: dict[str,Candidate]

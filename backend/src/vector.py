@@ -73,17 +73,18 @@ def query_database(collection: Collection, entries: list[Entry]):
     # Process the results
     docs = results.get("documents")
     metas = results.get("metadatas")
-    if results is None or docs is None or metas is None:
+    distances = results.get("distances")
+    if results is None or docs is None or metas is None or distances is None:
         raise ValueError("Query failed: No results returned, or results are missing data.")
-    if len(docs) != len(entries) or len(metas) != len(entries):
+    if len(docs) != len(entries) or len(metas) != len(entries) or len(distances) != len(entries):
         raise ValueError("Query failed: Number of results does not equal number of queries.")
     
     # Pack the result data into more compact, readable tuples and store them in the crossword_entries.
     for i in range(len(entries)):
-        hints_list: list[tuple[str, str]] = []
-        for example_clues, example_answers in zip(docs[i], metas[i]):
-            normalized_answer = "".join(c for c in str(example_answers["answer"]) if c.isalpha()).upper()
-            hints_list.append((str(example_clues), normalized_answer))
+        hints_list: list[tuple[str, str, float]] = []
+        for clue, metadata, distance in zip(docs[i], metas[i], distances[i]):
+            normalized_answer = "".join(c for c in str(metadata["answer"]) if c.isalpha()).upper()
+            hints_list.append((str(clue), normalized_answer, distance))
         entries[i].hints = hints_list
 
 def populate_hints(entries: list[Entry]) -> None:

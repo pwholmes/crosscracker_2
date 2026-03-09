@@ -131,7 +131,7 @@ class LLM:
         try:
             logger.debug(f"[LLM GENERATE] Entry: {entry.entry_id} | Clue: '{entry.clue}' | Length: {entry.length} | Pattern: {entry.pattern} | Search level {search_level}")
             if entry.hints:
-                hints_str = ", ".join(f"'{clue}'->{answer}" for clue, answer in entry.hints)
+                hints_str = ", ".join(f"'{clue}'->{answer}" for clue, answer, _ in entry.hints)
                 logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
             #logger.debug(f"[LLM GENERATE PROMPT]\n{prompt}")
             response = requests.post(
@@ -175,7 +175,7 @@ class LLM:
 
             # Add hints that match the criteria to the result set
             if entry.hints:
-                for _, answer in entry.hints:
+                for _, answer, distance in entry.hints:
                     if len(answer) != entry.length:
                         continue
                     if not answer.isalpha():
@@ -184,7 +184,8 @@ class LLM:
                     #    continue
                     candidates[answer] = Candidate(
                         entry_id=entry.entry_id, 
-                        answer=answer
+                        answer=answer,
+                        llm_confidence=1/(1+distance)
                     )
 
             # Add logprob words that match the criteria to the result set
@@ -234,7 +235,7 @@ class LLM:
         """
         clue: str = entry.clue
         length: int = entry.length
-        hints: list[tuple[str,str]] | None = entry.hints
+        hints: list[tuple[str,str,float]] | None = entry.hints
 
         matcher: str = f'[^{re.escape(".")}]'
         valid_pattern: bool = (re.search(matcher, pattern) is not None)
@@ -267,7 +268,7 @@ class LLM:
         prompt += "- IMPORTANT: DO NOT provide any other text, ratings or scores.\n"
         if hints is not None and len(hints) > 0:
             prompt += "\nHINTS:\n"
-            for hint_clue, hint_answer in hints:
+            for hint_clue, hint_answer, _ in hints:
                 prompt += f"- REFERENCE CLUE: '{hint_clue}', REFERENCE ANSWER: '{hint_answer}'\n"
         if valid_pattern:
             prompt += (f"\nPATTERN: {pattern}\n")
@@ -394,7 +395,7 @@ class LLM:
         
         if hints:
             prompt += "\nHINTS (for context):\n"
-            for hint_clue, hint_answer in hints:
+            for hint_clue, hint_answer, _ in hints:
                 prompt += f"- '{hint_clue}' -> '{hint_answer}'\n"
         
         prompt += f"\nCLUE: {clue}\n"
