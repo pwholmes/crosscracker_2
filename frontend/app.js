@@ -3,6 +3,7 @@ const gridContainer = document.getElementById("grid-container");
 const entriesAcrossList = document.getElementById("entries-across");
 const entriesDownList = document.getElementById("entries-down");
 const statusMessage = document.getElementById("status-message");
+const saveSolutionBtn = document.getElementById("save-solution");
 
 const playBtn = document.getElementById("play");
 const pauseBtn = document.getElementById("pause");
@@ -111,6 +112,30 @@ const AppState = {
 		showClues: true,
 		showTally: true
 	},
+	COMPLETED_SOLVED_SAVING: {
+		name: 'completed_solved_saving',
+		buttons: { play: false, pause: false, step: false, reset: true, save: true, load: true },
+		status: 'Saving solution...',
+		statusClass: 'status-solved',
+		showClues: true,
+		showTally: true
+	},
+	COMPLETED_SOLVED_SAVED: {
+		name: 'completed_solved_saved',
+		buttons: { play: false, pause: false, step: false, reset: true, save: true, load: true },
+		status: 'Solution saved ✓',
+		statusClass: 'status-solved',
+		showClues: true,
+		showTally: true
+	},
+	COMPLETED_SOLVED_SAVE_FAILED: {
+		name: 'completed_solved_save_failed',
+		buttons: { play: false, pause: false, step: false, reset: true, save: true, load: true },
+		status: 'Save solution failed',
+		statusClass: 'status-error',
+		showClues: true,
+		showTally: true
+	},
 	COMPLETED_FAILED: {
 		name: 'completed_failed',
 		buttons: { play: false, pause: false, step: false, reset: true, save: true, load: true },
@@ -181,6 +206,31 @@ function setState(newState, customMessage = null, source = null) {
 	} else if (newState.status !== null) {
 		statusMessage.textContent = newState.status;
 		statusMessage.className = newState.statusClass || '';
+	}
+
+	// Show Save Solution button only when solved in puzzle mode
+	const saveStates = new Set([
+		AppState.COMPLETED_SOLVED,
+		AppState.COMPLETED_SOLVED_SAVING,
+		AppState.COMPLETED_SOLVED_SAVED,
+		AppState.COMPLETED_SOLVED_SAVE_FAILED,
+	]);
+	const showSaveSolution = saveStates.has(newState) && !isReplayMode && currentMode === 'puzzles';
+	if (saveSolutionBtn) {
+		saveSolutionBtn.style.display = showSaveSolution ? 'inline-block' : 'none';
+		if (!showSaveSolution) {
+			saveSolutionBtn.disabled = true;
+			saveSolutionBtn.textContent = 'Save Solution';
+		} else if (newState === AppState.COMPLETED_SOLVED_SAVING) {
+			saveSolutionBtn.disabled = true;
+			saveSolutionBtn.textContent = 'Saving...';
+		} else if (newState === AppState.COMPLETED_SOLVED_SAVED) {
+			saveSolutionBtn.disabled = true;
+			saveSolutionBtn.textContent = 'Saved ✓';
+		} else {
+			saveSolutionBtn.disabled = false;
+			saveSolutionBtn.textContent = 'Save Solution';
+		}
 	}
 	// (if newState.status === null and customMessage === null, preserve current message)
 }
@@ -551,17 +601,6 @@ function processMessage(data) {
 		// Update status based on event
 		if (ev.event === 'solved') {
 			setState(AppState.COMPLETED_SOLVED, null, 'ws:event(solved)');
-			// Only prompt to save recording in puzzle mode
-			if (!isReplayMode) {
-				setTimeout(() => {
-					if (window.confirm('Puzzle solved! Do you want to save this recording?')) {
-						fetch('/api/save_recording', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-						});
-					}
-				}, 100);
-			}
 		} else if (ev.event === 'failed') {
 			setState(AppState.COMPLETED_FAILED, null, 'ws:event(failed)');
 		} else if (ev.event === 'placed' || ev.event === 'placed_fallback' || ev.event === 'backtrack') {
@@ -1212,6 +1251,25 @@ resetBtn.addEventListener('click', () => {
 
 		// Then call server to reinitialize
 		postAction('/reset');
+	}
+});
+
+saveSolutionBtn?.addEventListener('click', async () => {
+	if (currentState !== AppState.COMPLETED_SOLVED && currentState !== AppState.COMPLETED_SOLVED_SAVE_FAILED) {
+		return;
+	}
+
+	setState(AppState.COMPLETED_SOLVED_SAVING, null, 'ui:save-solution');
+	try {
+		const res = await fetch('/api/save_recording', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+		});
+		if (!res.ok) throw new Error(res.statusText);
+		setState(AppState.COMPLETED_SOLVED_SAVED, null, 'ui:save-solution(success)');
+	} catch (err) {
+		log('[error] Failed to save solution: ' + err);
+		setState(AppState.COMPLETED_SOLVED_SAVE_FAILED, null, 'ui:save-solution(failed)');
 	}
 });
 
