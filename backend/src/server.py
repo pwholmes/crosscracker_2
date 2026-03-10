@@ -247,12 +247,12 @@ def _save_recording() -> None:
 
         # Generate filename based on puzzle_id and ordinal
         puzzle_id = recording.get('puzzle_id', recording.get('puzzle', 'unknown'))
-        safe_name = str(puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_')
+        safe_name = str(puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_').replace('-', '_')
 
         # Find next available ordinal
         ordinal = 1
         while True:
-            filename = f"{safe_name} - {ordinal}.json"
+            filename = f"{safe_name}_{ordinal}.json"
             filepath = RECORDINGS_DIR / filename
             if not filepath.exists():
                 break
@@ -574,10 +574,10 @@ async def save_checkpoint(request: Request) -> dict[str, Any]:
             ordered_checkpoint_data[key] = value
         
         # Generate filename with ordinal
-        safe_puzzle_id = str(current_puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_')
+        safe_puzzle_id = str(current_puzzle_id).replace(' ', '_').replace('/', '_').replace('\\', '_').replace('-', '_')
         ordinal = 1
         while True:
-            filename = f"{safe_puzzle_id} - {ordinal}.json"
+            filename = f"{safe_puzzle_id}_{ordinal}.json"
             filepath = CHECKPOINTS_DIR / filename
             if not filepath.exists():
                 break
