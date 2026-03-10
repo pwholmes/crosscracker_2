@@ -51,3 +51,6 @@ Thumbs.db
 *.bin
 *.pickle
 last_index*.txt
+
+# Log files
+server.log
