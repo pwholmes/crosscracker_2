@@ -59,4 +59,4 @@ def create_grid() -> Grid:
     grid = Grid(entries)
     return grid
 
-register_puzzle("crosshare-daybreak-15", create_grid, title="Crosshare Daybreak #15 (9x9)", default=True)
+register_puzzle("crosshare_daybreak_15", create_grid, title="Crosshare Daybreak #15 (9x9)", default=True)

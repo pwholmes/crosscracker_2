@@ -107,4 +107,4 @@ def create_grid() -> Grid:
     grid = Grid(entries)
     return grid
 
-register_puzzle("nyt-2026-01-26-15x15", create_grid, title="NYT Monday puzzle 2026-01-26 (15x15)", default=True)
+register_puzzle("nyt_2026_01_26_15x15", create_grid, title="NYT Monday puzzle 2026-01-26 (15x15)", default=True)
