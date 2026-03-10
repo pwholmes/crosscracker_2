@@ -117,8 +117,8 @@ def test_full_puzzle_scored_candidates_exercises_backtracking():
         return False
     
     # Patch the function as imported into the solver module.
-    with patch("solver.LLM.generate_candidates", side_effect=mock_generate), \
-         patch("solver.LLM.verify_answer", side_effect=mock_verify):
+    with patch("src.solver.LLM.generate_candidates", side_effect=mock_generate), \
+         patch("src.solver.LLM.verify_answer", side_effect=mock_verify):
         solver = Solver(grid)
 
         events: list[str] = []

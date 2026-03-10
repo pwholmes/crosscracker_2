@@ -23,8 +23,8 @@ def test_solver_can_start():
                 return answer.upper() == entry.correct_answer.upper()
         return False
 
-    with patch("solver.LLM.generate_candidates", side_effect=mock_generate), \
-         patch("solver.LLM.verify_answer", side_effect=mock_verify):
+    with patch("src.solver.LLM.generate_candidates", side_effect=mock_generate), \
+         patch("src.solver.LLM.verify_answer", side_effect=mock_verify):
         solver = Solver(grid)
         ev = solver.step()
         assert ev["event"] in {"placed", "solved", "placed_fallback"}
@@ -74,7 +74,7 @@ def test_verify_entries_checks_crossings_only():
     # Prepare a dict of entry_id -> current pattern (answer) for crossing entries
     answers = {eid: grid.entries[eid].pattern for eid in crossing_ids}
 
-    with patch("solver.LLM.verify_answer", side_effect=mock_verify):
+    with patch("src.solver.LLM.verify_answer", side_effect=mock_verify):
         verified_entry_ids, failed_entry_ids = solver.verify_answers(answers)
 
     assert set(verified_entry_ids) == {"1D", "2D"}

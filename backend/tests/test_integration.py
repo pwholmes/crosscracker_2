@@ -19,7 +19,7 @@ def create_test_entry(clue: str, answer: str, length: int) -> Entry:
 def test_generate_candidates_integration():
     """Integration test that calls the real LLM endpoint."""
     entry = create_test_entry("Old-fashioned butter maker", "CHURN", 5)
-    candidates = LLM.generate_candidates(entry, search_level=0)
+    candidates = LLM.generate_candidates(entry, pattern=entry.pattern, search_level=0)
 
     assert isinstance(candidates, list)
     assert len(candidates) > 0
