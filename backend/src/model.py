@@ -28,8 +28,8 @@ class Candidate:
     entry_id: str
     answer: str
     search_level: int = 0
-    llm_confidence: float = 0.0
-    logprob_confidence: float = 0.0
+    llm_confidence: float = field(default_factory=lambda: float('-inf'))
+    logprob_confidence: float = field(default_factory=lambda: float('-inf'))
     backtracks : int = 0
     verification_failures: int = 0
 
@@ -41,8 +41,29 @@ class Candidate:
     
     @property
     def confidence(self) -> float:
-        base_confidence = self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
-            self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
+        """
+        Calculate weighted confidence, intelligently handling unset scores.
+        • If only LLM confidence is set, use it directly.
+        • If only logprob confidence is set, use it directly.
+        • If both are set, use weighted average (60% LLM, 40% logprob).
+        • If neither is set, return MINIMUM_CONFIDENCE.
+        """
+        llm_set = self.llm_confidence > float('-inf')
+        logprob_set = self.logprob_confidence > float('-inf')
+        
+        if not llm_set and not logprob_set:
+            # Neither score has been set; return default
+            return float(self.MINIMUM_CONFIDENCE)
+        elif llm_set and not logprob_set:
+            # Only LLM confidence is set; use it directly
+            base_confidence = self.llm_confidence
+        elif logprob_set and not llm_set:
+            # Only logprob confidence is set; use it directly
+            base_confidence = self.logprob_confidence
+        else:
+            # Both are set; use weighted average
+            base_confidence = self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
+                self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
         
         penalized = base_confidence - \
             self.backtracks * Candidate.BACKTRACK_PENALTY - \
@@ -82,8 +103,8 @@ class Candidate:
             entry_id=entry_id,
             answer=data["answer"],
             search_level=data.get("search_level", 0),
-            llm_confidence=data.get("llm_confidence", 0.0),
-            logprob_confidence=data.get("logprob_confidence", 0.0),
+            llm_confidence=data.get("llm_confidence", float('-inf')),
+            logprob_confidence=data.get("logprob_confidence", float('-inf')),
             backtracks=data.get("backtracks", 0),
             verification_failures=data.get("verification_failures", 0),
         )
