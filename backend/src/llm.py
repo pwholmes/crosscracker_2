@@ -103,12 +103,12 @@ class LLM:
         provider = LLM._ensure_initialized()
         
         # Call provider's generation and scoring in sequence
-        candidates = provider.generate_candidates(entry, pattern, search_level)
+        candidates = provider.provider_generate_candidates(entry, pattern, search_level)
         if not candidates:
             return []
         
         # Score the candidates
-        scored_candidates = provider.score_candidates(entry, candidates, search_level)
+        scored_candidates = provider.provider_score_candidates(entry, candidates, search_level)
 
         # Debug print: show all candidates and their aggregate confidence levels
         logger.debug("[LLM FINAL RESPONSE]: " + ", ".join(f"{c.answer} ({c.confidence:.1f})" for c in scored_candidates))
@@ -126,24 +126,4 @@ class LLM:
         :return: True if plausible, False otherwise
         """
         provider = LLM._ensure_initialized()
-        return provider.verify_answer(entry, answer)
-
-
-if __name__ == "__main__":
-    # Manual test
-    import logging
-    from .model import Entry, Cell
-    
-    logging.basicConfig(level=logging.DEBUG)
-    
-    clue = "Old-fashioned butter maker"
-    answer = "CHURN"
-    length = len(answer)
-    grid: list[list[Cell]] = [[Cell(0, i) for i in range(length)]]
-    entry = Entry("1A", clue, answer, grid, (0, 0), length)
-
-    print(f"Clue: {entry.clue}")
-    candidates = LLM.generate_candidates(entry, pattern=entry.pattern, search_level=0)
-    print("Candidates:")
-    for cand in candidates:
-        print(f"- {cand.answer} ({cand.confidence})")
+        return provider.provider_verify_answer(entry, answer)
