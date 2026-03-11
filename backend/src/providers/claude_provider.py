@@ -47,6 +47,9 @@ class ClaudeProvider(LLMProvider):
     """
     LLM provider implementation for Anthropic Claude models.
     """
+
+    # Tune generation creativity by search level (0=conservative, 2=exploratory)
+    CANDIDATE_GENERATION_TUNING_PARAMS: list[float] = [0.25, 0.70, 1.00]
     
     def __init__(self):
         """Initialize Claude provider from environment variables."""
@@ -68,9 +71,14 @@ class ClaudeProvider(LLMProvider):
             hints_str = ", ".join(f"'{clue}'->{answer}" for clue, answer, _ in entry.hints)
             logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
 
+        # Mirror Ollama behavior: generation creativity scales by search level.
+        clamped_level = max(0, min(search_level, len(self.CANDIDATE_GENERATION_TUNING_PARAMS) - 1))
+        temperature = self.CANDIDATE_GENERATION_TUNING_PARAMS[clamped_level]
+
         response = self.client.messages.create(
             model=self.model_name,
             max_tokens=1024,
+            temperature=temperature,
             messages=[
                 {"role": "user", "content": prompt}
             ]
