@@ -574,6 +574,10 @@ class Solver:
             for c, pattern in self._blacklist.items()
         ]
         checkpoint["blacklist"] = blacklist_data
+
+        # Include recording history so it survives checkpoint round-trips
+        if self._recording is not None:
+            checkpoint["recording"] = self._recording
         
         return checkpoint
     
@@ -593,4 +597,8 @@ class Solver:
                 candidate = entry.get_candidate(answer)
                 if candidate is not None:
                     self._blacklist[candidate] = pattern
+
+        # Restore recording history so the final recording includes pre-checkpoint events
+        if self._recording is not None:
+            self._recording = list(checkpoint_data.get("recording", []))
 
