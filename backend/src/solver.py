@@ -155,6 +155,16 @@ class Solver:
                 continue
             logger.debug(f"[STEP VERIFY]: PASSED entry {entry.entry_id}")
 
+            # Validate the candidate answer against its own clue.
+            # This runs after crossing verification so we skip the LLM call
+            # for candidates that already fail the cheaper crossing check.
+            #if not LLM.verify_answer(entry, candidate.answer):
+            #    logger.debug(
+            #        f"[STEP VALIDATE]: REJECTED {entry.entry_id}='{candidate.answer}' — "
+            #        f"failed LLM answer validation"
+            #    )
+            #    continue
+
             # Verification passed - now actually place the entry
             placement = Placement(
                 entry_id=entry.entry_id,
