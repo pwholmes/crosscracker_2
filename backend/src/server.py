@@ -48,7 +48,10 @@ PLAY_INTERVAL_SECONDS = 0
 # Logger
 logger = logging.getLogger("src.server")
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s [%(name)s] %(message)s")
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+# Keep noisy third-party libraries from overwhelming application logs.
+for noisy_logger in ("urllib3", "httpcore.http11", "anthropic._base_client"):
+    logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
 
 class ControlAction(BaseModel):
