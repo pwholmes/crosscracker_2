@@ -125,6 +125,8 @@ def serialize_state() -> dict[str, Any]:
                 "puzzle_id": None,
                 "steps": 0,
                 "fallbacks": 0,
+                "backtracks": 0,
+                "incorrect": 0,
             },
             "grid": None,
         }
@@ -176,6 +178,7 @@ def serialize_state() -> dict[str, Any]:
         numbers[r][c] = info["number"]
 
     entries: dict[str, dict[str, Any]] = {}
+    incorrect = 0
     for eid, e in grid.entries.items():
         entry_data: dict[str, Any] = {
             "pattern": e.pattern,
@@ -184,6 +187,10 @@ def serialize_state() -> dict[str, Any]:
             "verified": e.verified,
             "correct_answer": e.correct_answer,
         }
+        # Incorrect excludes fallbacks (tracked separately), and counts only
+        # fully-filled non-fallback entries that differ from the correct answer.
+        if e.completed and e.pattern != e.correct_answer:
+            incorrect += 1
         # Include placement confidence and selection score if entry is placed
         if e.placement is not None:
             entry_data["confidence"] = e.placement.candidate.confidence
@@ -196,6 +203,7 @@ def serialize_state() -> dict[str, Any]:
             "steps": steps_executed,
             "fallbacks": fallbacks_used,
             "backtracks": backtracks_used,
+            "incorrect": incorrect,
         },
         "grid": {
             "rows": rows,

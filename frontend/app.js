@@ -30,6 +30,7 @@ const itemSelectLabel = document.getElementById('item-select-label');
 const stepCountEl = document.getElementById('step-count');
 const fallbackCountEl = document.getElementById('fallback-count');
 const backtrackCountEl = document.getElementById('backtrack-count');
+const incorrectCountEl = document.getElementById('incorrect-count');
 
 const initProgressDiv = document.getElementById('init-progress');
 const progressText = document.getElementById('progress-text');
@@ -239,9 +240,26 @@ function renderTallyFromState(metrics) {
 	const steps = metrics?.steps ?? 0;
 	const fallbacks = metrics?.fallbacks ?? 0;
 	const backtracks = metrics?.backtracks ?? 0;
+	const incorrect = metrics?.incorrect ?? 0;
 	if (stepCountEl) stepCountEl.textContent = String(steps);
 	if (fallbackCountEl) fallbackCountEl.textContent = String(fallbacks);
 	if (backtrackCountEl) backtrackCountEl.textContent = String(backtracks);
+	if (incorrectCountEl) incorrectCountEl.textContent = String(incorrect);
+}
+
+function countIncorrectEntries(entries) {
+	if (!entries) return 0;
+	let incorrect = 0;
+	for (const entry of Object.values(entries)) {
+		const pattern = entry?.pattern;
+		const correct = entry?.correct_answer;
+		if (entry?.used_fallback) continue;
+		if (typeof pattern !== 'string' || typeof correct !== 'string') continue;
+		if (!pattern.includes('.') && pattern !== correct) {
+			incorrect++;
+		}
+	}
+	return incorrect;
 }
 
 function setClueHeadingsVisible(visible) {
@@ -682,6 +700,7 @@ function replayPlay() {
 
 		// Count fallbacks from current entries
 		const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
+		const incorrect = countIncorrectEntries(replayEntries);
 
 		// Dispatch through the same message processor as WebSocket uses
 		processMessage({ type: 'event', event });
@@ -694,6 +713,7 @@ function replayPlay() {
 				steps: replayIndex + 1,
 				fallbacks: fallbacks,
 				backtracks: replayBacktrackCount,
+				incorrect: incorrect,
 			},
 		});
 
@@ -748,6 +768,7 @@ function replayStep() {
 	replayEntries = computeReplayEntriesFromGrid(replayBaseEntries, replayGridState, entryToCells, replayFallbackEntries, replayEntryMetrics);
 
 	const fallbacks = Object.values(replayEntries).filter(e => e.used_fallback).length;
+	const incorrect = countIncorrectEntries(replayEntries);
 
 	processMessage({ type: 'event', event });
 	processMessage({
@@ -759,6 +780,7 @@ function replayStep() {
 			steps: replayIndex + 1,
 			fallbacks: fallbacks,
 			backtracks: replayBacktrackCount,
+			incorrect: incorrect,
 		},
 	});
 
@@ -792,6 +814,7 @@ function replayReset() {
 				steps: 0,
 				fallbacks: 0,
 				backtracks: 0,
+				incorrect: 0,
 			},
 		});
 	}
@@ -889,6 +912,7 @@ async function loadSelectedRecording() {
 						steps: 0,
 						fallbacks: 0,
 						backtracks: 0,
+						incorrect: 0,
 					},
 				});
 			}
