@@ -3,6 +3,7 @@ from typing import Any, Callable
 import asyncio
 import logging
 
+from config import SOLVER_MAX_BACKTRACKS_BEFORE_FALLBACK
 from llm import LLM
 from model import Grid, Entry, Candidate, Placement
 from heuristics import BasicStrategy
@@ -21,9 +22,6 @@ class Solver:
     - Only after a full pass makes no placements do we backtrack (heuristic), and if
       needed, apply fallbacks (removing conflicting non-fallback entries).
     """
-
-    # Backtracks for an entry before forcing its fallback
-    MAX_BACKTRACKS_BEFORE_FALLBACK: int = 3
 
     _blacklist: dict[Candidate, str]
 
@@ -234,7 +232,7 @@ class Solver:
                 self._blacklist[placement.candidate] = entry.pattern
                 
                 # Check if this entry has been backtracked too many times
-                if entry.total_backtracks >= self.MAX_BACKTRACKS_BEFORE_FALLBACK:
+                if entry.total_backtracks >= SOLVER_MAX_BACKTRACKS_BEFORE_FALLBACK:
                     # Force fallback for this thrashing entry
                     entry = self.grid.entries.get(entry_id)
                     if entry is not None and entry.correct_answer:

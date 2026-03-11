@@ -1,13 +1,14 @@
 import logging
+from config import (
+    HEURISTICS_FALLBACK_UNFILLED_RATIO_WEIGHT,
+    HEURISTICS_SELECTION_COMPLETENESS_WEIGHT,
+    HEURISTICS_SELECTION_CONFIDENCE_WEIGHT,
+    HEURISTICS_SELECTION_CONSTRAINT_WEIGHT,
+    HEURISTICS_SELECTION_LENGTH_WEIGHT,
+)
 from model import Grid, Entry, Candidate
 
 class BasicStrategy:
-    # Weights should sum to 1.0
-    SELECTION_CONFIDENCE_WEIGHT = 0.25
-    SELECTION_LENGTH_WEIGHT = 0.2
-    SELECTION_COMPLETENESS_WEIGHT = 0.35
-    SELECTION_CONSTRAINT_WEIGHT = 0.2
-    MIN_CANDIDATE_CONFIDENCE_THRESHOLD = 25
 
     @staticmethod
     def select_best_unfilled_entry(grid: Grid, attempted_entries: set[tuple[str, str]], blacklist: dict[Candidate, str] | None = None) -> tuple[Entry, Candidate, float] | None:
@@ -36,13 +37,13 @@ class BasicStrategy:
             filled_count = entry.length - blank_count
             completeness = filled_count / entry.length
 
-            confidence_score = BasicStrategy.SELECTION_CONFIDENCE_WEIGHT * cand.confidence
+            confidence_score = HEURISTICS_SELECTION_CONFIDENCE_WEIGHT * cand.confidence
             # This length score favors longer answers
-            length_score = BasicStrategy.SELECTION_LENGTH_WEIGHT * min(entry.length,10)/10 * 100
+            length_score = HEURISTICS_SELECTION_LENGTH_WEIGHT * min(entry.length,10)/10 * 100
             # This length score favors shorter answers
             #length_score = LENGTH_WEIGHT * max(0, 100 - 100/9 * (entry.length - 1))
-            completeness_score = BasicStrategy.SELECTION_COMPLETENESS_WEIGHT * completeness * 100
-            constraint_weight = BasicStrategy.SELECTION_CONSTRAINT_WEIGHT * (100 / max(1, entry.num_candidates(True)))
+            completeness_score = HEURISTICS_SELECTION_COMPLETENESS_WEIGHT * completeness * 100
+            constraint_weight = HEURISTICS_SELECTION_CONSTRAINT_WEIGHT * (100 / max(1, entry.num_candidates(True)))
             score =  confidence_score + length_score + completeness_score + constraint_weight
 
             if best_entry is None or score > best_score:
@@ -93,7 +94,7 @@ class BasicStrategy:
             attempted_candidates.add(candidate.answer)
             if len(candidate.answer) != entry.length:
                 continue
-            if candidate.confidence < BasicStrategy.MIN_CANDIDATE_CONFIDENCE_THRESHOLD:
+            if candidate.confidence < Candidate.MIN_SELECTABLE_CONFIDENCE:
                 continue
             if not entry.can_place_answer(candidate.answer):
                 continue
@@ -304,7 +305,6 @@ class BasicStrategy:
                  unplaced entries exist or all unplaced entries have no unfilled crossings
         """
         # These weights should sum to 1
-        W_UNFILLED_RATIO = 0.5
         #W_CONFIDENCE = 0.3
         #W_RETRY = 0.2
 
@@ -326,7 +326,7 @@ class BasicStrategy:
                     filled_count += 1
             if unfilled_count == 0:
                 continue
-            score = W_UNFILLED_RATIO * unfilled_count / (filled_count + 1)
+            score = HEURISTICS_FALLBACK_UNFILLED_RATIO_WEIGHT * unfilled_count / (filled_count + 1)
             if score > best_score:
                 best_score = score
                 best_entry = entry

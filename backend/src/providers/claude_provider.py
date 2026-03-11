@@ -7,8 +7,9 @@ Since Claude doesn't expose logprobs like Ollama, we rely on LLM-scored confiden
 
 import logging
 import os
-from typing import Any
+from typing import Any, cast
 from dotenv import load_dotenv
+from config import CLAUDE_CANDIDATE_GENERATION_TUNING_PARAMS
 from llm_provider import LLMProvider
 from model import Entry
 from anthropic import Anthropic, AsyncAnthropic
@@ -48,9 +49,6 @@ class ClaudeProvider(LLMProvider):
     LLM provider implementation for Anthropic Claude models.
     """
 
-    # Tune generation creativity by search level (0=conservative, 2=exploratory)
-    CANDIDATE_GENERATION_TUNING_PARAMS: list[float] = [0.25, 0.70, 1.00]
-    
     def __init__(self):
         """Initialize Claude provider from environment variables."""
         load_dotenv()
@@ -72,13 +70,17 @@ class ClaudeProvider(LLMProvider):
             logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
 
         # Mirror Ollama behavior: generation creativity scales by search level.
-        clamped_level = max(0, min(search_level, len(self.CANDIDATE_GENERATION_TUNING_PARAMS) - 1))
-        temperature = self.CANDIDATE_GENERATION_TUNING_PARAMS[clamped_level]
+        tuning_params = cast(list[dict[str, float | int]], CLAUDE_CANDIDATE_GENERATION_TUNING_PARAMS)
+        clamped_level = max(0, min(search_level, len(tuning_params) - 1))
+        tuning = tuning_params[clamped_level]
+        temperature = cast(float, tuning["temperature"])
+        top_k = cast(int, tuning["top_k"])
 
         response = self.client.messages.create(
             model=self.model_name,
             max_tokens=1024,
             temperature=temperature,
+            top_k=top_k,
             messages=[
                 {"role": "user", "content": prompt}
             ]

@@ -7,9 +7,8 @@ based on environment configuration, and exposes a backward-compatible LLM API.
 
 from collections.abc import Callable
 import logging
-import os
-from dotenv import load_dotenv
 
+from config import LLM_DEFAULT_CONFIDENCE, LLM_MAX_CANDIDATES, LLM_MAX_SEARCH_LEVEL, LLM_PROVIDER_NAME
 from model import Entry, Candidate
 from providers import OllamaProvider, ClaudeProvider
 from llm_provider import LLMProvider
@@ -27,11 +26,10 @@ class LLM:
     Delegates to the configured provider (Ollama or Claude) based on LLM_PROVIDER env var.
     """
     
-    # Configuration defaults
-    MAX_SEARCH_LEVEL: int = 2
-    DEFAULT_CONFIDENCE = 30.0
-    MAX_CANDIDATES: list[int] = [7, 12, 15]  # Max candidates per search level
-    
+    MAX_SEARCH_LEVEL: int = LLM_MAX_SEARCH_LEVEL
+    DEFAULT_CONFIDENCE: float = LLM_DEFAULT_CONFIDENCE
+    MAX_CANDIDATES: list[int] = LLM_MAX_CANDIDATES
+
     _provider: LLMProvider | None = None
 
     @staticmethod
@@ -43,8 +41,7 @@ class LLM:
         - "ollama" (default): Use local Ollama instance
         - "claude": Use Anthropic Claude API
         """
-        load_dotenv()
-        provider_name = os.environ.get("LLM_PROVIDER", "ollama").lower()
+        provider_name = LLM_PROVIDER_NAME
         
         if provider_name == "claude":
             logger.info("Initializing Claude provider")

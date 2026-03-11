@@ -11,6 +11,12 @@ import math
 from typing import Any, cast
 from dotenv import load_dotenv
 
+from config import (
+    OLLAMA_CANDIDATE_GENERATION_TUNING_PARAMS,
+    OLLAMA_KEEP_ALIVE,
+    OLLAMA_TIMEOUT_SECONDS,
+    OLLAMA_TOP_LOGPROBS,
+)
 from llm_provider import LLMProvider
 from model import Entry, Candidate
 
@@ -22,19 +28,6 @@ class OllamaProvider(LLMProvider):
     LLM provider implementation for local Ollama instances.
     """
     
-    # Configuration for candidate generation behavior
-    DEFAULT_CONFIDENCE = 30.0
-    MAX_SEARCH_LEVEL: int = 2
-    MAX_CANDIDATES: list[int] = [7, 12, 15]
-    CANDIDATE_GENERATION_TUNING_PARAMS: list[dict[str, float | int]] = [
-        {"temperature": 0.25, "top_p": 0.8, "top_k": 10},
-        {"temperature": 0.70, "top_p": 0.9, "top_k": 30},
-        {"temperature": 1.00, "top_p": 0.95, "top_k": 60}
-    ]
-    TIMEOUT_SECONDS = 120
-    KEEP_ALIVE = "30m"
-    TOP_LOGPROBS = 5
-
     def __init__(self):
         """Initialize Ollama provider from environment variables."""
         load_dotenv()
@@ -49,6 +42,8 @@ class OllamaProvider(LLMProvider):
             hints_str = ", ".join(f"'{clue}'->{answer}" for clue, answer, _ in entry.hints)
             logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
 
+        tuning_params = cast(list[dict[str, float | int]], OLLAMA_CANDIDATE_GENERATION_TUNING_PARAMS)
+
         response = requests.post(
             self.url,
             json={
@@ -56,11 +51,11 @@ class OllamaProvider(LLMProvider):
                 "prompt": prompt,
                 "stream": False,
                 "logprobs": True,
-                "top_logprobs": self.TOP_LOGPROBS,
-                "keep_alive": self.KEEP_ALIVE,
-                "options": self.CANDIDATE_GENERATION_TUNING_PARAMS[search_level]
+                "top_logprobs": OLLAMA_TOP_LOGPROBS,
+                "keep_alive": OLLAMA_KEEP_ALIVE,
+                "options": tuning_params[search_level]
             },
-            timeout=self.TIMEOUT_SECONDS
+            timeout=OLLAMA_TIMEOUT_SECONDS
         )
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -75,9 +70,9 @@ class OllamaProvider(LLMProvider):
                 "model": self.model_name,
                 "prompt": prompt,
                 "stream": False,
-                "keep_alive": self.KEEP_ALIVE
+                "keep_alive": OLLAMA_KEEP_ALIVE
             },
-            timeout=self.TIMEOUT_SECONDS
+            timeout=OLLAMA_TIMEOUT_SECONDS
         )
         response.raise_for_status()
         result: dict[str, Any] = response.json()
@@ -93,9 +88,9 @@ class OllamaProvider(LLMProvider):
                 "model": self.model_name,
                 "prompt": prompt,
                 "stream": False,
-                "keep_alive": self.KEEP_ALIVE
+                "keep_alive": OLLAMA_KEEP_ALIVE
             },
-            timeout=self.TIMEOUT_SECONDS
+            timeout=OLLAMA_TIMEOUT_SECONDS
         )
         response.raise_for_status()
         result: dict[str, Any] = response.json()

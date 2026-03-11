@@ -1,7 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import ClassVar, Final, Any, Optional
+from typing import Any, ClassVar, Optional
 import logging
+
+from config import (
+    MODEL_BACKTRACK_PENALTY,
+    MODEL_LLM_CONFIDENCE_WEIGHT,
+    MODEL_MIN_SELECTABLE_CONFIDENCE,
+    MODEL_VERIFICATION_PENALTY,
+)
 
 logger = logging.getLogger("src.model")
 
@@ -20,11 +27,7 @@ class Candidate:
     Represents a possible answer for a crossword entry, including scoring and placement context.
     Combines the previous Candidate and ScoredCandidate classes.
     """
-    LLM_CONFIDENCE_WEIGHT: ClassVar[Final[float]] = 0.6
-    LOGPROB_CONFIDENCE_WEIGHT: ClassVar[Final[float]] = 1 - LLM_CONFIDENCE_WEIGHT
-    BACKTRACK_PENALTY: ClassVar[Final[int]]  = 25
-    VERIFICATION_PENALTY: ClassVar[Final[int]] = 5
-    MINIMUM_CONFIDENCE: ClassVar[Final[int]] = 20
+    MIN_SELECTABLE_CONFIDENCE: ClassVar[int] = MODEL_MIN_SELECTABLE_CONFIDENCE
     entry_id: str
     answer: str
     search_level: int = 0
@@ -46,14 +49,14 @@ class Candidate:
         • If only LLM confidence is set, use it directly.
         • If only logprob confidence is set, use it directly.
         • If both are set, use weighted average (60% LLM, 40% logprob).
-        • If neither is set, return MINIMUM_CONFIDENCE.
+        • If neither is set, return MIN_SELECTABLE_CONFIDENCE.
         """
         llm_set = self.llm_confidence > float('-inf')
         logprob_set = self.logprob_confidence > float('-inf')
         
         if not llm_set and not logprob_set:
             # Neither score has been set; return default
-            return float(self.MINIMUM_CONFIDENCE)
+            return float(Candidate.MIN_SELECTABLE_CONFIDENCE)
         elif llm_set and not logprob_set:
             # Only LLM confidence is set; use it directly
             base_confidence = self.llm_confidence
@@ -62,16 +65,16 @@ class Candidate:
             base_confidence = self.logprob_confidence
         else:
             # Both are set; use weighted average
-            base_confidence = self.llm_confidence * self.LLM_CONFIDENCE_WEIGHT + \
-                self.logprob_confidence * self.LOGPROB_CONFIDENCE_WEIGHT
+            base_confidence = self.llm_confidence * MODEL_LLM_CONFIDENCE_WEIGHT + \
+                self.logprob_confidence * (1 - MODEL_LLM_CONFIDENCE_WEIGHT)
         
         penalized = base_confidence - \
-            self.backtracks * Candidate.BACKTRACK_PENALTY - \
-            self.verification_failures * Candidate.VERIFICATION_PENALTY
+            self.backtracks * MODEL_BACKTRACK_PENALTY - \
+            self.verification_failures * MODEL_VERIFICATION_PENALTY
         
         # Only apply minimum floor if base confidence was above threshold
-        if base_confidence >= Candidate.MINIMUM_CONFIDENCE:
-            return max(Candidate.MINIMUM_CONFIDENCE, penalized)
+        if base_confidence >= Candidate.MIN_SELECTABLE_CONFIDENCE:
+            return max(Candidate.MIN_SELECTABLE_CONFIDENCE, penalized)
         else:
             return penalized
 

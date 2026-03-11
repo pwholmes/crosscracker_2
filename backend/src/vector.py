@@ -5,13 +5,9 @@ from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
 import time
 from pathlib import Path
 
+from config import CHROMA_COLLECTION_NAME, CHROMA_EXECUTION_PROVIDER, CHROMA_HOST, CHROMA_PORT
 from llm import LLM
 from model import Entry, Cell
-
-CHROMA_HOST = 'localhost'
-CHROMA_PORT = 8001
-COLLECTION_NAME = "crossword_1"
-EXECUTION_PROVIDER = 'CUDAExecutionProvider'
 
 def open_database() -> Collection:
     print("Opening database...")
@@ -39,9 +35,9 @@ def open_database() -> Collection:
     # the GPU instead of the CPU.)
     #print(ort.get_available_providers())
     #gpu_ef = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2", device="cuda")
-    gpu_ef = ONNXMiniLM_L6_V2(preferred_providers=[EXECUTION_PROVIDER])
+    gpu_ef = ONNXMiniLM_L6_V2(preferred_providers=[CHROMA_EXECUTION_PROVIDER])
 
-    collection: Collection = client.get_or_create_collection(name=COLLECTION_NAME, embedding_function=gpu_ef) #type: ignore
+    collection: Collection = client.get_or_create_collection(name=CHROMA_COLLECTION_NAME, embedding_function=gpu_ef) #type: ignore
     return collection
 
 def query_database(collection: Collection, entries: list[Entry]):

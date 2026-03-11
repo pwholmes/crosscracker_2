@@ -1,7 +1,6 @@
 from __future__ import annotations
 import asyncio
 from threading import Lock
-import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from pydantic import BaseModel
@@ -9,7 +8,6 @@ from typing import Any, Callable, cast
 import uvicorn
 import logging
 import json
-from pathlib import Path
 from datetime import datetime
 import uuid
 
@@ -18,6 +16,7 @@ import uuid
 # just to be sure the env values are loaded, but it doesn't hurt to call it more than once.
 load_dotenv()
 
+from config import CHECKPOINTS_DIR, FRONTEND_DIR, RECORDINGS_DIR, SERVER_PLAY_INTERVAL_SECONDS
 from model import Grid
 from llm import LLM
 from solver import Solver
@@ -38,12 +37,8 @@ backtracks_used: int = 0
 _metrics_lock = Lock()
 
 # Recordings
-BASE_DIR = Path(__file__).resolve().parents[2]
-RECORDINGS_DIR = BASE_DIR / "backend" / "recordings"
 RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
-CHECKPOINTS_DIR = BASE_DIR / "backend" / "checkpoints"
 CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
-PLAY_INTERVAL_SECONDS = 0
 
 # Logger
 logger = logging.getLogger("src.server")
@@ -63,7 +58,6 @@ app = FastAPI()
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pathlib import Path
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -346,7 +340,7 @@ async def start_player() -> None:
             if ev.get("event") in ("solved", "failed"):
                 play_event.clear()
                 # Recording is only saved if user confirms via frontend
-            await asyncio.sleep(PLAY_INTERVAL_SECONDS)
+            await asyncio.sleep(SERVER_PLAY_INTERVAL_SECONDS)
 
     asyncio.create_task(player_loop())
 
@@ -769,7 +763,6 @@ async def load_puzzle(puzzle_id: str):
 
 
 # Mount frontend static files after routes are defined so websocket routes are matched first
-FRONTEND_DIR = BASE_DIR / "frontend"
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 else:
