@@ -215,7 +215,6 @@ class Solver:
             placement = entry.placement
             assert placement is not None, "Placement record for a placed entry cannot be None"
             assert placement.candidate is not None, "Candidate  record for a placement cannot be None"
-            placement.candidate.backtracks += 1
             if self._remove_placed(entry_id):
                 # Add the candidate to the blacklist so we don't try it again
                 self._blacklist.add(placement.candidate)
