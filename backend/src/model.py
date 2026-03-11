@@ -90,8 +90,8 @@ class Candidate:
         return {
             "answer": self.answer,
             "search_level": self.search_level,
-            "llm_confidence": self.llm_confidence,
-            "logprob_confidence": self.logprob_confidence,
+            "llm_confidence": None if self.llm_confidence == float('-inf') else self.llm_confidence,
+            "logprob_confidence": None if self.logprob_confidence == float('-inf') else self.logprob_confidence,
             "backtracks": self.backtracks,
             "verification_failures": self.verification_failures
         }
@@ -99,12 +99,13 @@ class Candidate:
     @staticmethod
     def deserialize(entry_id: str, data: dict[str, Any]) -> Candidate:
         """Deserialize a candidate from a dict."""
+        _neg_inf = float('-inf')
         return Candidate(
             entry_id=entry_id,
             answer=data["answer"],
             search_level=data.get("search_level", 0),
-            llm_confidence=data.get("llm_confidence", float('-inf')),
-            logprob_confidence=data.get("logprob_confidence", float('-inf')),
+            llm_confidence=_neg_inf if data.get("llm_confidence") is None else data["llm_confidence"],
+            logprob_confidence=_neg_inf if data.get("logprob_confidence") is None else data["logprob_confidence"],
             backtracks=data.get("backtracks", 0),
             verification_failures=data.get("verification_failures", 0),
         )
@@ -211,7 +212,7 @@ class Entry:
         """Returns the CURRENT search level for the specified pattern"""
         if pattern is None:
             pattern = self.pattern
-        return self._pattern_levels.get(self.pattern, 0)
+        return self._pattern_levels.get(pattern, 0)
     
     @property
     def completed(self) -> bool:
