@@ -7,10 +7,10 @@ class BasicStrategy:
     SELECTION_LENGTH_WEIGHT = 0.2
     SELECTION_COMPLETENESS_WEIGHT = 0.35
     SELECTION_CONSTRAINT_WEIGHT = 0.2
-    MIN_CANDIDATE_CONFIDENCE_THRESHOLD = 20
+    MIN_CANDIDATE_CONFIDENCE_THRESHOLD = 25
 
     @staticmethod
-    def select_best_unfilled_entry(grid: Grid, attempted_entries: set[tuple[str, str]], blacklist: set[Candidate] | None = None) -> tuple[Entry, Candidate, float] | None:
+    def select_best_unfilled_entry(grid: Grid, attempted_entries: set[tuple[str, str]], blacklist: dict[Candidate, str] | None = None) -> tuple[Entry, Candidate, float] | None:
         """Select the best unfilled entry using a heuristic that balances:
         1. Candidate confidence (higher confidence preferred)
         2. Entry completeness (higher percentage of filled letters preferred)
@@ -56,7 +56,7 @@ class BasicStrategy:
 
 
     @staticmethod
-    def select_best_candidate(entry: Entry, attempted_candidates: set[str], widen_search: bool = False, blacklist: set[Candidate] | None = None) -> Candidate | None:
+    def select_best_candidate(entry: Entry, attempted_candidates: set[str], widen_search: bool = False, blacklist: dict[Candidate, str] | None = None) -> Candidate | None:
         """
         Select the best candidate for an entry:
         1. It must not be in the blacklist (entries that failed previously)
@@ -81,8 +81,13 @@ class BasicStrategy:
         best_confidence = float("-inf")
 
         for candidate in candidates:
+            # Pattern-aware blacklist: skip only if the entry's pattern hasn't
+            # changed since the candidate was blacklisted.  A pattern change
+            # means a crossing entry was placed or removed, so the candidate
+            # deserves another chance.
             if blacklist is not None and candidate in blacklist:
-                continue
+                if blacklist[candidate] == entry.pattern:
+                    continue
             if candidate.answer in attempted_candidates:
                 continue
             attempted_candidates.add(candidate.answer)
@@ -108,14 +113,16 @@ class BasicStrategy:
         
         Algorithm:
         For each unplaced entry (the "stuck" entry):
-          - If it has no candidates, skip it -- it's hopeless and backtracking won't help
+          - If it has no candidates, try generating some.  If we can't generate any,
+            skip it -- it's hopeless and backtracking won't help
           - Otherwise, examine its top N candidates
           - For each placed crossing entry, determine what letter it contributes
             at the shared cell
           - Count how many of the stuck entry's top N candidates conflict with
             that crossing letter
-          - Award blame to the crossing entry proportional to the conflict ratio,
-            weighted by candidate scarcity
+          - Award blame to the crossing entry proportional to the
+            confidence-weighted conflict ratio, scaled inversely by
+            the crossing entry's placement confidence
         Select the placed entry with the highest total blame score.
         Break ties by lowest confidence.
         """
@@ -159,9 +166,6 @@ class BasicStrategy:
                     logger.debug(f"No viable candidates could be generated for entry {entry.entry_id} even when removing crossing entries; skipping for backtrack analysis and leaving for potential fallback")
                     continue
 
-            # more weight when fewer candidates exist
-            scarcity_weight = 1.0 + (1.0 / len(candidates))
-
             for crossing_entry_id in crossing_entry_ids:
                 crossing_entry = grid.entries[crossing_entry_id]
                 if crossing_entry.placement is None:
@@ -174,22 +178,37 @@ class BasicStrategy:
                 # What letter is the crossing entry contributing at the shared cell?
                 cross_position, crossing_letter = entry.get_crossing_letter(crossing_entry)
                 if cross_position is None or crossing_letter is None:
-                    #logger.debug(f"Crossing entry {crossing_entry.entry_id} has no conflict with entry {entry.entry_id}, so can't be blamed; skipping")
                     continue
 
-                # How many of this entry's candidates conflict with that letter?
-                conflicting = sum(
-                    1 for candidate in candidates
+                # Compute confidence-weighted blame.
+                # For each candidate that conflicts with this crossing letter,
+                # weight the conflict by the blocked candidate's confidence
+                # (high-confidence candidates being blocked = stronger signal).
+                # Then scale inversely by the blocker's placement confidence
+                # (low-confidence placements deserve more blame).
+                blocker_confidence = crossing_entry.placement.candidate.confidence
+                blocker_weight = 100.0 / max(blocker_confidence, 1.0)
+
+                weighted_conflicts = sum(
+                    candidate.confidence
+                    for candidate in candidates
                     if candidate.answer[cross_position] != crossing_letter
                 )
-                conflict_ratio = conflicting / len(candidates)
-                #logger.debug(f"Crossing entry {crossing_entry.entry_id} has {len(candidates)} conflicting candidates")
-                blame[crossing_entry_id] = blame.get(crossing_entry_id, 0.0) + conflict_ratio * scarcity_weight
+                total_confidence = sum(c.confidence for c in candidates)
+                if total_confidence <= 0:
+                    continue
+                conflict_ratio = weighted_conflicts / total_confidence
+
+                blame[crossing_entry_id] = blame.get(crossing_entry_id, 0.0) + conflict_ratio * blocker_weight
 
         # If nothing could be blamed, we can't select a backtrack target.
         if not blame:
             logger.debug(f"BACKTRACK TARGET NOT SELECTED: Couldn't assign blame")
             return None
+
+        # Log the blame
+        for eid, val in blame.items():
+            logger.debug(f"SELECT BACKTRACK BLAME: Entry {eid}, blame {val}")
 
         # Find the maximum blame value and the entry(ies) that have it
         max_blame = max(blame.values())

@@ -25,10 +25,10 @@ class Solver:
     # Backtracks for an entry before forcing its fallback
     MAX_BACKTRACKS_BEFORE_FALLBACK: int = 3
 
-    _blacklist: set[Candidate]
+    _blacklist: dict[Candidate, str]
 
     def __init__(self, grid: Grid, *, defer_candidate_init: bool = False, record: bool = False):
-        self._blacklist = set()
+        self._blacklist = {}
         self.grid = grid
         self._recording: list[dict[str, Any]] | None = [] if record else None
         # Initialize candidates for all entries at width 0 with empty pattern
@@ -167,8 +167,9 @@ class Solver:
                 logger.error(f"[STEP ERROR] Unable to place candidate {candidate.answer} for entry {entry.entry_id}")
                 return self._finalize_event({"event": "fatal error"}, [])
 
-            # Clear blacklist on successful placement
-            self._blacklist.clear()
+            # NOTE: We do NOT clear the blacklist here.  Blacklisted candidates
+            # are automatically un-blacklisted when their entry's pattern changes
+            # (see select_best_candidate in heuristics.py).
 
             # Log the placement
             logger.debug(
@@ -216,8 +217,11 @@ class Solver:
             assert placement is not None, "Placement record for a placed entry cannot be None"
             assert placement.candidate is not None, "Candidate  record for a placement cannot be None"
             if self._remove_placed(entry_id):
-                # Add the candidate to the blacklist so we don't try it again
-                self._blacklist.add(placement.candidate)
+                # Blacklist this candidate paired with the entry's current pattern.
+                # It will be un-blacklisted automatically when the pattern changes
+                # (i.e., a crossing entry is placed or removed), signalling that
+                # the landscape is genuinely different.
+                self._blacklist[placement.candidate] = entry.pattern
                 
                 # Check if this entry has been backtracked too many times
                 if entry.total_backtracks >= self.MAX_BACKTRACKS_BEFORE_FALLBACK:
@@ -564,10 +568,10 @@ class Solver:
         """Serialize the complete solver state for checkpointing."""
         checkpoint = self.grid.serialize()
         
-        # Serialize the blacklist as a list of (entry_id, answer) tuples
+        # Serialize the blacklist as a list of {entry_id, answer, pattern} dicts
         blacklist_data = [
-            {"entry_id": c.entry_id, "answer": c.answer}
-            for c in self._blacklist
+            {"entry_id": c.entry_id, "answer": c.answer, "pattern": pattern}
+            for c, pattern in self._blacklist.items()
         ]
         checkpoint["blacklist"] = blacklist_data
         
@@ -583,9 +587,10 @@ class Solver:
         for item in blacklist_data:
             entry_id = item.get("entry_id")
             answer = item.get("answer")
+            pattern = item.get("pattern", "")
             entry = self.grid.entries.get(entry_id)
             if entry is not None:
                 candidate = entry.get_candidate(answer)
                 if candidate is not None:
-                    self._blacklist.add(candidate)
+                    self._blacklist[candidate] = pattern
 
