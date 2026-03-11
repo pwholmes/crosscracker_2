@@ -253,7 +253,7 @@ input:checked + .toggle-slider:before {
 }
 
 #tally {
-  margin: 8px 0 12px 0;
+  margin: 10px 0 0 0;
   font-size: 14px;
   text-align: center;
   color: #222;
