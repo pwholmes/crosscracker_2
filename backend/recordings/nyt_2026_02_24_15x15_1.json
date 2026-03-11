@@ -1,9 +1,9 @@
 {
   "puzzle_id": "nyt_2026_02_24_15x15",
-  "puzzle_title": "nyt_2026_02_24_15x15",
+  "puzzle_title": "NYT Tuesday 2026-02-24 - complete solution with 4 backtracks",
   "width": 15,
   "height": 15,
-  "timestamp": "2026-03-10T21:58:30.032972",
+  "timestamp": "2026-03-11T15:11:23.148494",
   "event_count": 81,
   "grid_state": {
     "rows": 15,
@@ -1001,59 +1001,14 @@
       }
     },
     {
-      "event": "backtrack",
-      "candidate": {
-        "entry_id": "68A",
-        "answer": "CREPT",
-        "pattern": "C....",
-        "search_level": 0,
-        "confidence": 28.0,
-        "selection_score": 46.5
-      }
-    },
-    {
       "event": "placed",
       "candidate": {
-        "entry_id": "68A",
-        "answer": "CREEP",
-        "pattern": "C....",
+        "entry_id": "53D",
+        "answer": "DWASP",
+        "pattern": "D.ASP",
         "search_level": 0,
-        "confidence": 75.0,
-        "selection score": 45.75
-      }
-    },
-    {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "57D",
-        "answer": "WRAP",
-        "pattern": ".RAP",
-        "search_level": 0,
-        "confidence": 70.0,
-        "selection score": 71.75
-      }
-    },
-    {
-      "event": "placed_fallback",
-      "candidate": {
-        "entry_id": "68A",
-        "answer": "CREEP",
-        "pattern": "C...P",
-        "search_level": 0,
-        "confidence": 100.0,
-        "selection_score": 100
-      },
-      "conflicts_removed": []
-    },
-    {
-      "event": "backtrack",
-      "candidate": {
-        "entry_id": "65A",
-        "answer": "MENSA",
-        "pattern": "M....",
-        "search_level": 0,
-        "confidence": 47.0,
-        "selection_score": 61.25
+        "confidence": 35.0,
+        "selection score": 49.60714285714286
       }
     },
     {
@@ -1063,7 +1018,7 @@
         "answer": "EVENINGWEAR",
         "pattern": "...NIN.....",
         "search_level": 0,
-        "confidence": 40.0,
+        "confidence": 65.0,
         "selection_score": 62.04545454545455
       }
     },
@@ -1083,69 +1038,76 @@
       "candidate": {
         "entry_id": "59A",
         "answer": "EVENINGWEAR",
-        "pattern": "EVENING...R",
+        "pattern": "EVENING..A.",
         "search_level": 0,
-        "confidence": 40.0,
-        "selection score": 75.45454545454545
+        "confidence": 90.0,
+        "selection score": 87.95454545454545
       }
     },
     {
-      "event": "placed",
-      "candidate": {
-        "entry_id": "65A",
-        "answer": "MENSA",
-        "pattern": "M...A",
-        "search_level": 0,
-        "confidence": 47.0,
-        "selection score": 55.75
-      }
-    },
-    {
-      "event": "placed_fallback",
-      "candidate": {
-        "entry_id": "65A",
-        "answer": "MENSA",
-        "pattern": "M...A",
-        "search_level": 0,
-        "confidence": 100.0,
-        "selection_score": 100
-      },
-      "conflicts_removed": []
-    },
-    {
-      "event": "placed_fallback",
+      "event": "backtrack",
       "candidate": {
         "entry_id": "59A",
-        "answer": "EVENINGGOWN",
-        "pattern": "EVENING....",
+        "answer": "EVENINGWEAR",
+        "pattern": "EVENING..A.",
         "search_level": 0,
-        "confidence": 100.0,
-        "selection_score": 100
-      },
-      "conflicts_removed": [
-        "57D"
-      ]
+        "confidence": 65.0,
+        "selection_score": 87.95454545454545
+      }
     },
     {
       "event": "placed",
       "candidate": {
         "entry_id": "45D",
         "answer": "CHARGER",
-        "pattern": "CHA.GER",
+        "pattern": "CHA..ER",
         "search_level": 0,
-        "confidence": 92.0,
-        "selection score": 87.0
+        "confidence": 95.0,
+        "selection score": 66.75
       }
     },
     {
       "event": "placed",
       "candidate": {
-        "entry_id": "53D",
-        "answer": "DOWSE",
-        "pattern": "D.WSE",
+        "entry_id": "59A",
+        "answer": "EVENINGGEAR",
+        "pattern": "EVENINGG.A.",
         "search_level": 0,
-        "confidence": 97.0,
-        "selection score": 82.25
+        "confidence": 75.0,
+        "selection score": 87.38636363636364
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "DWASP",
+        "pattern": "D.ASP",
+        "search_level": 0,
+        "confidence": 20,
+        "selection_score": 49.60714285714286
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "59A",
+        "answer": "EVENINGGEAR",
+        "pattern": "EVENINGG.A.",
+        "search_level": 0,
+        "confidence": 50.0,
+        "selection_score": 87.38636363636364
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "59A",
+        "answer": "EVENINGGOWN",
+        "pattern": "EVENINGG...",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 76.70454545454545
       }
     },
     {
@@ -1160,17 +1122,50 @@
       }
     },
     {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "CREPT",
+        "pattern": "C....",
+        "search_level": 0,
+        "confidence": 53.0,
+        "selection_score": 46.5
+      }
+    },
+    {
       "event": "placed",
       "candidate": {
-        "entry_id": "57D",
-        "answer": "SNAP",
-        "pattern": ".NAP",
+        "entry_id": "53D",
+        "answer": "DOWSE",
+        "pattern": "D.WS.",
         "search_level": 0,
-        "confidence": 95.0,
-        "selection score": 78.0
+        "confidence": 97.0,
+        "selection score": 75.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "CREEP",
+        "pattern": "CREE.",
+        "search_level": 0,
+        "confidence": 75.0,
+        "selection score": 76.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "56A",
+        "answer": "ROOS",
+        "pattern": "ROO.",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 75.5
       },
       "verified": [
-        "56A"
+        "57D"
       ]
     },
     {
