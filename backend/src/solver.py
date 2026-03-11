@@ -53,19 +53,22 @@ class Solver:
     async def async_initialize_with_progress(self, progress_callback: Callable[[int, int], Any]) -> None:
         """Async initialization with progress callback for UI feedback. """
         total = len(self.grid.entries)
+        loop = asyncio.get_event_loop()
         for idx, entry in enumerate(self.grid.entries.values(), 1):
-            # Call get_candidates() to trigger candidate generation for the entry's current pattern
-            entry.get_candidates()
+            # Run in thread pool so blocking LLM HTTP calls don't stall the event loop,
+            # which would prevent WebSocket messages from reaching the UI.
+            await loop.run_in_executor(None, entry.get_candidates)
             result = progress_callback(idx, total)
             if asyncio.iscoroutine(result):
                 await result
-            await asyncio.sleep(0)
 
     async def async_step_with_progress(self, progress_callback: Callable[[int, int], Any], broadcast_event_callback: Callable[[dict[str, Any]], Any] | None = None) -> dict[str, Any]:
         """Perform a step, broadcast placement event, then retrieve candidates
            for crossing entries with progress reporting."""
-        # Perform the step
-        event = self.step()
+        loop = asyncio.get_event_loop()
+        # Run step in thread pool — step() may call the LLM synchronously, which
+        # would block the event loop and stall WebSocket delivery to the UI.
+        event = await loop.run_in_executor(None, self.step)
         
         # Broadcast the event
         if broadcast_event_callback is not None:
@@ -94,11 +97,10 @@ class Solver:
         
         total = len(affected_entries)
         for idx, entry in enumerate(affected_entries, 1):
-            entry.get_candidates()
+            await loop.run_in_executor(None, entry.get_candidates)
             result = progress_callback(idx, total)
             if asyncio.iscoroutine(result):
                 await result
-            await asyncio.sleep(0)
 
         return event
 
