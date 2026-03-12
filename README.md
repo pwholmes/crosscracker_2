@@ -1,6 +1,11 @@
+CrossCracker 2 is an AI-assisted crossword solving application that combines large language models, retrieval-augmented clue hints from a Chroma vector database, and a step-by-step heuristic solver to fill crossword grids interactively.  It includes a FastAPI backend, a browser-based frontend, support for local Ollama models or Anthropic Claude, and tooling for recording, replaying, and inspecting solve sessions so you can study how the solver reasons through placements, backtracking, and fallbacks.
+
+Depending on the selected LLM, CrossCracker 2 has proved itself capable of solving up to a Tuesday New York Times crossword puzzle with no errors in about 10 minutes.  It could probably solve most clues for puzzles beyond that level too, but such puzzles typically also include "tricks" like rebuses or self-referential clues that my solver is not built to address, and never will be.
+
+
 INSTALLING THE APP
 ------------------
-NOTE: All of these instructions are executed inside WSL (the Windows Subsystem for Linux) on my PC, which is Windows's Linux emulator.  The Linux snobs out there may feel free to run this stuff on a native Linux system.
+NOTE: All of these instructions are executed inside WSL (the Windows Subsystem for Linux) on my PC, which is Windows's Linux emulator.  I've never tested it on a native Linux system, but it should run fine there too.
 
 1. Get the project off GitHub
 If you're reading this, you've already found it!
@@ -21,14 +26,14 @@ Make sure you've activated the virtual environment, then go to {project root}/ba
 
    pip install -r requirements.txt
 
-IMPORTANT: One of the project dependencies, ChromaDB, has sub-dependencies on both onnxruntime and onnxruntime-gpu.  BUT THEY ARE MUTUALLY EXCLUSIVE AND CONFLICT WITH EACH OTHER.  Not only that, but BOTH LIBRARIES IT INSTALLS ARE OBSOLETE!  We only want the latest version of the -gpu version.  There are several workarounds to this, but the simplest is to run this after installing the requirements.txt (or after installing anything else via pip install that may have dependencies on these libraries):
+IMPORTANT: One of the project dependencies, ChromaDB, has sub-dependencies on both onnxruntime and onnxruntime-gpu.  BUT THEY ARE MUTUALLY EXCLUSIVE AND CONFLICT WITH EACH OTHER.  Not only that, but BOTH LIBRARIES IT INSTALLS ARE OBSOLETE!  We only want the latest version of the -gpu version.  There are several workarounds to this, but the simplest is to run the following after installing the requirements.txt (or after installing anything else via pip install that may have dependencies on these libraries):
 
    pip uninstall onnxruntime onnxruntime-gpu
    pip install onnxruntime-gpu
 
 
 5. Install ChromaDB dependencies
-To use our selected vector database (ChromaDB) with a GPU, you also need to install *both* the NVidia CUDA Toolkit *and* the NVidia CUDA Deep Neural Network Library (cuDNN), which is built on top of the CUDA Tooklit.  These are not Python libraries, they are separate executables.  They are available here:
+To use the selected vector database (ChromaDB) with a GPU, you also need to install *both* the NVidia CUDA Toolkit *and* the NVidia CUDA Deep Neural Network Library (cuDNN), which is built on top of the CUDA Tooklit.  These are not Python libraries, they are separate executables.  They are available here:
 
    https://developer.nvidia.com/cuda-downloads
    https://developer.nvidia.com/cudnn
@@ -46,6 +51,8 @@ The database will be created in the {project root}/db directory.  The script wil
     HF_TOKEN=mykey
     
 You might have to adjust the path to the .env file because the script is in a subdirectory, I'm not sure.  Anyway, a full load took about *6 hours* on my system, so... get some coffee and put your feet up!
+
+NOTE: You can omit installing the Chroma database and the associated NVIDIA drivers if you don't feel like committing the time and resources to it.  The app will still run, but if you're using a less-capable LLM (i.e., anything you might run via Ollama, or even the lower-tier Claude LLMs), the app will not perform well.  That is, it will fail to solve a lot of clues correctly.
 
 
 RUNNING THE APP
@@ -78,7 +85,18 @@ I'm using Ollama with the llama3.1:8b LLM, which runs in 6-8 GB of RAM.  Feel fr
    ollama run llama3.1:8b
 
 
-3. Start the app
+3. Set up the .env file
+Copy .env.example to .env in the project root:
+
+   cp .env.example .env
+
+The values in the .env should work fine, except three values corresponding to keys:
+
+   NYT_S_COOKIE
+   
+
+
+4. Start the app
 Run this *from the /backend subdirectory*:
 
 	../.venv/bin/uvicorn server:app --app-dir src --port 8000 --reload
@@ -88,15 +106,15 @@ Run this *from the /backend subdirectory*:
    make run
 
 
-4. Open the front end
+5. Open the front end
 Open `frontend/index.html` in your browser.  In VS Code you'll automatically be prompted to open this file when you execute step 3.  You can also go to VS Code's Ports window, right-click on the line for port 8000, and select "Open in Browser".
 
 
-5. Run the Solver
+6. Run the Solver
 Select a puzzle using the dropdown, and use the Play, Pause, and Step to execute the solver.
 
 
-6. Executing the unit tests
+7. Executing the unit tests
 Run this *from the /backend subdirectory*:
 
    pytest
