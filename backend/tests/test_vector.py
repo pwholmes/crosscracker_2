@@ -35,7 +35,7 @@ def test_query_database():
         assert len(entry.hints) > 0, f"Entry {entry.entry_id} should have at least one hint"
         
         # Check structure of hints (list of tuples with strings)
-        for hint_clue, hint_answer in entry.hints:
+        for hint_clue, hint_answer, _ in entry.hints:
             assert isinstance(hint_clue, str), "Hint clue should be a string"
             assert isinstance(hint_answer, str), "Hint answer should be a string"
             assert len(hint_clue) > 0, "Hint clue should not be empty"
