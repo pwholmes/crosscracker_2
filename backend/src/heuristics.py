@@ -1,10 +1,12 @@
 import logging
 from config import (
-    HEURISTICS_FALLBACK_UNFILLED_RATIO_WEIGHT,
     HEURISTICS_SELECTION_COMPLETENESS_WEIGHT,
     HEURISTICS_SELECTION_CONFIDENCE_WEIGHT,
     HEURISTICS_SELECTION_CONSTRAINT_WEIGHT,
     HEURISTICS_SELECTION_LENGTH_WEIGHT,
+    HEURISTICS_FALLBACK_COMPLETENESS_WEIGHT,
+    HEURISTICS_FALLBACK_CONFIDENCE_WEIGHT,
+    HEURISTICS_FALLBACK_BACKTRACKS_WEIGHT
 )
 from model import Grid, Entry, Candidate
 
@@ -229,54 +231,6 @@ class BasicStrategy:
 
 
     @staticmethod
-    def select_best_backtrack_target_old(grid: Grid) -> str | None:
-        """Select a backtrack target by finding the entry that appears most frequently
-        as a crossing to unfilled entries.
-        
-        Algorithm:
-        1. For each unplaced entry, identify all placed crossing entries
-        2. Award each unplaced crossing entry a point
-        3. Select the placed entry with the most points
-        4. Break ties by lowest confidence score
-        """
-        logger = logging.getLogger("src.heuristics")
-        entries = grid.entries.values()
-        points: dict[str,int] = {}
-
-        # Loop through placed non-fallback entries, assigning a point for every unplaced
-        # entry that crosses it.
-        for entry in entries:
-            if entry.placement == None or entry.used_fallback:
-                continue
-
-            total = 0
-            crossing_entry_ids = grid.get_crossing_entry_ids(entry.entry_id)
-            for crossing_entry_id in crossing_entry_ids:
-                crossing_entry = grid.entries[crossing_entry_id]
-                if not crossing_entry.completed:
-                    total += 1
-            points[entry.entry_id] = total
-
-        # If no entries were added to the points list, we couldn't find an entry to backtrack
-        if not points:
-            return None
-
-        # Find the entry with the most points
-        max_points = max(points.values())
-        # There will always be at least ONE with the max value
-        tied_entries = [entry for entry in entries if entry.entry_id in points and points[entry.entry_id] == max_points]
-
-        # Break ties by lowest confidence score
-        selected = min(tied_entries, key=lambda rec: rec.placement.candidate.confidence if rec.placement is not None else float("inf"))
-        logger.debug(
-            f"BACKTRACK TARGET SELECTED: entry_id={selected.entry_id} "
-            f"points={max_points} "
-            f"confidence={selected.placement.candidate.confidence:.2f}" if selected.placement is not None else "confidence=None"
-        )
-
-        return selected.entry_id
-
-    @staticmethod
     def select_best_fallback_target(grid: Grid) -> Entry | None:
         """Select the best unplaced entry to assign a fallback answer to.
         
@@ -288,6 +242,8 @@ class BasicStrategy:
         The selection heuristic prioritizes entries that:
         - Have many unfilled crossing entries (high unfilled_count)
         - Have few filled crossing entries (low filled_count)
+        - Have low-confidence candidates
+        - Have been backtracked before
         
         This strategy targets "blocking" entries: entries whose placement would free up
         the most stuck crossing entries, maximizing the chance that fallback placement
@@ -304,10 +260,6 @@ class BasicStrategy:
         :return: The Entry that should receive a fallback answer, or None if no
                  unplaced entries exist or all unplaced entries have no unfilled crossings
         """
-        # These weights should sum to 1
-        #W_CONFIDENCE = 0.3
-        #W_RETRY = 0.2
-
         best_entry = None
         best_score = float("-inf")
 
@@ -326,7 +278,12 @@ class BasicStrategy:
                     filled_count += 1
             if unfilled_count == 0:
                 continue
-            score = HEURISTICS_FALLBACK_UNFILLED_RATIO_WEIGHT * unfilled_count / (filled_count + 1)
+            completeness_score = HEURISTICS_FALLBACK_COMPLETENESS_WEIGHT * unfilled_count / (filled_count + 1)
+            confidence_score = HEURISTICS_FALLBACK_CONFIDENCE_WEIGHT * (100 - max(
+                (candidate.confidence for candidate in entry.get_candidates(entry.pattern)),
+                default=0.0))/100
+            backtracks_score = HEURISTICS_FALLBACK_BACKTRACKS_WEIGHT * int(entry.total_backtracks > 0)
+            score = completeness_score + confidence_score + backtracks_score
             if score > best_score:
                 best_score = score
                 best_entry = entry

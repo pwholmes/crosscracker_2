@@ -4,10 +4,11 @@ from typing import Any, ClassVar, Optional
 import logging
 
 from config import (
-    MODEL_BACKTRACK_PENALTY,
-    MODEL_LLM_CONFIDENCE_WEIGHT,
-    MODEL_MIN_SELECTABLE_CONFIDENCE,
-    MODEL_VERIFICATION_PENALTY,
+    CANDIDATE_BACKTRACK_PENALTY,
+    CANDIDATE_LLM_CONFIDENCE_WEIGHT,
+    CANDIDATE_LOGPROB_CONFIDENCE_WEIGHT,
+    CANDIDATE_MIN_SELECTABLE_CONFIDENCE,
+    CANDIDATE_VERIFICATION_PENALTY
 )
 
 logger = logging.getLogger("src.model")
@@ -27,7 +28,7 @@ class Candidate:
     Represents a possible answer for a crossword entry, including scoring and placement context.
     Combines the previous Candidate and ScoredCandidate classes.
     """
-    MIN_SELECTABLE_CONFIDENCE: ClassVar[int] = MODEL_MIN_SELECTABLE_CONFIDENCE
+    MIN_SELECTABLE_CONFIDENCE: ClassVar[int] = CANDIDATE_MIN_SELECTABLE_CONFIDENCE
     entry_id: str
     answer: str
     search_level: int = 0
@@ -65,12 +66,12 @@ class Candidate:
             base_confidence = self.logprob_confidence
         else:
             # Both are set; use weighted average
-            base_confidence = self.llm_confidence * MODEL_LLM_CONFIDENCE_WEIGHT + \
-                self.logprob_confidence * (1 - MODEL_LLM_CONFIDENCE_WEIGHT)
+            base_confidence = self.llm_confidence * CANDIDATE_LLM_CONFIDENCE_WEIGHT + \
+                self.logprob_confidence * CANDIDATE_LOGPROB_CONFIDENCE_WEIGHT
         
         penalized = base_confidence - \
-            self.backtracks * MODEL_BACKTRACK_PENALTY - \
-            self.verification_failures * MODEL_VERIFICATION_PENALTY
+            self.backtracks * CANDIDATE_BACKTRACK_PENALTY - \
+            self.verification_failures * CANDIDATE_VERIFICATION_PENALTY
         
         # Only apply minimum floor if base confidence was above threshold
         if base_confidence >= Candidate.MIN_SELECTABLE_CONFIDENCE:
