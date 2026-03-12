@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def load_hf_dataset():
-    # Load the first dataset.  If we don't have it already, it is downloaded from the HuggingFace 
+    # Load the hints dataset.  If we don't have it already, it is downloaded from the HuggingFace 
     # website.  After the first execution it is cached in ~/.cache/huggingface/datasets.  
     # (It checks for updates even if we do have it, which is why we call login() even on subsequent
     # executions.)
