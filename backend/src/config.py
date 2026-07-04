@@ -38,8 +38,7 @@ def _get_json(name: str, default: Any) -> Any:
 
 
 class ClaudeGenerationTuning(TypedDict):
-    temperature: float
-    top_k: int
+    effort: str
 
 
 class OllamaGenerationTuning(TypedDict):
@@ -97,24 +96,15 @@ OLLAMA_TIMEOUT_SECONDS = _get_int("OLLAMA_TIMEOUT_SECONDS", 120)
 OLLAMA_KEEP_ALIVE = _get_str("OLLAMA_KEEP_ALIVE", "30m")
 OLLAMA_TOP_LOGPROBS = _get_int("OLLAMA_TOP_LOGPROBS", 5)
 
-CLAUDE_GENERATION_LEVEL_0_TEMPERATURE: float = _get_float("CLAUDE_GENERATION_LEVEL_0_TEMPERATURE", 0.25)
-CLAUDE_GENERATION_LEVEL_0_TOP_K: int = _get_int("CLAUDE_GENERATION_LEVEL_0_TOP_K", 10)
-CLAUDE_GENERATION_LEVEL_1_TEMPERATURE: float = _get_float("CLAUDE_GENERATION_LEVEL_1_TEMPERATURE", 0.70)
-CLAUDE_GENERATION_LEVEL_1_TOP_K: int = _get_int("CLAUDE_GENERATION_LEVEL_1_TOP_K", 30)
-CLAUDE_GENERATION_LEVEL_2_TEMPERATURE: float = _get_float("CLAUDE_GENERATION_LEVEL_2_TEMPERATURE", 1.00)
-CLAUDE_GENERATION_LEVEL_2_TOP_K: int = _get_int("CLAUDE_GENERATION_LEVEL_2_TOP_K", 60)
 CLAUDE_CANDIDATE_GENERATION_TUNING_PARAMS: list[ClaudeGenerationTuning] = [
     {
-        "temperature": CLAUDE_GENERATION_LEVEL_0_TEMPERATURE,
-        "top_k": CLAUDE_GENERATION_LEVEL_0_TOP_K,
+        "effort": "high",
     },
     {
-        "temperature": CLAUDE_GENERATION_LEVEL_1_TEMPERATURE,
-        "top_k": CLAUDE_GENERATION_LEVEL_1_TOP_K,
+        "effort": "xhigh",
     },
     {
-        "temperature": CLAUDE_GENERATION_LEVEL_2_TEMPERATURE,
-        "top_k": CLAUDE_GENERATION_LEVEL_2_TOP_K,
+        "effort": "max",
     },
 ]
 

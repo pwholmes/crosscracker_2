@@ -55,7 +55,7 @@ class ClaudeProvider(LLMProvider):
         api_key = os.environ.get("CLAUDE_API_KEY")
         if not api_key:
             raise ValueError("CLAUDE_API_KEY environment variable is not set")
-        
+
         self.model_name: str = os.environ.get("CLAUDE_MODEL", "claude-haiku-4-5")
         self.client = Anthropic(api_key=api_key)
         self.async_client = AsyncAnthropic(api_key=api_key)
@@ -70,17 +70,16 @@ class ClaudeProvider(LLMProvider):
             logger.debug(f"[LLM GENERATE HINTS] {hints_str}")
 
         # Mirror Ollama behavior: generation creativity scales by search level.
-        tuning_params = cast(list[dict[str, float | int]], CLAUDE_CANDIDATE_GENERATION_TUNING_PARAMS)
+        tuning_params = cast(list[dict[str, float | int | str]], CLAUDE_CANDIDATE_GENERATION_TUNING_PARAMS)
         clamped_level = max(0, min(search_level, len(tuning_params) - 1))
         tuning = tuning_params[clamped_level]
-        temperature = cast(float, tuning["temperature"])
-        top_k = cast(int, tuning["top_k"])
+        effort: str = cast(str, tuning["effort"])
 
         response = self.client.messages.create(
             model=self.model_name,
             max_tokens=1024,
-            temperature=temperature,
-            top_k=top_k,
+            cache_control={"type": "ephemeral"},
+            output_config=cast(Any, {"effort": effort}),
             messages=[
                 {"role": "user", "content": prompt}
             ]
