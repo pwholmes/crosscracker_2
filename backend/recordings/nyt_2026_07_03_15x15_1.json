@@ -1,0 +1,1912 @@
+{
+  "puzzle_id": "nyt_2026_07_03_15x15",
+  "puzzle_title": "nyt_2026_07_03_15x15",
+  "width": 15,
+  "height": 15,
+  "timestamp": "2026-07-03T21:24:44.378733",
+  "event_count": 145,
+  "grid_state": {
+    "rows": 15,
+    "cols": 15,
+    "blocks": [
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    ]
+  },
+  "events": [
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "1A",
+        "answer": "IMPEI",
+        "pattern": ".....",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 53.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "PLEADSIGNORANCE",
+        "pattern": "P..............",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 62.333333333333336
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "BEETSUGAR",
+        "pattern": "..E......",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 64.38888888888889
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "66A",
+        "answer": "BICOASTAL",
+        "pattern": "..C......",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 63.138888888888886
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "57D",
+        "answer": "GIBB",
+        "pattern": "..BB",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 69.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "58D",
+        "answer": "OKIE",
+        "pattern": "..IE",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 66.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "63A",
+        "answer": "IKNOWTHEFEELING",
+        "pattern": "IKN............",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 68.25
+      },
+      "verified": [
+        "64D"
+      ]
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "57A",
+        "answer": "GOATEE",
+        "pattern": "GOA...",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 67.0
+      },
+      "verified": [
+        "59D"
+      ]
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "32D",
+        "answer": "DOOROPENER",
+        "pattern": ".......N..",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 66.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "65D",
+        "answer": "LOW",
+        "pattern": "L..",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 62.166666666666664
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "67A",
+        "answer": "ROSEN",
+        "pattern": ".O.E.",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 68.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "61D",
+        "answer": "MERE",
+        "pattern": ".ER.",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 68.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "69A",
+        "answer": "EWERS",
+        "pattern": "EW.R.",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 72.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "12D",
+        "answer": "BIRDSOFPARADISE",
+        "pattern": "............ISE",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 68.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "62A",
+        "answer": "DEI",
+        "pattern": "DE.",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 73.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "38A",
+        "answer": "FOE",
+        "pattern": "FO.",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 70.58333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "51A",
+        "answer": "THROE",
+        "pattern": "..RO.",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 67.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "6A",
+        "answer": "TAKESABOW",
+        "pattern": "......B..",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 65.63888888888889
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "46A",
+        "answer": "CANARD",
+        "pattern": "...AR.",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 64.91666666666666
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "42D",
+        "answer": "INHD",
+        "pattern": ".NH.",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 66.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "56A",
+        "answer": "DAPS",
+        "pattern": "DAP.",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 75.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "33D",
+        "answer": "SETDESIGNS",
+        "pattern": ".E.DESIGNS",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 69.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "41A",
+        "answer": "NETIPOT",
+        "pattern": "...IPOT",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 75.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "37D",
+        "answer": "STAT",
+        "pattern": ".TAT",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 74.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "31A",
+        "answer": "SODS",
+        "pattern": ".ODS",
+        "search_level": 0,
+        "confidence": 75.0,
+        "selection score": 73.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "30D",
+        "answer": "SPEC",
+        "pattern": "..EC",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 68.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "11D",
+        "answer": "ALLIES",
+        "pattern": "A....S",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 67.41666666666666
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "26A",
+        "answer": "YES",
+        "pattern": ".ES",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 69.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "21A",
+        "answer": "AMIDST",
+        "pattern": "..ID..",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 67.41666666666666
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "10D",
+        "answer": "SEAMY",
+        "pattern": "S..MY",
+        "search_level": 0,
+        "confidence": 75.0,
+        "selection score": 69.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "9D",
+        "answer": "ELIA",
+        "pattern": "E..A",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 69.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "16A",
+        "answer": "SMILELINE",
+        "pattern": "...LELI..",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 71.05555555555556
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "13D",
+        "answer": "ONUS",
+        "pattern": "ON.S",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 78.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "17A",
+        "answer": "PRESIDENTIALRUN",
+        "pattern": "..E......IALRU.",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 71.5
+      },
+      "verified": [
+        "8D",
+        "14D"
+      ]
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "4D",
+        "answer": "ETS",
+        "pattern": "E.S",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 70.58333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "1D",
+        "answer": "IMPULSEBUY",
+        "pattern": "I.P.......",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 68.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "19A",
+        "answer": "UTA",
+        "pattern": "U.A",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 73.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "43A",
+        "answer": "URN",
+        "pattern": "U.N",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 73.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "2D",
+        "answer": "MORTARFIRE",
+        "pattern": "M.RT....R.",
+        "search_level": 0,
+        "confidence": 75.0,
+        "selection score": 72.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "47A",
+        "answer": "YEOH",
+        "pattern": "YEO.",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 78.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "15A",
+        "answer": "MOLTS",
+        "pattern": "MOLT.",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 78.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "22A",
+        "answer": "LADE",
+        "pattern": "LAD.",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 76.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "27A",
+        "answer": "SRSLY",
+        "pattern": "SRS..",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 72.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "5D",
+        "answer": "ISIT",
+        "pattern": "ISI.",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 71.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "39A",
+        "answer": "BIGEASY",
+        "pattern": "BIG....",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 70.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "23D",
+        "answer": "ELLE",
+        "pattern": "EL.E",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 75.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "34A",
+        "answer": "EFILES",
+        "pattern": "EFIL..",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 72.83333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "28D",
+        "answer": "YEAS",
+        "pattern": "YEA.",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 78.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "35D",
+        "answer": "SSNS",
+        "pattern": "SS..",
+        "search_level": 0,
+        "confidence": 99.0,
+        "selection score": 70.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "44A",
+        "answer": "SNIT",
+        "pattern": "SN..",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 69.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "40D",
+        "answer": "YIPS",
+        "pattern": "YI..",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 69.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "7D",
+        "answer": "AMNESTY",
+        "pattern": "AMN....",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 66.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "36A",
+        "answer": "YAPS",
+        "pattern": "Y.PS",
+        "search_level": 0,
+        "confidence": 75.0,
+        "selection score": 73.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "29A",
+        "answer": "ETAS",
+        "pattern": ".T.S",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 68.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "6D",
+        "answer": "TSETSE",
+        "pattern": "TSE..E",
+        "search_level": 0,
+        "confidence": 95.0,
+        "selection score": 79.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "20A",
+        "answer": "TOTE",
+        "pattern": "T.TE",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 75.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "24A",
+        "answer": "ASSN",
+        "pattern": ".SS.",
+        "search_level": 0,
+        "confidence": 90.0,
+        "selection score": 68.0
+      },
+      "verified": [
+        "18D",
+        "25D"
+      ]
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "49A",
+        "answer": "SPEW",
+        "pattern": "SP..",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 65.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "54A",
+        "answer": "SMOG",
+        "pattern": "S...",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 61.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "55D",
+        "answer": "GEE",
+        "pattern": "G.E",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 69.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "60A",
+        "answer": "POEM",
+        "pattern": "..EM",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 70.0
+      },
+      "verified": [
+        "45D",
+        "50D"
+      ]
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "66A",
+        "answer": "BICOASTAL",
+        "pattern": "..C......",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection_score": 63.138888888888886
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "45D",
+        "answer": "TEMPERA",
+        "pattern": "TEMPE.A",
+        "search_level": 0,
+        "confidence": 88.0,
+        "selection score": 76.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "59D",
+        "answer": "ETTU",
+        "pattern": "ET.U",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 68.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "48D",
+        "answer": "HITOUT",
+        "pattern": "H.TO.T",
+        "search_level": 0,
+        "confidence": 85.0,
+        "selection score": 66.58333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "52A",
+        "answer": "RIM",
+        "pattern": "RI.",
+        "search_level": 0,
+        "confidence": 80.0,
+        "selection score": 69.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "MEWLS",
+        "pattern": "MEW.S",
+        "search_level": 0,
+        "confidence": 98.0,
+        "selection score": 82.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "64D",
+        "answer": "HUG",
+        "pattern": "H.G",
+        "search_level": 0,
+        "confidence": 92.0,
+        "selection score": 62.33333333333333
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "49A",
+        "answer": "SPEW",
+        "pattern": "SP..",
+        "search_level": 0,
+        "confidence": 55.0,
+        "selection_score": 65.5
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "45D",
+        "answer": "TEMPERA",
+        "pattern": "TEMPE.A",
+        "search_level": 0,
+        "confidence": 63.0,
+        "selection_score": 76.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "49A",
+        "answer": "SPEW",
+        "pattern": "SP..",
+        "search_level": 0,
+        "confidence": 55.0,
+        "selection score": 59.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "45D",
+        "answer": "TEMPERA",
+        "pattern": "TEMPE.A",
+        "search_level": 0,
+        "confidence": 63.0,
+        "selection score": 69.75
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "49A",
+        "answer": "SPEW",
+        "pattern": "SP..",
+        "search_level": 0,
+        "confidence": 30.0,
+        "selection_score": 59.25
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "45D",
+        "answer": "TEMPERA",
+        "pattern": "TEMPE.A",
+        "search_level": 0,
+        "confidence": 38.0,
+        "selection_score": 69.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "49A",
+        "answer": "SPEW",
+        "pattern": "SP..",
+        "search_level": 0,
+        "confidence": 30.0,
+        "selection score": 53.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "45D",
+        "answer": "TEMPERA",
+        "pattern": "TEMPE.A",
+        "search_level": 0,
+        "confidence": 38.0,
+        "selection score": 63.5
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "49A",
+        "answer": "SPEW",
+        "pattern": "SPE.",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "45D",
+        "answer": "TEMPERA",
+        "pattern": "TEMPE.A",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "63A",
+        "answer": "IKNOWTHEFEELING",
+        "pattern": "IKN............",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection_score": 68.25
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "64D",
+        "answer": "HUG",
+        "pattern": "H.G",
+        "search_level": 0,
+        "confidence": 67.0,
+        "selection_score": 62.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "63A",
+        "answer": "IKNOWTHEFEELING",
+        "pattern": "IKNOWT.E.EELING",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection score": 85.33333333333334
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "64D",
+        "answer": "HUG",
+        "pattern": "H.G",
+        "search_level": 0,
+        "confidence": 67.0,
+        "selection score": 56.08333333333333
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "63A",
+        "answer": "IKNOWTHEFEELING",
+        "pattern": "IKNOWT.E.EELING",
+        "search_level": 0,
+        "confidence": 35.0,
+        "selection_score": 85.33333333333334
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "64D",
+        "answer": "HUG",
+        "pattern": "H.G",
+        "search_level": 0,
+        "confidence": 42.0,
+        "selection_score": 56.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "63A",
+        "answer": "IKNOWTHEFEELING",
+        "pattern": "IKNOWT.E.EELING",
+        "search_level": 0,
+        "confidence": 35.0,
+        "selection score": 79.08333333333334
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "64D",
+        "answer": "HUG",
+        "pattern": "H.G",
+        "search_level": 0,
+        "confidence": 42.0,
+        "selection score": 49.83333333333333
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "63A",
+        "answer": "IKNOWTHEFEELING",
+        "pattern": "IKNOWTHE.EELING",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "64D",
+        "answer": "HUG",
+        "pattern": "H.G",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "60A",
+        "answer": "POEM",
+        "pattern": "..EM",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection_score": 70.0
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "54A",
+        "answer": "SMOG",
+        "pattern": "S...",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection_score": 61.25
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "MEWLS",
+        "pattern": "MEW.S",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection_score": 82.5
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "57A",
+        "answer": "GOATEE",
+        "pattern": "GOA...",
+        "search_level": 0,
+        "confidence": 45.0,
+        "selection_score": 67.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "MEWLS",
+        "pattern": "M.W.S",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection score": 69.25
+      },
+      "verified": [
+        "57A"
+      ]
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "MEWLS",
+        "pattern": "M.W.S",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection_score": 69.25
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "59D",
+        "answer": "ETTU",
+        "pattern": "ET.U",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection_score": 68.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "57A",
+        "answer": "GOATEE",
+        "pattern": "GOAT..",
+        "search_level": 0,
+        "confidence": 45.0,
+        "selection score": 66.58333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "MEWLS",
+        "pattern": "MEW.S",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection score": 70.0
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "59D",
+        "answer": "ETTU",
+        "pattern": "ET.U",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection score": 62.5
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "53D",
+        "answer": "MEWLS",
+        "pattern": "MEW.S",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "59D",
+        "answer": "ETTU",
+        "pattern": "ET.U",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection_score": 62.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "59D",
+        "answer": "ETSU",
+        "pattern": "ET.U",
+        "search_level": 0,
+        "confidence": 25.0,
+        "selection score": 50.5
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "59D",
+        "answer": "ETTU",
+        "pattern": "ET.U",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "48D",
+        "answer": "HITOUT",
+        "pattern": "H.TO.T",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection_score": 66.58333333333333
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "57A",
+        "answer": "GOATEE",
+        "pattern": "GOAT..",
+        "search_level": 0,
+        "confidence": 25,
+        "selection_score": 66.58333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "48D",
+        "answer": "HITOUT",
+        "pattern": "HI.O.T",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection score": 70.33333333333333
+      },
+      "verified": [
+        "57A"
+      ]
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "48D",
+        "answer": "HITOUT",
+        "pattern": "HI.O.T",
+        "search_level": 0,
+        "confidence": 35.0,
+        "selection_score": 70.33333333333333
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "58D",
+        "answer": "OKIE",
+        "pattern": "..IE",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection_score": 66.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "57A",
+        "answer": "GOATEE",
+        "pattern": "G.A.EE",
+        "search_level": 0,
+        "confidence": 25,
+        "selection score": 61.58333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "48D",
+        "answer": "HITOUT",
+        "pattern": "HITO.T",
+        "search_level": 0,
+        "confidence": 35.0,
+        "selection score": 69.91666666666667
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "58D",
+        "answer": "OKIE",
+        "pattern": "OK.E",
+        "search_level": 0,
+        "confidence": 60.0,
+        "selection score": 69.25
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "48D",
+        "answer": "HITOUT",
+        "pattern": "HITO.T",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "55D",
+        "answer": "GEE",
+        "pattern": "G.E",
+        "search_level": 0,
+        "confidence": 55.0,
+        "selection_score": 69.33333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "54A",
+        "answer": "SMOG",
+        "pattern": "SM..",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection score": 63.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "60A",
+        "answer": "POEM",
+        "pattern": "P..M",
+        "search_level": 0,
+        "confidence": 73.0,
+        "selection score": 63.75
+      },
+      "verified": [
+        "55D"
+      ]
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "60A",
+        "answer": "POEM",
+        "pattern": "P..M",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection_score": 63.75
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "55D",
+        "answer": "GEE",
+        "pattern": "G.E",
+        "search_level": 0,
+        "confidence": 55.0,
+        "selection score": 63.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "60A",
+        "answer": "POEM",
+        "pattern": "P.EM",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection score": 66.25
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "60A",
+        "answer": "POEM",
+        "pattern": "P.EM",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "54A",
+        "answer": "SMOG",
+        "pattern": "SM..",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection_score": 63.75
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "PLEADSIGNORANCE",
+        "pattern": "P..............",
+        "search_level": 0,
+        "confidence": 55.0,
+        "selection_score": 62.333333333333336
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "57A",
+        "answer": "GOATEE",
+        "pattern": "GO.TEE",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "17A",
+        "answer": "PRESIDENTIALRUN",
+        "pattern": "..E......IALRU.",
+        "search_level": 0,
+        "confidence": 45.0,
+        "selection_score": 71.5
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "PLEADSIGNORANCE",
+        "pattern": "PL.ADSIGNORAN.E",
+        "search_level": 0,
+        "confidence": 55.0,
+        "selection score": 84.08333333333334
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "17A",
+        "answer": "PRESIDENTIALRUN",
+        "pattern": "PRESI.EN.IALRU.",
+        "search_level": 0,
+        "confidence": 45.0,
+        "selection score": 79.25
+      },
+      "verified": [
+        "18D",
+        "8D",
+        "14D"
+      ]
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "PLEADSIGNORANCE",
+        "pattern": "PL.ADSIGNORAN.E",
+        "search_level": 0,
+        "confidence": 30.0,
+        "selection_score": 84.08333333333334
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "17A",
+        "answer": "PRESIDENTIALRUN",
+        "pattern": "PRESI.EN.IALRU.",
+        "search_level": 0,
+        "confidence": 25,
+        "selection_score": 79.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "PLEADSIGNORANCE",
+        "pattern": "PL.ADSIGNORAN.E",
+        "search_level": 0,
+        "confidence": 30.0,
+        "selection score": 77.83333333333334
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "17A",
+        "answer": "PRESIDENTIALRUN",
+        "pattern": "PRESI.EN.IALRU.",
+        "search_level": 0,
+        "confidence": 25,
+        "selection score": 74.25
+      },
+      "verified": [
+        "18D",
+        "8D",
+        "14D"
+      ]
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "3D",
+        "answer": "PLEADSIGNORANCE",
+        "pattern": "PLEADSIGNORAN.E",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "BEETSUGAR",
+        "pattern": "..E......",
+        "search_level": 0,
+        "confidence": 65.0,
+        "selection_score": 64.38888888888889
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "58D",
+        "answer": "OKIE",
+        "pattern": "OK.E",
+        "search_level": 0,
+        "confidence": 35.0,
+        "selection_score": 69.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "BEETSUGAR",
+        "pattern": "B.ETSUGA.",
+        "search_level": 0,
+        "confidence": 65.0,
+        "selection score": 81.47222222222223
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "58D",
+        "answer": "OKIE",
+        "pattern": "OK.E",
+        "search_level": 0,
+        "confidence": 35.0,
+        "selection score": 63.0
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "BEETSUGAR",
+        "pattern": "B.ETSUGA.",
+        "search_level": 0,
+        "confidence": 40.0,
+        "selection_score": 81.47222222222223
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "58D",
+        "answer": "OKIE",
+        "pattern": "OK..",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "57D",
+        "answer": "GIBB",
+        "pattern": "..BB",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection_score": 69.25
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "BEETSUGAR",
+        "pattern": ".EETSUGA.",
+        "search_level": 0,
+        "confidence": 40.0,
+        "selection score": 75.22222222222223
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "57D",
+        "answer": "GIBB",
+        "pattern": "GI.B",
+        "search_level": 0,
+        "confidence": 70.0,
+        "selection score": 71.75
+      }
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "68A",
+        "answer": "BEETSUGAR",
+        "pattern": "BEETSUGA.",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "57D",
+        "answer": "GIBB",
+        "pattern": "GI.B",
+        "search_level": 0,
+        "confidence": 45.0,
+        "selection_score": 71.75
+      }
+    },
+    {
+      "event": "backtrack",
+      "candidate": {
+        "entry_id": "55D",
+        "answer": "GEE",
+        "pattern": "G.E",
+        "search_level": 0,
+        "confidence": 30.0,
+        "selection_score": 63.08333333333333
+      }
+    },
+    {
+      "event": "placed",
+      "candidate": {
+        "entry_id": "54A",
+        "answer": "SMOG",
+        "pattern": "SM..",
+        "search_level": 0,
+        "confidence": 48.0,
+        "selection score": 57.5
+      },
+      "verified": [
+        "55D"
+      ]
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "54A",
+        "answer": "SMOG",
+        "pattern": "SM..",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "placed_fallback",
+      "candidate": {
+        "entry_id": "66A",
+        "answer": "BICULTURE",
+        "pattern": ".ICULTUR.",
+        "search_level": 0,
+        "confidence": 100.0,
+        "selection_score": 100
+      },
+      "conflicts_removed": []
+    },
+    {
+      "event": "solved"
+    }
+  ]
+}
