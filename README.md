@@ -26,7 +26,7 @@ Make sure you've activated the virtual environment, then go to {project root}/ba
 
    pip install -r requirements.txt
 
-IMPORTANT: One of the project dependencies, ChromaDB, has sub-dependencies on both onnxruntime and onnxruntime-gpu.  BUT THEY ARE MUTUALLY EXCLUSIVE AND CONFLICT WITH EACH OTHER.  Not only that, but BOTH LIBRARIES IT INSTALLS ARE OBSOLETE!  We only want the latest version of the -gpu version.  There are several workarounds to this, but the simplest is to run the following after installing the requirements.txt (or after installing anything else via pip install that may have dependencies on these libraries):
+IMPORTANT: One of the project dependencies, ChromaDB, has sub-dependencies on both onnxruntime and onnxruntime-gpu.  BUT THEY ARE MUTUALLY EXCLUSIVE AND CONFLICT WITH EACH OTHER.  Not only that, but BOTH LIBRARIES IT INSTALLS ARE OBSOLETE!  We only want the latest available version of onnxruntime-gpu.  There are several workarounds to this, but the simplest is to run the following after installing the requirements.txt:
 
    pip uninstall onnxruntime onnxruntime-gpu
    pip install onnxruntime-gpu
