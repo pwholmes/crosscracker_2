@@ -1,6 +1,6 @@
 CrossCracker 2 is an AI-assisted crossword solving application that combines large language models, retrieval-augmented clue hints from a Chroma vector database, and a step-by-step heuristic solver using a sophisticated constraint satisfaction algorithm to fill crossword grids interactively.  It includes a FastAPI backend, a browser-based frontend, support for local Ollama models or Anthropic Claude, and tooling for recording, replaying, and inspecting solve sessions so you can study how the solver reasons through placements, backtracking, and fallbacks.
 
-Depending on the selected LLM, CrossCracker 2 has proved itself capable of solving up to a Tuesday New York Times crossword puzzle with no errors in about 10 minutes.  It could probably solve most clues for puzzles beyond that level too, but such puzzles typically also include "tricks" like rebuses or self-referential clues that my solver is not built to address, and never will be.
+Depending on the selected LLM, CrossCracker 2 has proved itself capable of solving up to a Tuesday New York Times crossword puzzle with no errors in about 10 minutes.  It can solve most clues for puzzles beyond that level too, but such puzzles typically also include "tricks" like rebuses or self-referential clues that my solver is not built to address.
 
 
 INSTALLING THE APP
