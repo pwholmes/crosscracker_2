@@ -45,7 +45,7 @@ ALSO INTERSTING: While ChromaDB's CUDAExecutionProvider has vastly superior perf
 
 **3. Ollama and LLM support**
 
-When we want to solve a particular crossword entry, we collect the clue, the "hints" we got from the vector database, and any other contextual information like the answer's length and the current pattern of known letters.  We pass all this data to a local LLM (managed by Ollama) along with a carefully constructed prompt instructing it to guess a few answers.  Then we call the LLM again and ask it to score these answers with a confidence level from 0-100.
+When we want to solve a particular crossword entry, we collect the clue, the "hints" we got from the vector database, and any other contextual information like the answer's length and the current pattern of known letters.  We pass all this data to an LLM (either a local LLM managed by Ollama or an Anthropic LLM in the cloud) along with a carefully constructed prompt instructing it to guess a few answers.  Then we call the LLM again and ask it to score these answers with a confidence level from 0-100.
 
 Why two separate calls, you ask?  Because LLMs are dumb.  If you ask them to rank their own answers in the first call, they'll rank everything at or near 100%.  Remember, the LLM chose those answers in the first place because they satisfied its own internal criteria, so in the LLM's opinion they're all good.  Asking the LLM to rank answers in a separate call forces it to consider them more carefully and you get much better results -- though it still consistently overrates its confidence levels.
 
