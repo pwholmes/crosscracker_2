@@ -165,9 +165,8 @@ Copy .env.example to .env in the project root:
 
 `cp .env.example .env`
 
-The values in the .env should work fine, except three values corresponding to keys:
+The values in the .env.example should work fine, except the three values corresponding to keys, which you will have to set yourself.
 
-   NYT_S_COOKIE
 
 **4. Start the app**
 
@@ -181,7 +180,7 @@ Run this *from the /backend subdirectory*:
 
 **5. Open the front end**
 
-Open `frontend/index.html` in your browser.  In VS Code you'll automatically be prompted to open this file when you execute step 3.  You can also go to VS Code's Ports window, right-click on the line for port 8000, and select "Open in Browser".
+Open `frontend/index.html` in your browser.  In VS Code you'll automatically be prompted to open this file when you execute the previous step.  You can also go to VS Code's Ports window, right-click on the line for port 8000, and select "Open in Browser".
 
 **6. Run the Solver**
 
