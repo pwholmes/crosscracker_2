@@ -40,7 +40,7 @@ But if it uses the SentenceTransformerEmbeddingFunction embedding function (whic
 
 Hey, there's PyTorch!  Everyone loves PyTorch because it helped usher in the current age of AI programming.  It's a hot name when you're looking at job requirements.  But we're not using it.  It's slow and cumbersome and unnecessary.
 
-ALSO INTERSTING: While ChromaDB's CUDAExecutionProvider has vastly superior performance to the CPUExecutionProvider (as you would expect, since it uses the GPU instead of the CPU), it doesn't really make any difference for our little crossword app.  For all the massive memory requirements ChromaDB imposes on us, in its entire run the solver executes just ONE database query which takes only a second or two, regardless of whether you're using the GPU or CPU.  The overwhelming majority of the time required to use Chroma is when it initially loads the database index.
+ALSO INTERSTING: While ChromaDB's CUDAExecutionProvider has vastly superior performance to the CPUExecutionProvider (as you would expect, since it uses the GPU instead of the CPU), it doesn't really make any difference for our little crossword app.  For all the massive memory requirements ChromaDB imposes on us, in its entire run the solver executes just ONE database query, executed at startup to retrieve the list of hints for all the clues in the puzzle.  This query takes only a second or two, regardless of whether you're using the GPU or CPU.  The overwhelming majority of the time required to use Chroma is when it initially loads the database index.
 
 
 **3. Ollama and LLM support**
