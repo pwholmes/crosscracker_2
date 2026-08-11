@@ -55,11 +55,11 @@ Speaking of internal API values, we also use the "popular" LLM tuning parameters
 
 [UPDATE: Anthropic has deprecated use of these parameters in their newer models because they feel it unduly exposes the innards of the model's execution to the outside.]
 
-We use three sets of these parameters, depending on the "search level" for a particular clue.  When we're stuck on a clue and don't have any candidate answers for it, we increase its search level.  This gives us more candidates.  Most of them are usually garbage -- not even real words -- but occasionally it gives us something useful.  (Though I want to run some metrics to see how accurate that statement is!)
+We use three sets of these parameters, depending on the "search level" for a particular clue.  When we're stuck on a clue and don't have any candidate answers for it, we increase its search level.  This gives us more candidates.  On the higher search levels most of them are usually garbage -- not even real words -- but occasionally it gives us something useful.
 
-Currently we're using the llama3.1:8b LLM, which basically has the intelligence of Elmer Fudd when compared to the LLMs you use online every day, but that's about all I can manage with the horsepower at my disposal on my potato PC.  For comparison, there's a llama3.1:405b model available on Ollama.  That's *50 times* as powerful (and 50 times the memory requirements) as the model I'm using.  Sheesh!  Maybe one day I'll set up my app so it can call a powerful online LLM instead -- but that costs money, yo!
+Currently the LLM I'm using with Ollama is llama3.1:8b LLM, which basically has the intelligence of Elmer Fudd when compared to the LLMs you use online every day, but that's about all I can manage with the horsepower at my disposal on my potato PC.  For comparison, there's a llama3.1:405b model available on Ollama.  That's *50 times* as powerful (and 50 times the memory requirements) as the model I'm using.  But of course that also requires a _much_ more powerful PC, which I do not have.
 
-IMPORTANT: The LLM we're using needs 6-8 GB of RAM.  Combined with the 12 GB or so required by the vector database, that puts a pretty heavy load on WSL's memory, which I have capped at 20 GB.  Expect a lot of swapping and thrashing.
+IMPORTANT: The LLM we're using needs 6-8 GB of RAM.  Combined with the 12 GB or so required by the vector database, that puts a pretty heavy load on WSL's memory, which I have capped at 20 GB.  Expect a lot of swapping at runtime with that kind of limit.
 
 **4. FastAPI**
 
