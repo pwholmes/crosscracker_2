@@ -2,6 +2,71 @@ CrossCracker 2 is an AI-assisted crossword solving application that combines lar
 
 Depending on the selected LLM, CrossCracker 2 has proved itself capable of solving up to a Tuesday New York Times crossword puzzle with no errors in about 10 minutes.  It can solve most clues for puzzles beyond that level too, but such puzzles typically also include "tricks" like rebuses or self-referential clues that my solver is not built to address.
 
+APP ARCHITECTURE
+----------------
+**1. The Solver Algorithm**
+
+Believe it or not, all the AI stuff described below was the easy part.  I handled all that in just a few days, and most of THAT was faffing around with the LLM prompt.
+
+The really hard part was the solver algorithm itself -- a good old-fashioned coding problem.  I'm using a variant of a **constraint satisfaction algorithm** with **dependency-aware backtracking**.  What this means is that the app can guess an answer, and if it turns out to be wrong it can backtrack and guess again, without getting stuck, going into an infinite loop, or taking longer than the lifetime of the universe to solve a puzzle.
+
+The main difference from the first version of the crossword solver is that version 2 guesses the answers for each clue at runtime.  Technically, Version 1 of this app did use an LLM to get the answers, but I ran the LLM and recorded its answers *before* running the solver app, and made sure the *correct* answers were in the list.  That meant there was a small, fixed set of possible answers for each clue, guaranteed to include the correct answer, when I ran the solver.  Therefore it could solve the puzzle using a simple depth-first search.
+
+Letting the LLM generate guesses in real time while the app runs, and thus having an effectively infinite set of possible answers per clue -- not necessarily including the correct answer -- is a literally exponentially more difficult problem.  Version 2 had to be VASTLY better at guessing clues, even though it's still using the same LLM as version 1.  Thanks to RAG technology, it is.  It usually gets over 90% of the clues correct on the first guess.
+
+Still, it's not 100%, so the solving algorithm also has to be much smarter.  Smarter about how to choose the order in which to answer clues, how to generate candidate answers and which ones to select, and most importantly, how and when to "backtrack" and try something different when it gets stuck.  Frankly, the AIs I consulted -- and I asked many of the big ones -- were absolutely hopeless at this task.  Even with a lot of hand-holding, the best AIs out there are still completely incapable of properly solving a problem of this complexity.  When asked, they will confidently give you... a steaming pile of dung.  This confirmed my conviction that even top LLMs are good only at small, focused tasks.  If you want high-level design of any quality, you still need a human.
+
+I chose to model the algorithm after how humans (like me!) solve crosswords IRL.  The algorithm uses a complex set of heuristics to determine which clue to fill in first, based on parameters including candidate answer confidence, the length of the answer, and the number of already filled-in letters.  When an answer is placed, the LLM generates new candidate answers for each clue that had a new letter filled in.  It proceeds in this manner until it solves the puzzle or gets stuck.  In that case, it uses another complex set of heuristics to guess which clue to "backtrack".  It then applies a penalty to the clue it removed, but doesn't remove it from the list of potential candidate answers entirely.
+
+Sometimes, though, even with just one letter left to fill in a given clue, an LLM can't guess the correct answer.  Crossword clues are famously punny and LLMs are generally not trained on that kind of stuff, so even an answer that seems completely obvious to a human just isn't in the LLMs vocabulary.  In that case my algorithm will thrash a few times, and then finally give up and use a "fallback" -- it fills in the clue's known correct answer from a given list (i.e., it cheats).
+
+My goal in coding the solver is to always reduce fallbacks to 0.  With the LLMs I've used, it can do that most of the time on a NYT Tuesday puzzle.  Once in a while it can solve a Wednesday puzzle without resorting to a fallback, but usually it requires several of them.  And starting on Thursdays the NYT puzzles are filled with rebuses (grid squares that contain more than one letter or sometimes even a symbol) and similar gimmicks that my solver is not equipped to handle, so that's basically as far as it can go.
+
+**2. ChromaDB and RAG**
+
+The app uses a ChromaDB vector database to store a knowledge base of past crossword clue-answer pairs.  It was populated using a dataset obtained from Hugging Face with about 6.4 million rows.
+
+Vector databases use a neural network to retrieve data "similar" to the given input.  This makes them useful for all sorts of things, from helpbots to medical diagnosis apps.  In this app, we use the vector database on startup to get a set of clue-answer pairs that are "semantically similar" to each clue in the puzzle.  In other words, we get a list of "hints" for each clue.  We then pass those hints to an LLM to help it select and rank a list of possible candidate answers for a clue.  This is classic RAG technology -- Retrieval Augmented Generation.
+
+IMPORTANT: ChromaDB is a memory hog.  To do anything, it has to load the entire database index into memory.  That's just how vector DBs work.  In the case of our 6.4 million row crossword database, that index consumes about 11.5 GB of memory.  Yikes!!!  It takes a long time (about 50 seconds on my system) to load the index the first time you run a query, and it unloads automatically after the keep-alive expires.  The default keep-alive was something like 30 seconds, but I've overridden it in the code to 10 minutes.
+
+NOT IMPORTANT BUT INTERESTING: With the code using Chroma's preferred ONNXMiniLM_L6_V2 "embedding function" (which defines the mathematical procedure used to access the database), the call stack looks like this:
+
+**app -> chromaDB library -> ONNX Runtime -> cuDNN -> CUDA Runtime -> CUDA Driver -> hardware**
+
+But if it uses the SentenceTransformerEmbeddingFunction embedding function (which is said to be slower and more memory intensive, but has additional features), the call stack would be:
+
+**app -> chromaDB library -> PyTorch -> cuDNN -> CUDA Runtime -> CUDA Driver -> hardware**
+
+Hey, there's PyTorch!  Everyone loves PyTorch because it helped usher in the current age of AI programming.  It's a hot name when you're looking at job requirements.  But we're not using it.  It's slow and cumbersome and unnecessary.
+
+ALSO INTERSTING: While ChromaDB's CUDAExecutionProvider has vastly superior performance to the CPUExecutionProvider (as you would expect, since it uses the GPU instead of the CPU), it doesn't really make any difference for our little crossword app.  For all the massive memory requirements ChromaDB imposes on us, in its entire run the solver executes just ONE database query which takes only a second or two, regardless of whether you're using the GPU or CPU.  The overwhelming majority of the time required to use Chroma is when it initially loads the database index.
+
+
+**3. Ollama and LLM support**
+
+When we want to solve a particular crossword entry, we collect the clue, the "hints" we got from the vector database, and any other contextual information like the answer's length and the current pattern of known letters.  We pass all this data to a local LLM (managed by Ollama) along with a carefully constructed prompt instructing it to guess a few answers.  Then we call the LLM again and ask it to score these answers with a confidence level from 0-100.
+
+Why two separate calls, you ask?  Because LLMs are dumb.  If you ask them to rank their own answers in the first call, they'll rank everything at or near 100%.  Remember, the LLM chose those answers in the first place because they satisfied its own internal criteria, so in the LLM's opinion they're all good.  Asking the LLM to rank answers in a separate call forces it to consider them more carefully and you get much better results -- though it still consistently overrates its confidence levels.
+
+Therefore we also use the "logprobs" obtained in the first query.  Logprobs ("log probabilities") are the internal probability the Ollama code used to predict each particular token in the response, so they're also a sort of "confidence" in the answer.  But they're just mechanical measures, they don't consider the semantics of the crossword clue.  Usually the logprobs and the confidence levels reported in the text response from the second query are correlated, but sometimes one is way off.  Therefore we use a weighted average of the two values to calculate the effective confidence in each crossword answer.  That's almost always good enough.
+
+Speaking of internal API values, we also use the "popular" LLM tuning parameters when querying it for candidate answers: temperature (which is how "speculative" or "aggressive" the LLM is in selecting tokens), top_p (which limits the probability of the tokens it selects), and top_k (which limits the number of tokens selected).  They're really just parameters for the shape of the "Receiver Operating Characteristic" (ROC) curve, which is the technical name of the curve in a machine learning classification calculation that separates the positive and negative cases.
+
+[UPDATE: Anthropic has deprecated use of these parameters in their newer models because they feel it unduly exposes the innards of the model's execution to the outside.]
+
+We use three sets of these parameters, depending on the "search level" for a particular clue.  When we're stuck on a clue and don't have any candidate answers for it, we increase its search level.  This gives us more candidates.  Most of them are usually garbage -- not even real words -- but occasionally it gives us something useful.  (Though I want to run some metrics to see how accurate that statement is!)
+
+Currently we're using the llama3.1:8b LLM, which basically has the intelligence of Elmer Fudd when compared to the LLMs you use online every day, but that's about all I can manage with the horsepower at my disposal on my potato PC.  For comparison, there's a llama3.1:405b model available on Ollama.  That's *50 times* as powerful (and 50 times the memory requirements) as the model I'm using.  Sheesh!  Maybe one day I'll set up my app so it can call a powerful online LLM instead -- but that costs money, yo!
+
+IMPORTANT: The LLM we're using needs 6-8 GB of RAM.  Combined with the 12 GB or so required by the vector database, that puts a pretty heavy load on WSL's memory, which I have capped at 20 GB.  Expect a lot of swapping and thrashing.
+
+**4. FastAPI**
+
+This app uses a FastAPI framework for the "back end".  FastAPI is basically a lightweight REST API framework similar to Flask, but it uses ASGI instead of WSGI (read: it's faster and more modern).
+
+But note that CrossCracker is not a traditional client-server app that can run across the Internet.  I couldn't put the back end on an app server and then run the interface on my phone.  Everything runs locally.  We're using FastAPI mainly to cleanly separate the front end from the back end and make it easy to build a UI using well-known tools like HTML and JavaScript.  Making it Internet-capable is *possible* (I did it with CrossCracker version 1)... but it's impractical.  It might be intersting to implement that at some point, but we'll cross that bridge if we ever come to it.
+
 
 INSTALLING THE APP
 ------------------
@@ -139,73 +204,6 @@ A couple of the tests are marked as "integration tests" because they result in a
 ...or again, using make:
 
 `make itest`
-
-
-APP ARCHITECTURE
-----------------
-**1. FastAPI**
-
-This app uses a FastApi framework for the "back end".  FastApi is basically a lightweight REST API framework similar to Flask, but it uses ASGI instead of WSGI (read: it's faster and more modern).
-
-But note that CrossCracker is not a traditional client-server app that can run across the Internet.  I couldn't put the back end on an AWS server and then run the interface on my phone.  Everything runs locally.  We're using FastAPI mainly to cleanly separate the front end from the back end and make it easy to build a UI using well-known tools like HTML and JavaScript.  Making it Internet-capable is *possible* (I did it with CrossCracker version 1)... but it's impractical.  It might be intersting to implement that at some point, but we'll cross that bridge if we ever come to it.
-
-
-**2. ChromaDB and RAG**
-
-The app uses a ChromaDB vector database to store a knowledge base of past crossword clue-answer pairs.  It was populated using a dataset obtained from Hugging Face with about 6.4 million rows.
-
-Vector databases use a neural network to retrieve data "similar" to the given input.  This makes them useful for all sorts of things, from helpbots to medical diagnosis apps.  In this app, we use the vector database on startup to get a set of clue-answer pairs that are "semantically similar" to each clue in the puzzle.  In other words, we get a list of "hints" for each clue.  We then pass those hints to an LLM to help it select and rank a list of possible candidate answers for a clue.  This is classic RAG technology -- Retrieval Augmented Generation.
-
-IMPORTANT: ChromaDB is a memory hog.  To do anything, it has to load the entire database index into memory.  That's just how vector DBs work.  In the case of our 6.4 million row crossword database, that index consumes about 11.5 GB of memory.  Yikes!!!  It takes a long time (about 50 seconds on my system) to load the index the first time you run a query, and it unloads automatically after the keep-alive expires.  The default keep-alive was something like 30 seconds, but I've overridden it in the code to 10 minutes.
-
-NOT IMPORTANT BUT INTERESTING: With the code using Chroma's preferred ONNXMiniLM_L6_V2 "embedding function" (which defines the mathematical procedure used to access the database), the call stack looks like this:
-
-**app -> chromaDB library -> ONNX Runtime -> cuDNN -> CUDA Runtime -> CUDA Driver -> hardware**
-
-But if it uses the SentenceTransformerEmbeddingFunction embedding function (which is said to be slower and more memory intensive, but has additional features), the call stack would be:
-
-**app -> chromaDB library -> PyTorch -> cuDNN -> CUDA Runtime -> CUDA Driver -> hardware**
-
-Hey, there's PyTorch!  Everyone loves PyTorch because it helped usher in the current age of AI programming.  It's a hot name when you're looking at job requirements.  But we're not using it.  It's slow and cumbersome and unnecessary.
-
-ALSO INTERSTING: While ChromaDB's CUDAExecutionProvider has vastly superior performance to the CPUExecutionProvider (as you would expect, since it uses the GPU instead of the CPU), it doesn't really make any difference for our little crossword app.  For all the massive memory requirements ChromaDB imposes on us, in its entire run the solver executes just ONE database query which takes only a second or two, regardless of whether you're using the GPU or CPU.  The overwhelming majority of the time required to use Chroma is when it initially loads the database index.
-
-
-**3. Ollama and LLM support**
-
-When we want to solve a particular crossword entry, we collect the clue, the "hints" we got from the vector database, and any other contextual information like the answer's length and the current pattern of known letters.  We pass all this data to a local LLM (managed by Ollama) along with a carefully constructed prompt instructing it to guess a few answers.  Then we call the LLM again and ask it to score these answers with a confidence level from 0-100.
-
-Why two separate calls, you ask?  Because LLMs are dumb.  If you ask them to rank their own answers in the first call, they'll rank everything at or near 100%.  Remember, the LLM chose those answers in the first place because they satisfied its own internal criteria, so in the LLM's opinion they're all good.  Asking the LLM to rank answers in a separate call forces it to consider them more carefully and you get much better results -- though it still consistently overrates its confidence levels.
-
-Therefore we also use the "logprobs" obtained in the first query.  Logprobs ("log probabilities") are the internal probability the Ollama code used to predict each particular token in the response, so they're also a sort of "confidence" in the answer.  But they're just mechanical measures, they don't consider the semantics of the crossword clue.  Usually the logprobs and the confidence levels reported in the text response from the second query are correlated, but sometimes one is way off.  Therefore we use a weighted average of the two values to calculate the effective confidence in each crossword answer.  That's almost always good enough.
-
-Speaking of internal API values, we also use the "popular" LLM tuning parameters when querying it for candidate answers: temperature (which is how "speculative" or "aggressive" the LLM is in selecting tokens), top_p (which limits the probability of the tokens it selects), and top_k (which limits the number of tokens selected).  They're really just parameters for the shape of the "Receiver Operating Characteristic" (ROC) curve, which is the technical name of the curve in a machine learning classification calculation that separates the positive and negative cases.
-
-[UPDATE: Anthropic has deprecated use of these parameters in their newer models because they feel it unduly exposes the innards of the model's execution to the outside.]
-
-We use three sets of these parameters, depending on the "search level" for a particular clue.  When we're stuck on a clue and don't have any candidate answers for it, we increase its search level.  This gives us more candidates.  Most of them are usually garbage -- not even real words -- but occasionally it gives us something useful.  (Though I want to run some metrics to see how accurate that statement is!)
-
-Currently we're using the llama3.1:8b LLM, which basically has the intelligence of Elmer Fudd when compared to the LLMs you use online every day, but that's about all I can manage with the horsepower at my disposal on my potato PC.  For comparison, there's a llama3.1:405b model available on Ollama.  That's *50 times* as powerful (and 50 times the memory requirements) as the model I'm using.  Sheesh!  Maybe one day I'll set up my app so it can call a powerful online LLM instead -- but that costs money, yo!
-
-IMPORTANT: The LLM we're using needs 6-8 GB of RAM.  Combined with the 12 GB or so required by the vector database, that puts a pretty heavy load on WSL's memory, which I have capped at 20 GB.  Expect a lot of swapping and thrashing.
-
-**4. The Solver Algorithm**
-
-Believe it or not, all that stuff above with the AIs was the easy part.  I handled all that in just a few days, and most of THAT was faffing around with the LLM prompt.
-
-The really hard part was the solver algorithm itself -- a good old-fashioned coding problem.  I'm using a variant of a **constraint satisfaction algorithm** with **dependency-aware backtracking**.  What this means is that the app can guess an answer, and if it turns out to be wrong it can backtrack and guess again, without getting stuck, going into an infinite loop, or taking longer than the lifetime of the universe to solve a puzzle.
-
-The main difference from the first version of the crossword solver is that version 2 guesses the answers for each clue at runtime.  Technically, Version 1 of this app did use an LLM to get the answers, but I ran the LLM and recorded its answers *before* running the solver app, and made sure the *correct* answers were in the list.  That meant there was a small, fixed set of possible answers for each clue, guaranteed to include the correct answer, when I ran the solver.  Therefore it could solve the puzzle using a simple depth-first search.
-
-Letting the LLM generate guesses in real time while the app runs, and thus having an effectively infinite set of possible answers per clue -- not necessarily including the correct answer -- is a literally exponentially more difficult problem.  Version 2 had to be VASTLY better at guessing clues, even though it's still using the same LLM as version 1.  Thanks to RAG technology, it is.  It usually gets over 90% of the clues correct on the first guess.
-
-Still, it's not 100%, so the solving algorithm also has to be much smarter.  Smarter about how to choose the order in which to answer clues, how to generate candidate answers and which ones to select, and most importantly, how and when to "backtrack" and try something different when it gets stuck.  Frankly, the AIs I consulted -- and I asked many of the big ones -- were absolutely hopeless at this task.  Even with a lot of hand-holding, the best AIs out there are still completely incapable of properly solving a problem of this complexity.  When asked, they will confidently give you... a steaming pile of dung.  This confirmed my conviction that even top LLMs are good only at small, focused tasks.  If you want high-level design of any quality, you still need a human.
-
-I chose to model the algorithm after how humans (like me!) solve crosswords IRL.  The algorithm uses a complex set of heuristics to determine which clue to fill in first, based on parameters including candidate answer confidence, the length of the answer, and the number of already filled-in letters.  When an answer is placed, the LLM generates new candidate answers for each clue that had a new letter filled in.  It proceeds in this manner until it solves the puzzle or gets stuck.  In that case, it uses another complex set of heuristics to guess which clue to "backtrack".  It then applies a penalty to the clue it removed, but doesn't remove it from the list of potential candidate answers entirely.
-
-Sometimes, though, even with just one letter left to fill in a given clue, an LLM can't guess the correct answer.  Crossword clues are famously punny and LLMs are generally not trained on that kind of stuff, so even an answer that seems completely obvious to a human just isn't in the LLMs vocabulary.  In that case my algorithm will thrash a few times, and then finally give up and use a "fallback" -- it fills in the clue's known correct answer from a given list (i.e., it cheats).
-
-My goal in coding the solver is to always reduce fallbacks to 0.  With the LLMs I've used, it can do that most of the time on a NYT Tuesday puzzle.  Once in a while it can solve a Wednesday puzzle without resorting to a fallback, but usually it requires several of them.  And starting on Thursdays the NYT puzzles are filled with rebuses (grid squares that contain more than one letter or sometimes even a symbol) and similar gimmicks that my solver is not equipped to handle, so that's basically as far as it can go.
 
 
 CONCLUSION
